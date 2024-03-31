@@ -1,0 +1,30 @@
+{
+  "mode": "development",
+  "port": 8080,
+  "host": "0.0.0.0",
+  "cors": {
+    "origin": "*"
+  },
+  "rateLimit": {
+    "windowMs": 1000,
+    "maxRequests": 20
+  },
+  "langchain": {
+    "chunkSize": 2000,
+    "chunkOverlap": 200,
+    "collectionName": "playground"
+  },
+  "redis": {
+    "url": "redis://redis:6379"
+  },
+  "ollama": {
+    "baseUrl": "http://ollama:11434",
+    "model": "llama2:13b"
+  },
+  "unstructuredAPI": {
+    "url": "http://unstructured-api:8000/general/v0/general"
+  },
+  "chroma": {
+    "url": "http://chroma:8000"
+  }
+}

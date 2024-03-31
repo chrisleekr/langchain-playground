@@ -1,0 +1,35 @@
+{
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "allowJs": true,
+    "target": "es2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "typeRoots": ["./node_modules/@types"],
+    "traceResolution": false,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/src/*": ["src/*"],
+      "@/api/*": ["src/api/*"],
+      "@/libraries": ["src/libraries"],
+      "@/libraries/*": ["src/libraries/*"],
+      "@/middlewares": ["src/middlewares"],
+      "@/middlewares/*": ["src/middlewares/*"],
+      "@/models/*": ["src/models/*"],
+      "@/test/*": ["test/*"]
+    }
+  },
+  "include": ["src", "test"],
+  "exclude": ["dist/**/*", "build/**/*", "node_modules", "**/__mocks__/*", "dist", "coverage", "jest.config.*"]
+}

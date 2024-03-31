@@ -1,0 +1,46 @@
+{
+  "mode": "NODE_ENV",
+  "port": {
+    "__name": "PORT",
+    "__format": "number"
+  },
+  "host": "HOST",
+  "cors": {
+    "origin": "CORS_ORIGIN"
+  },
+  "rateLimit": {
+    "windowMs": {
+      "__name": "RATE_LIMIT_WINDOW_MS",
+      "__format": "number"
+    },
+    "maxRequests": {
+      "__name": "RATE_LIMIT_MAX_REQUESTS",
+      "__format": "number"
+    }
+  },
+  "langchain": {
+    "chunkSize": {
+      "__name": "LANGCHAIN_CHUNK_SIZE",
+      "__format": "number"
+    },
+    "chunkOverlap": {
+      "__name": "LANGCHAIN_CHUNK_OVERLAP",
+      "__format": "number"
+    },
+    "collectionName": "LANGCHAIN_COLLECTION_NAME"
+  },
+
+  "redis": {
+    "url": "REDIS_URL"
+  },
+  "ollama": {
+    "baseUrl": "OLLAMA_BASE_URL",
+    "model": "OLLAMA_MODEL"
+  },
+  "unstructuredAPI": {
+    "url": "UNSTRUCTURED_API_URL"
+  },
+  "chroma": {
+    "url": "CHROMA_HOST"
+  }
+}
