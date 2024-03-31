@@ -44,3 +44,19 @@ This will launch the following services:
         ]
     }
     ```
+
+  - Response body:
+
+    ```json
+    {
+        "success": true,
+        "message": "OK",
+        "data": {
+            "message": {
+                "role": "assistant",
+                "content": "I do not think that, but that's the information I've been given. According to this, the moon is reportedly made of air!"
+            }
+        },
+        "statusCode": 200
+    }
+    ```
