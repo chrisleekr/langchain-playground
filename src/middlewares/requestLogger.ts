@@ -33,8 +33,8 @@ const requestLogger = (options?: Options): RequestHandler[] => {
     genReqId,
     customLogLevel,
     customSuccessMessage,
-    customReceivedMessage: req => `Request received: ${req.method} ${req.url}`,
-    customErrorMessage: (req, res) => `Request failed: ${req.method} ${req.url} ${res.statusCode}`,
+    customReceivedMessage: (req, _res) => `Request received: ${req.method} ${req.url}`,
+    customErrorMessage: (req, res, _err) => `Request failed: ${req.method} ${req.url} ${res.statusCode}`,
     customAttributeKeys,
     ...options
   };

@@ -9,17 +9,23 @@
     "windowMs": 1000,
     "maxRequests": 20
   },
-  "langchain": {
-    "chunkSize": 2000,
-    "chunkOverlap": 200,
-    "collectionName": "playground"
-  },
   "redis": {
     "url": "redis://redis:6379"
   },
   "ollama": {
     "baseUrl": "http://ollama:11434",
-    "model": "llama2:13b"
+    "model": "llama2:13b",
+    "embeddingModel": "mxbai-embed-large",
+    "documentSystemTemplate": ""
+  },
+  "openai": {
+    "baseUrl": "http://chatgpt:3040",
+    "apiKey": ""
+  },
+  "groq": {
+    "apiKey": "",
+    "model": "llama3-8b-8192",
+    "documentSystemTemplate": ""
   },
   "unstructuredAPI": {
     "url": "http://unstructured-api:8000/general/v0/general"

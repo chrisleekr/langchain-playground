@@ -7,6 +7,8 @@ import bodyParser from 'body-parser';
 import { errorHandler, rateLimiter, requestLogger } from '@/middlewares';
 import { healthRouter } from '@/src/api/health';
 import { ollamaRouter } from '@/src/api/ollama';
+import { openAIRouter } from '@/src/api/openai';
+import { groqRouter } from '@/src/api/groq';
 
 const app: Express = express();
 
@@ -20,6 +22,8 @@ app.use(requestLogger());
 // Routes
 app.use('/health', healthRouter);
 app.use('/ollama', ollamaRouter);
+app.use('/openai', openAIRouter);
+app.use('/groq', groqRouter);
 
 app.use(errorHandler());
 

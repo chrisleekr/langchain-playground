@@ -4,12 +4,12 @@ import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { Logger } from '@/libraries';
 
 // Embeddings Model — OpenAI Embeddings: Converts text into embeddings, a numerical representation that machines can understand and process.
-const getEmbeddings = (logger: Logger): Embeddings => {
+const getOllamaEmbeddings = (logger: Logger): Embeddings => {
   logger.info('Getting Ollama Embeddings...');
   return new OllamaEmbeddings({
     baseUrl: config.get('ollama.baseUrl'),
-    model: config.get('ollama.model')
+    model: config.get('ollama.embeddingModel')
   });
 };
 
-export { getEmbeddings };
+export { getOllamaEmbeddings };

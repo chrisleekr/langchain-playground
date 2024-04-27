@@ -5,8 +5,8 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "allowJs": true,
-    "target": "es2022",
-    "module": "NodeNext",
+    "target": "ES2022",
+    "module": "nodenext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "outDir": "./dist",

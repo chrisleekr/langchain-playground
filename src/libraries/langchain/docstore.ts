@@ -1,7 +1,7 @@
 import { Document } from '@langchain/core/documents';
 import { BaseStoreInterface } from '@langchain/core/stores';
 import { Redis } from 'ioredis';
-import { createRedisClient, logger } from '@/libraries';
+import { getRedisClient } from '@/libraries';
 
 /**
  * Redis Docstore referred from InMemoryDocstore - https://github.com/langchain-ai/langchainjs/blob/main/libs/langchain-community/src/stores/doc/in_memory.ts#L9
@@ -12,8 +12,7 @@ class RedisDocstore implements BaseStoreInterface<string, Document> {
 
   constructor(namespace: string) {
     this._namespace = namespace;
-    console.log('this._namespace => ', this._namespace);
-    this._client = createRedisClient(logger);
+    this._client = getRedisClient();
   }
 
   serializeDocument(doc: Document): string {
@@ -53,7 +52,6 @@ class RedisDocstore implements BaseStoreInterface<string, Document> {
   }
 
   async search(search: string): Promise<Document> {
-    console.log('this.getNamespacedKey(search) => ', this.getNamespacedKey(search));
     const result = await this._client.get(this.getNamespacedKey(search));
     if (!result) {
       throw new Error(`ID ${search} not found.`);

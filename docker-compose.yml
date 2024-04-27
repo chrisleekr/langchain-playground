@@ -11,7 +11,7 @@ services:
     ports:
       - '11434:11434'
     volumes:
-      - ollama_data:/root/.ollama
+      - ~/.ollama:/root/.ollama
 
   openweb-ui:
     container_name: openweb-ui
@@ -31,6 +31,17 @@ services:
     volumes:
       - open_webui_data:/app/backend/data
 
+  chatgpt:
+    container_name: chatgpt
+    image: pawanosman/chatgpt:latest
+    networks:
+      - internal
+    env_file:
+      - .env
+    restart: unless-stopped
+    ports:
+      - '3040:3040'
+
   unstructured-api:
     container_name: unstructured-api
     image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
@@ -49,7 +60,7 @@ services:
       - internal
     restart: unless-stopped
     ports:
-      - '8083:8000'
+      - '8084:8000'
     volumes:
       - chroma_data:/chroma/chroma/
 
@@ -71,8 +82,6 @@ services:
       dockerfile: Dockerfile
     networks:
       - internal
-    volumes:
-      - ./:/srv
     env_file:
       - .env
     restart: unless-stopped
@@ -84,7 +93,6 @@ networks:
     driver: bridge
 
 volumes:
-  ollama_data:
   open_webui_data:
   redis_data:
   chroma_data:
