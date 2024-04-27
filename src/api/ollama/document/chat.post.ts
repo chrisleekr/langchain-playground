@@ -1,3 +1,4 @@
+import config from 'config';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
@@ -7,12 +8,16 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { formatDocumentsAsString } from 'langchain/util/document';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { handleServiceResponse } from '@/libraries/httpHandlers';
-import { getChat, getEmbeddings, getRetriever } from '@/libraries';
+import { getChatOllama, getOllamaEmbeddings, getRetriever } from '@/libraries';
 
-const systemTemplate = `Answer the user's question based on the context below.
-Your answer should be in the format of Markdown.
+const systemTemplate =
+  config.get('ollama.documentSystemTemplate') !== ''
+    ? <string>config.get('ollama.documentSystemTemplate')
+    : `Answer the user's question based on the context below. And improve your answers from previous answer in History.
 
-If the context doesn't contain any relevant information to the question, don't make something up and just say "I don't know":
+  Don't try to make up an answer. If the context doesn't contain any relevant information to the question, don't make something up and just say "I don't know".
+
+  Answer in a way that is easy to understand. Just answer the question directly in detail:
 
 <context>
 {context}
@@ -40,7 +45,7 @@ export default function documentChatPost(collectionName: string) {
     logger.info({ messages }, 'Received messages.');
 
     // Get embeddings
-    const embeddings = getEmbeddings(logger);
+    const embeddings = getOllamaEmbeddings(logger);
     logger.info({ embeddings }, 'Got embeddings.');
 
     // Get retriever
@@ -48,7 +53,7 @@ export default function documentChatPost(collectionName: string) {
     logger.info({ retriever }, 'Got retriever.');
 
     // Get chat
-    const chat = getChat(logger);
+    const chat = getChatOllama(0, logger);
 
     // Create RunnableSequence.from
     const query = messages[messages.length - 1].content;
@@ -67,7 +72,7 @@ export default function documentChatPost(collectionName: string) {
       chat
     ]);
 
-    logger.info({ query, messages }, 'Invoking chain...');
+    logger.info({ query, messages, chain, systemTemplate }, 'Invoking chain...');
     const invokeResult = await chain.invoke({
       question: query,
       chatHistory: serializeMessages(messages)

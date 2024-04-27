@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import { UnstructuredDirectoryLoader } from 'langchain/document_loaders/fs/unstructured';
-import { getEmbeddings, getRetriever, getVectorStore } from '@/libraries';
+import { getOllamaEmbeddings, getRetriever, getVectorStore } from '@/libraries';
 import { handleServiceResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
@@ -21,7 +21,7 @@ export default function documentLoadGet(collectionName: string) {
     const docs = await directoryLoader.load();
     logger.info({ docs }, 'Loaded documents from the directory.');
 
-    const embeddings = getEmbeddings(logger);
+    const embeddings = getOllamaEmbeddings(logger);
     logger.info({ embeddings }, 'Got embeddings.');
 
     logger.info('Getting Chroma Vector Store...');

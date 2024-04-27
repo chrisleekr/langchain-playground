@@ -18,24 +18,23 @@
       "__format": "number"
     }
   },
-  "langchain": {
-    "chunkSize": {
-      "__name": "LANGCHAIN_CHUNK_SIZE",
-      "__format": "number"
-    },
-    "chunkOverlap": {
-      "__name": "LANGCHAIN_CHUNK_OVERLAP",
-      "__format": "number"
-    },
-    "collectionName": "LANGCHAIN_COLLECTION_NAME"
-  },
-
   "redis": {
     "url": "REDIS_URL"
   },
   "ollama": {
     "baseUrl": "OLLAMA_BASE_URL",
-    "model": "OLLAMA_MODEL"
+    "model": "OLLAMA_MODEL",
+    "embeddingModel": "OLLAMA_EMBEDDING_MODEL",
+    "documentSystemTemplate": "OLLAMA_DOCUMENT_SYSTEM_TEMPLATE"
+  },
+  "openai": {
+    "baseUrl": "OPENAI_BASE_URL",
+    "apiKey": "OPENAI_API_KEY"
+  },
+  "groq": {
+    "apiKey": "GROQ_API_KEY",
+    "model": "GROQ_MODEL",
+    "documentSystemTemplate": "GROQ_DOCUMENT_SYSTEM_TEMPLATE"
   },
   "unstructuredAPI": {
     "url": "UNSTRUCTURED_API_URL"

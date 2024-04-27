@@ -22,7 +22,6 @@ yarn-error.log*
 
 coverage
 build
-data
 log
 
 .env

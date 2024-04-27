@@ -50,7 +50,7 @@ console.log(config);
     logger.info('Creating embeddings from the documents...');
     const embeddings = new OllamaEmbeddings({
       baseUrl: config.get('ollama.baseUrl'), // Default value
-      model: config.get('ollama.model')
+      model: config.get('ollama.embeddingModel')
     });
     logger.info({ embeddings }, 'Creating embeddings from the documents...done');
 
@@ -58,13 +58,17 @@ console.log(config);
     const vectorstore = await MemoryVectorStore.fromDocuments(splitDocs, embeddings);
     logger.info({ vectorstore }, 'Creating a vector store from the documents...done');
 
-    const prompt = ChatPromptTemplate.fromTemplate(`Answer the following question based only on the provided context:
+    const prompt = ChatPromptTemplate.fromTemplate(
+      config.get('ollama.documentSystemTemplate') !== ''
+        ? <string>config.get('ollama.documentSystemTemplate')
+        : `You must use the context. Do not make Answer the following question based only on the provided context:
 
 <context>
 {context}
 </context>
 
-Question: {input}`);
+Question: {input}`
+    );
 
     logger.info({ prompt }, 'Creating a document chain...');
     const documentChain = await createStuffDocumentsChain({
@@ -91,8 +95,8 @@ Question: {input}`);
     logger.info({ result }, 'Invoking the retrieval chain...done');
 
     logger.info(result.answer, 'Answer:');
-  } catch (error) {
-    logger.error('An error has occurred.', error);
+  } catch (err) {
+    logger.error({ err }, 'An error has occurred.');
 
     // eslint-disable-next-line no-process-exit
     process.exit(1);

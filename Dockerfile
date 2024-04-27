@@ -19,7 +19,10 @@ WORKDIR /srv
 
 COPY --from=build /srv/node_modules ./node_modules
 COPY --from=build /srv/dist ./dist
-COPY --from=build package*.json ./
+
+COPY ./config ./config
+COPY ./data ./data
+COPY ./package*.json ./
 
 EXPOSE 8080
 
