@@ -7,7 +7,14 @@ import { ChatGroq } from '@langchain/groq';
 import { Logger } from '@/libraries';
 
 const getChatOllama = (temperature: number, logger: Logger): BaseChatModel => {
-  logger.info('Getting ChatOllama...');
+  logger.info(
+    {
+      baseUrl: config.get('ollama.baseUrl'),
+      model: config.get('ollama.model'),
+      temperature
+    },
+    'Getting ChatOllama...'
+  );
   return new ChatOllama({
     baseUrl: config.get('ollama.baseUrl'),
     model: config.get('ollama.model'),

@@ -29,6 +29,8 @@ export default function threadIdPost() {
 
     const sessionId = `ollama-thread-${threadId}`;
 
+    logger.info({ sessionId, systemTemplate }, 'Session ID and system template');
+
     const memory = new ConversationSummaryBufferMemory({
       llm: getLLMOllama(0, logger),
       maxTokenLimit: 10,
