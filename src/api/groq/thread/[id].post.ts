@@ -16,7 +16,7 @@ import { getRedisClient } from '@/libraries/redis';
 const redisClient = getRedisClient();
 
 const systemTemplate =
-  <string>config.get('ollama.documentSystemTemplate') ??
+  <string>config.get('groq.documentSystemTemplate') ??
   `The AI will engage in a friendly conversation with a human, offering specific details from its context. If it lacks knowledge on a topic, it will simply respond with "I don't know." The AI will provide clear and direct answers, avoiding unnecessary information and refraining from asking questions back. It will respond to the last question asked without introducing new topics, providing additional details or asking questions in return.`;
 
 export default function threadIdPost() {

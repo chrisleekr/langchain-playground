@@ -7,7 +7,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { formatDocumentsAsString } from 'langchain/util/document';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { handleServiceResponse } from '@/libraries/httpHandlers';
-import { getChatOllama, getOllamaEmbeddings, getParentDocumentRetriever, getChromaVectorStore } from '@/libraries';
+import { getChatOllama, getOllamaEmbeddings, getChromaVectorStore } from '@/libraries';
 
 const systemTemplate = `Answer the user's question based on the context below. And improve your answers from previous answer in History.
 
@@ -52,12 +52,13 @@ export default function documentChatPost(collectionName: string) {
     const collection = await vectorStore.ensureCollection();
     logger.info({ collection }, 'Ensured collection exists');
 
-    // Get retriever
-    const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
+    // Get retriever. It seems Chroma Vector Store retriever is good as getParentDocumentRetriever.
+    // const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
+    const retriever = vectorStore.asRetriever();
     logger.info({ retriever }, 'Got retriever.');
 
     // Get chat
-    const chat = getChatOllama(0, logger);
+    const chat = getChatOllama(0.5, logger);
 
     const chain = RunnableSequence.from([
       {

@@ -18,45 +18,10 @@ This will launch the following services:
 
 ## Endpoints
 
-- `GET http://0.0.0.0:8080/health`: This endpoint is used to verify if the server is operational.
+TBD
 
-- `GET http://0.0.0.0:8080/ollama/document/load`: This endpoint loads documents from the data folder and stores them in the VectorStore.
+## Todo
 
-- `POST http://0.0.0.0:8080/ollama/document/chat`: This endpoint allows sending messages to Ollama based on the chat context and retrieves the response.
-
-  - Request body:
-
-    ```json
-    {
-        "messages": [
-            {
-                "role": "user",
-                "content": "What is the moon made of?"
-            },
-            {
-                "role": "assistant",
-                "content": "The moon is reportedly made of cheese!\nBut in all seriousness, the information given states that the moon is actually made of **air**."
-            },
-            {
-                "role": "user",
-                "content": "What? Really? Do you really think like that?"
-            }
-        ]
-    }
-    ```
-
-  - Response body:
-
-    ```json
-    {
-        "success": true,
-        "message": "OK",
-        "data": {
-            "message": {
-                "role": "assistant",
-                "content": "I do not think that, but that's the information I've been given. According to this, the moon is reportedly made of air!"
-            }
-        },
-        "statusCode": 200
-    }
-    ```
+- [ ] Add more examples
+- [ ] Add tests
+- [ ] Make better documentations

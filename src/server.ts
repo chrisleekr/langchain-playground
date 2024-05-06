@@ -9,6 +9,7 @@ import { healthRouter } from '@/src/api/health';
 import { ollamaRouter } from '@/src/api/ollama';
 import { openAIRouter } from '@/src/api/openai';
 import { groqRouter } from '@/src/api/groq';
+import { langgraphRouter } from '@/src/api/langgraph';
 
 const app: Express = express();
 
@@ -24,6 +25,7 @@ app.use('/health', healthRouter);
 app.use('/ollama', ollamaRouter);
 app.use('/openai', openAIRouter);
 app.use('/groq', groqRouter);
+app.use('/langgraph', langgraphRouter);
 
 app.use(errorHandler());
 
