@@ -123,9 +123,9 @@ coverage/
 *.log
 
 data/*
-!data/.gitkeep
-!data/nonsense.txt
-!data/langgraph/.gitkeep
+!data/*/
+data/*/*
+!data/*/.gitkeep
 !data/langgraph/recipe-korean-fried-chicken.pdf
 
 .env
