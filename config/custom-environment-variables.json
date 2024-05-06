@@ -41,5 +41,11 @@
   },
   "chroma": {
     "url": "CHROMA_HOST"
+  },
+  "langchain": {
+    "project": "LANGCHAIN_PROJECT",
+    "tracingV2": "LANGCHAIN_TRACING_V2",
+    "endpoint": "LANGCHAIN_ENDPOINT",
+    "apiKey": "LANGCHAIN_API_KEY"
   }
 }

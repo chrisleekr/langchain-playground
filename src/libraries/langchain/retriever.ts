@@ -14,11 +14,11 @@ const getParentDocumentRetriever = async (vectorStore: Chroma, collectionName: s
     docstore: redisStore,
     parentSplitter: new RecursiveCharacterTextSplitter({
       chunkSize: 2000,
-      chunkOverlap: 500
+      chunkOverlap: 0
     }),
     childSplitter: new RecursiveCharacterTextSplitter({
       chunkSize: 500,
-      chunkOverlap: 50
+      chunkOverlap: 0
     }),
     // Optional `k` parameter to search for more child documents in VectorStore.
     // Note that this does not exactly correspond to the number of final (parent) documents

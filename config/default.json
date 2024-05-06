@@ -32,5 +32,11 @@
   },
   "chroma": {
     "url": "http://chroma:8000"
+  },
+  "langchain": {
+    "project": "default",
+    "tracingV2": true,
+    "endpoint": "https://api.smith.langchain.com",
+    "apiKey": ""
   }
 }
