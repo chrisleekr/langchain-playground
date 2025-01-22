@@ -1,1 +1,1 @@
-export * from './groqRouter';
+export { default as groqRouter } from './groqRouter';

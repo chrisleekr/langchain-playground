@@ -1,20 +1,17 @@
-import { Router } from 'express';
+import type { FastifyPluginAsync } from 'fastify/types/plugin';
 
-import { validateRequest } from '@/libraries/httpHandlers';
-
+import { createRouteSchema } from '@/libraries/httpHandlers';
 import threadNewPost from '@/api/openai/thread/new.post';
 import threadIdPost from '@/api/openai/thread/[id].post';
 import threadIdGet from '@/api/openai//thread/[id].get';
-import { GetOpenAIThreadId, PostOpenAIThreadId, PostOpenAIThreadNew } from './openaiSchema';
+import { PostOpenAIThreadId } from './openaiSchema';
 
-export const openAIRouter: Router = (() => {
-  const router = Router();
+const openAIRouter: FastifyPluginAsync = async fastify => {
+  fastify.post('/thread', createRouteSchema({}), threadNewPost());
 
-  router.post('/thread', validateRequest(PostOpenAIThreadNew), threadNewPost());
+  fastify.get('/thread/:id', createRouteSchema({}), threadIdGet());
 
-  router.get('/thread/:id', validateRequest(GetOpenAIThreadId), threadIdGet());
+  fastify.post('/thread/:id', createRouteSchema({ params: PostOpenAIThreadId }), threadIdPost());
+};
 
-  router.post('/thread/:id', validateRequest(PostOpenAIThreadId), threadIdPost());
-
-  return router;
-})();
+export default openAIRouter;

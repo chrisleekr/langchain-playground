@@ -1,17 +1,19 @@
 /**
  * Note: It works. But it's too slow.
  */
-import { Request, Response } from 'express';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
-import { ConversationChain } from 'langchain/chains';
-import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
-import { BufferMemory } from 'langchain/memory';
-import { PromptTemplate } from '@langchain/core/prompts';
 
-import { handleServiceResponse } from '@/libraries/httpHandlers';
-import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
+import { BufferMemory } from 'langchain/memory';
+import { ConversationChain } from 'langchain/chains';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
+
 import { getChatOllama } from '@/libraries';
 import { getRedisClient } from '@/libraries/redis';
+import { sendResponse } from '@/libraries/httpHandlers';
+import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 const redisClient = getRedisClient();
 
@@ -22,42 +24,56 @@ const systemTemplate =
 Current conversation:
 {history}
 
-Human: {input}
+H: {input}
 
 AI:`;
 
 export default function threadIdPost() {
-  return async (req: Request, res: Response): Promise<Response<unknown, Record<string, unknown>>> => {
-    const logger = req.log;
-    const { id: threadId } = req.params;
-    const { message } = req.body;
+  return async (
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: { message: string };
+    }>,
+    reply: FastifyReply
+  ): Promise<void> => {
+    const logger = request.log as Logger;
+    const { id: threadId } = request.params;
+    const { message } = request.body;
 
+    logger.info({ threadId, message }, 'Processing message');
+
+    // Initialise memory
     const memory = new BufferMemory({
       chatHistory: new RedisChatMessageHistory({
         sessionId: threadId,
         client: redisClient
       })
     });
+    logger.info({ memory }, 'Memory Initialised');
 
-    logger.info({ memory }, 'Created new memory.');
-
-    // Get chat
+    // Initialise chat model
     const chat = getChatOllama(0.5, logger);
 
+    // Setup chain
     const promptTemplate = PromptTemplate.fromTemplate(systemTemplate);
-
     const chain = new ConversationChain({ llm: chat, memory, prompt: promptTemplate });
+    logger.info({ chain }, 'Chain Initialised');
 
-    logger.info({ chain }, 'Created new chain.');
-
+    // Process message
     const callResponse = await chain.call({ input: message });
+    logger.info({ callResponse }, 'Message processed');
 
-    const response = {
-      threadId,
-      response: callResponse.response
-    };
-
-    const serviceResponse = new ServiceResponse(ResponseStatus.Success, 'OK', response, StatusCodes.OK);
-    return handleServiceResponse(serviceResponse, res);
+    await sendResponse(
+      reply,
+      new ServiceResponse(
+        ResponseStatus.Success,
+        'OK',
+        {
+          threadId,
+          response: callResponse.response
+        },
+        StatusCodes.OK
+      )
+    );
   };
 }

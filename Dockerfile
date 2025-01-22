@@ -1,5 +1,5 @@
 # Step 1: Base
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 
 WORKDIR /srv
 
@@ -26,4 +26,4 @@ COPY ./package*.json ./
 
 EXPOSE 8080
 
-CMD npm run start
+CMD ["npm", "run", "start"]

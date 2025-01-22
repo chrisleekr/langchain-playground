@@ -1,1 +1,1 @@
-export * from './langgraphRouter';
+export { default as langgraphRouter } from './langgraphRouter';

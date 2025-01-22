@@ -1,1 +1,1 @@
-export * from './openaiRouter';
+export { default as openAIRouter } from './openaiRouter';

@@ -1,46 +1,45 @@
-import { Request, Response } from 'express';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
-import { JSONLoader, JSONLinesLoader } from 'langchain/document_loaders/fs/json';
-import { TextLoader } from 'langchain/document_loaders/fs/text';
-import { CSVLoader } from 'langchain/document_loaders/fs/csv';
-import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
+import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
-
 import { Document } from 'langchain/document';
-
+import { JSONLoader, JSONLinesLoader } from 'langchain/document_loaders/fs/json';
 import { ParentDocumentRetriever } from 'langchain/retrievers/parent_document';
-import { getOllamaEmbeddings, getChromaVectorStore, Logger, getParentDocumentRetriever } from '@/libraries';
-import { handleServiceResponse } from '@/libraries/httpHandlers';
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import { TextLoader } from 'langchain/document_loaders/fs/text';
+
+import { getOllamaEmbeddings, getChromaVectorStore, getParentDocumentRetriever } from '@/libraries';
+import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { collectionName } from '../langgraphRouter';
 
 const verifyDocs = async (retriever: ParentDocumentRetriever, logger: Logger) => {
-  // Verifies that the retriever can return relevant documents for a test query
+  // Verify relevant document retrieval
   const testRelevantDocs = await retriever.invoke('What is ingredients of Korean Fried Chicken?');
-  logger.info({ testRelevantDocs }, 'Test relevant docs');
-  // If testRelevantDocs is empty or testRelevantDoc[].pageContent does not contain 'moon', throw error
+  logger.info({ testRelevantDocs }, 'Testing relevant document retrieval');
+
   if (testRelevantDocs.length === 0 || testRelevantDocs.filter((doc: Document) => doc.pageContent.indexOf('chicken') !== -1).length === 0) {
-    throw new Error('Retriever did not return relevant documents for test query.');
+    throw new Error('Retriever did not return relevant documents for test query');
   }
 
-  // Verifies that the retriever does not return irrelevant documents for a test query
+  // Verify irrelevant document filtering
   const testIrrelevantDocs = await retriever.invoke('What is the moon?');
-  logger.info({ testIrrelevantDocs }, 'Test irrelevant docs');
-  // If testIrrelevantDocs is not empty or testIrrelevantDocs[].pageContent contains 'moon', throw error
+  logger.info({ testIrrelevantDocs }, 'Testing irrelevant document filtering');
+
   if (testIrrelevantDocs.length !== 0 || testIrrelevantDocs.filter((doc: Document) => doc.pageContent.indexOf('moon') !== -1).length !== 0) {
-    throw new Error('Retriever returned irrelevant documents for test query.');
+    throw new Error('Retriever returned irrelevant documents for test query');
   }
 };
 
 export default function documentLoadGet() {
-  return async (req: Request, res: Response): Promise<Response<unknown, Record<string, unknown>>> => {
-    const logger = req.log;
+  return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const logger = request.log as Logger;
     const directoryPath = __dirname + '/../../../../data/langgraph';
 
-    // Get loader
-    logger.info({ directoryPath }, 'Loading documents from the directory');
-
+    // Initialise document loader
+    logger.info({ directoryPath }, 'Initializing document loader');
     const loader = new DirectoryLoader(directoryPath, {
       '.json': path => new JSONLoader(path, '/texts'),
       '.jsonl': path => new JSONLinesLoader(path, '/html'),
@@ -48,51 +47,63 @@ export default function documentLoadGet() {
       '.csv': path => new CSVLoader(path, 'text'),
       '.pdf': path => new PDFLoader(path, { splitPages: false })
     });
+
+    // Load documents
     const docs = await loader.load();
-    logger.info({ docs }, 'Loaded documents from the directory.');
+    logger.info({ docs }, 'Documents loaded');
 
+    // Initialise embeddings and vector store
     const embeddings = getOllamaEmbeddings(logger);
-    logger.info({ embeddings }, 'Got embeddings.');
+    logger.info({ embeddings }, 'Embeddings Initialised');
 
-    logger.info('Getting Vector Store...');
+    logger.info('Initializing vector store...');
     const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
-    logger.info({ collectionName: vectorStore.collectionName }, 'Got Vector Store...');
+    logger.info({ collectionName: vectorStore.collectionName }, 'Vector store Initialised');
 
+    // Setup collection
     logger.info('Ensuring collection exists...');
     const collection = await vectorStore.ensureCollection();
-    logger.info({ collection }, 'Ensured collection exists');
+    logger.info({ collection }, 'Collection ensured');
 
-    logger.info('Deleting existing docs from collection to create fresh collection...');
+    // Clear existing documents
+    logger.info('Clearing existing documents...');
     const existingCollectionIds = (await collection.get()).ids;
     await collection.delete({ ids: existingCollectionIds });
-    logger.info({ existingCollectionIds }, 'Deleted existing docs from collection');
+    logger.info({ existingCollectionIds }, 'Existing documents cleared');
 
+    // Initialise retriever
     const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
-    logger.info({ retriever }, 'Got retriever.');
+    logger.info({ retriever }, 'Retriever Initialised');
 
-    logger.info('Adding documents to the retriever...');
+    // Add documents
+    logger.info('Adding documents to retriever...');
     const addDocumentsResult = await retriever.addDocuments(docs);
-    logger.info({ addDocumentsResult }, 'Added documents to the retriever.');
+    logger.info({ addDocumentsResult }, 'Documents added');
 
-    // Verify that the retriever can return relevant documents for a test query
+    // Verify retriever
     try {
       await verifyDocs(retriever, logger);
+      logger.info('Retriever verification passed');
     } catch (e) {
-      // Ignore for now.
-      logger.error({ error: e }, 'Error verifying retriever');
+      logger.error({ error: e }, 'Retriever verification failed');
     }
 
+    // Get collection stats
     const collectionCount = await collection.count();
     const collectionDocs = await collection.get();
-    const serviceResponse = new ServiceResponse(
-      ResponseStatus.Success,
-      'OK',
-      {
-        collectionCount,
-        collectionDocs
-      },
-      StatusCodes.OK
+    logger.info({ collectionCount }, 'Collection stats retrieved');
+
+    await sendResponse(
+      reply,
+      new ServiceResponse(
+        ResponseStatus.Success,
+        'OK',
+        {
+          collectionCount,
+          collectionDocs
+        },
+        StatusCodes.OK
+      )
     );
-    return handleServiceResponse(serviceResponse, res);
   };
 }

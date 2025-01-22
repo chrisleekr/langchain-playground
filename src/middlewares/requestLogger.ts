@@ -1,8 +1,5 @@
-import { Request, RequestHandler, Response } from 'express';
-import { getReasonPhrase, StatusCodes } from 'http-status-codes';
-import { LevelWithSilent } from 'pino';
-import { CustomAttributeKeys, Options, pinoHttp } from 'pino-http';
-import { IncomingMessage, ServerResponse } from 'http';
+import { type FastifyRequest, type FastifyReply } from 'fastify';
+import { getReasonPhrase } from 'http-status-codes';
 import { randomUUID } from 'crypto';
 import { logger } from '@/libraries';
 
@@ -16,73 +13,51 @@ enum LogLevel {
   Silent = 'silent'
 }
 
-type PinoCustomProps = {
-  request: Request;
-  response: Response;
-  err: Error;
-  responseBody: unknown;
-};
+type RequestHandler = (request: FastifyRequest, reply: FastifyReply, done: () => void) => void;
 
-const requestLogger = (options?: Options): RequestHandler[] => {
-  const pinoOptions: Options = {
-    logger,
-    // If NODE_ENV is test, then we don't want to log anything.
-    enabled: process.env.NODE_ENV !== 'test',
-    customProps: customProps as unknown as Options['customProps'],
-    redact: [],
-    genReqId,
-    customLogLevel,
-    customSuccessMessage,
-    customReceivedMessage: (req, _res) => `Request received: ${req.method} ${req.url}`,
-    customErrorMessage: (req, res, _err) => `Request failed: ${req.method} ${req.url} ${res.statusCode}`,
-    customAttributeKeys,
-    ...options
+const requestLogger = (): RequestHandler => {
+  return (request: FastifyRequest, reply: FastifyReply, done: () => void) => {
+    // Skip logging in test environment
+    if (process.env.NODE_ENV === 'test') {
+      done();
+      return;
+    }
+
+    const requestId = request.id || randomUUID();
+    reply.header('X-Request-Id', requestId);
+
+    const startTime = process.hrtime();
+
+    reply.raw.on('finish', () => {
+      const [seconds, nanoseconds] = process.hrtime(startTime);
+      const responseTime = seconds * 1000 + nanoseconds / 1000000;
+
+      const logLevel = getLogLevel(reply.statusCode);
+      const logMessage = {
+        req: {
+          id: requestId,
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          remoteAddress: request.ip
+        },
+        res: {
+          statusCode: reply.statusCode,
+          responseTime
+        }
+      };
+
+      logger[logLevel](logMessage, `${request.method} ${request.url} ${reply.statusCode} ${getReasonPhrase(reply.statusCode)}`);
+    });
+
+    done();
   };
-  return [responseBodyMiddleware, pinoHttp(pinoOptions)];
 };
 
-const customAttributeKeys: CustomAttributeKeys = {
-  req: 'request',
-  res: 'response',
-  err: 'error',
-  responseTime: 'timeTaken'
-};
-
-const customProps = (req: Request, res: Response): PinoCustomProps => ({
-  request: req,
-  response: res,
-  err: res.locals.err,
-  responseBody: res.locals.responseBody
-});
-
-const responseBodyMiddleware: RequestHandler = (_req, res, next) => {
-  const originalSend = res.send;
-  res.send = function (content) {
-    res.locals.responseBody = content;
-    res.send = originalSend;
-    return originalSend.call(res, content);
-  };
-  next();
-};
-
-const customLogLevel = (_req: IncomingMessage, res: ServerResponse<IncomingMessage>, err?: Error): LevelWithSilent => {
-  if (err || res.statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) return LogLevel.Error;
-  if (res.statusCode >= StatusCodes.BAD_REQUEST) return LogLevel.Warn;
-  if (res.statusCode >= StatusCodes.MULTIPLE_CHOICES) return LogLevel.Silent;
+const getLogLevel = (statusCode: number): LogLevel => {
+  if (statusCode >= 500) return LogLevel.Error;
+  if (statusCode >= 400) return LogLevel.Warn;
   return LogLevel.Info;
-};
-
-const customSuccessMessage = (req: IncomingMessage, res: ServerResponse<IncomingMessage>) => {
-  if (res.statusCode === StatusCodes.NOT_FOUND) return getReasonPhrase(StatusCodes.NOT_FOUND);
-  return `Request completed: ${req.method} ${req.url} with status code: ${res.statusCode}`;
-};
-
-const genReqId = (req: IncomingMessage, res: ServerResponse<IncomingMessage>) => {
-  const existingID = req.id ?? req.headers['x-request-id'];
-  if (existingID) return existingID;
-  const id = randomUUID();
-  res.setHeader('X-Request-Id', id);
-  return id;
 };
 
 export default requestLogger;

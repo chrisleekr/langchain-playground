@@ -129,3 +129,5 @@ data/*/*
 !data/langgraph/recipe-korean-fried-chicken.pdf
 
 .env
+
+models

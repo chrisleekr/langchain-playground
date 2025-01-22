@@ -2,7 +2,7 @@ import pino, { Logger } from 'pino';
 
 const loggerInstance = pino({
   name: 'langchain-playground',
-  level: 'debug'
+  level: 'trace'
 });
 
 const logger: Logger = loggerInstance;

@@ -2,7 +2,8 @@
  * Note: Couldn't make it working. The memory is not being saved between requests.
  */
 import config from 'config';
-import { Request, Response } from 'express';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import { LLMChain } from 'langchain/chains';
 
@@ -10,7 +11,7 @@ import { VectorStoreRetrieverMemory } from 'langchain/memory';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { PromptTemplate } from '@langchain/core/prompts';
 
-import { handleServiceResponse } from '@/libraries/httpHandlers';
+import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { getOllamaEmbeddings, getLLMOllama } from '@/libraries';
 
@@ -29,10 +30,18 @@ Human: {input}
 AI:`;
 
 export default function threadIdPost() {
-  return async (req: Request, res: Response): Promise<Response<unknown, Record<string, unknown>>> => {
-    const logger = req.log;
-    const { id: threadId } = req.params;
-    const { message } = req.body;
+  return async (
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: { message: string };
+    }>,
+    reply: FastifyReply
+  ): Promise<void> => {
+    const logger = request.log as Logger;
+    const { id: threadId } = request.params;
+    const { message } = request.body;
+
+    logger.info({ threadId, message }, 'Posting to thread.');
 
     const vectorStore = new MemoryVectorStore(getOllamaEmbeddings(logger));
     const memory = new VectorStoreRetrieverMemory({
@@ -72,12 +81,17 @@ export default function threadIdPost() {
     await memory.saveContext({ input: message }, { output: callResponse.text });
     logger.info({ input: message, output: callResponse.text }, 'Saved context');
 
-    const response = {
-      threadId,
-      response: callResponse.text
-    };
-
-    const serviceResponse = new ServiceResponse(ResponseStatus.Success, 'OK', response, StatusCodes.OK);
-    return handleServiceResponse(serviceResponse, res);
+    await sendResponse(
+      reply,
+      new ServiceResponse(
+        ResponseStatus.Success,
+        'OK',
+        {
+          threadId,
+          response: callResponse.text
+        },
+        StatusCodes.OK
+      )
+    );
   };
 }

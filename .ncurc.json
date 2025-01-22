@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["d3-dsv", "eslint", "eslint-plugin-jest", "pino"]
+  "reject": []
 }

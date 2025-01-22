@@ -1,3 +1,9 @@
+/**
+ * Test LangGraph with Groq
+ *
+ * How to run:
+ *   $ npm run dev:script src/test-langgraph-groq.ts "What is the capital city of France?"
+ */
 import config from 'config';
 
 import { END, MessageGraph } from '@langchain/langgraph';
@@ -16,13 +22,11 @@ console.log(config);
 
     const graph = new MessageGraph();
 
-    graph.addNode('oracle', async (state: BaseMessage[]) => {
+    graph.addNode('__start__', async (state: BaseMessage[]) => {
       return model.invoke(state);
     });
 
-    graph.addEdge('oracle', END);
-
-    graph.setEntryPoint('oracle');
+    graph.addEdge('__start__', END);
 
     const runnable = graph.compile();
 
@@ -33,7 +37,6 @@ console.log(config);
   } catch (err) {
     logger.error({ err }, 'An error has occurred.');
 
-    // eslint-disable-next-line no-process-exit
     process.exit(1);
   }
 })();

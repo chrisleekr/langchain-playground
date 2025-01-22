@@ -1,31 +1,14 @@
-import { z } from 'zod';
+import { Type } from '@sinclair/typebox';
 
-export const PostOllamaDocumentChat = z.object({
-  body: z.object({
-    messages: z.array(
-      z.object({
-        role: z.enum(['user', 'assistant']),
-        content: z.string()
-      })
-    )
-  })
+export const PostOllamaDocumentChat = Type.Object({
+  messages: Type.Array(
+    Type.Object({
+      role: Type.Union([Type.Literal('user'), Type.Literal('assistant')]),
+      content: Type.String()
+    })
+  )
 });
 
-export const PostOllamaThreadNew = z.object({
-  body: z.object({})
-});
-
-export const PostOllamaThreadId = z.object({
-  params: z.object({
-    id: z.string()
-  }),
-  body: z.object({
-    message: z.string()
-  })
-});
-
-export const GetOllamaThreadId = z.object({
-  params: z.object({
-    id: z.string()
-  })
+export const PostOllamaThreadId = Type.Object({
+  message: Type.String()
 });

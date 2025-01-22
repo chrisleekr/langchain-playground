@@ -1,25 +1,22 @@
-import { Router } from 'express';
+import type { FastifyPluginAsync } from 'fastify/types/plugin';
 
-import { validateRequest } from '@/libraries/httpHandlers';
-
+import { createRouteSchema } from '@/libraries/httpHandlers';
 import documentLoadGet from '@/api/langgraph/document/load.get';
 import threadNewPost from '@/api/langgraph/thread/new.post';
 import threadIdPost from '@/api/langgraph/thread/[id].post';
 import threadIdGet from '@/api/langgraph//thread/[id].get';
-import { GetLanggraphThreadId, PostLanggraphThreadId, PostLanggraphThreadNew } from './langgraphSchema';
+import { PostLanggraphThreadId } from './langgraphSchema';
 
 export const collectionName = 'langgraph';
 
-export const langgraphRouter: Router = (() => {
-  const router = Router();
+const langgraphRouter: FastifyPluginAsync = async fastify => {
+  fastify.get('/document/load', createRouteSchema({}), documentLoadGet());
 
-  router.get('/document/load', documentLoadGet());
+  fastify.post('/thread', createRouteSchema({}), threadNewPost());
 
-  router.post('/thread', validateRequest(PostLanggraphThreadNew), threadNewPost());
+  fastify.get('/thread/:id', createRouteSchema({}), threadIdGet());
 
-  router.get('/thread/:id', validateRequest(GetLanggraphThreadId), threadIdGet());
+  fastify.post('/thread/:id', createRouteSchema({ params: PostLanggraphThreadId }), threadIdPost());
+};
 
-  router.post('/thread/:id', validateRequest(PostLanggraphThreadId), threadIdPost());
-
-  return router;
-})();
+export default langgraphRouter;

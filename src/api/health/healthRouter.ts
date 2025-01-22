@@ -1,16 +1,17 @@
-import { Request, Response, Router } from 'express';
+import type { FastifyPluginAsync } from 'fastify/types/plugin';
 import { StatusCodes } from 'http-status-codes';
 
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { handleServiceResponse } from '@/libraries/httpHandlers';
+import { createRouteSchema, sendResponse } from '@/libraries/httpHandlers';
 
-export const healthRouter: Router = (() => {
-  const router = Router();
-
-  router.get('/', (_req: Request, res: Response) => {
-    const serviceResponse = new ServiceResponse(ResponseStatus.Success, 'OK', null, StatusCodes.OK);
-    return handleServiceResponse(serviceResponse, res);
-  });
-
-  return router;
-})();
+export const healthRouter: FastifyPluginAsync = async fastify => {
+  fastify.get(
+    '/',
+    {
+      ...createRouteSchema({})
+    },
+    async (_request, reply) => {
+      await sendResponse(reply, new ServiceResponse(ResponseStatus.Success, 'OK', null, StatusCodes.OK));
+    }
+  );
+};
