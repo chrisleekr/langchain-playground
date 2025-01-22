@@ -1,6 +1,4 @@
 import { StatusCodes } from 'http-status-codes';
-import request from 'supertest';
-
 import { app } from '@/src/server';
 import { ServiceResponse } from '@/models/serviceResponse';
 
@@ -9,8 +7,11 @@ describe('Health Check API endpoints', () => {
 
   describe('GET /', () => {
     beforeEach(async () => {
-      const response = await request(app).get('/health');
-      result = response.body;
+      const response = await app.inject({
+        method: 'GET',
+        url: '/health'
+      });
+      result = JSON.parse(response.payload);
     });
 
     it('returns expected status code', () => {

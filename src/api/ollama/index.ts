@@ -1,1 +1,1 @@
-export * from './ollamaRouter';
+export { default as ollamaRouter } from './ollamaRouter';

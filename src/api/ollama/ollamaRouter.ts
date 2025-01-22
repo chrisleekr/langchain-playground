@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import type { FastifyPluginAsync } from 'fastify/types/plugin';
 
-import { validateRequest } from '@/libraries/httpHandlers';
-import { GetOllamaThreadId, PostOllamaDocumentChat, PostOllamaThreadId, PostOllamaThreadNew } from '@/api/ollama/ollamaSchema';
+import { createRouteSchema } from '@/libraries/httpHandlers';
+import { PostOllamaDocumentChat, PostOllamaThreadId } from '@/api/ollama/ollamaSchema';
 import documentLoadGet from '@/api/ollama/document/load.get';
 import documentChatPost from '@/api/ollama/document/chat.post';
 import threadNewPost from '@/api/ollama/thread/new.post';
@@ -10,18 +10,16 @@ import threadIdGet from '@/api/ollama/thread/[id].get';
 
 const collectionName = 'playground';
 
-export const ollamaRouter: Router = (() => {
-  const router = Router();
+const ollamaRouter: FastifyPluginAsync = async fastify => {
+  fastify.get('/document/load', createRouteSchema({}), documentLoadGet(collectionName));
 
-  router.get('/document/load', documentLoadGet(collectionName));
+  fastify.post('/document/chat', createRouteSchema({ body: PostOllamaDocumentChat }), documentChatPost(collectionName));
 
-  router.post('/document/chat', validateRequest(PostOllamaDocumentChat), documentChatPost(collectionName));
+  fastify.post('/thread', createRouteSchema({}), threadNewPost());
 
-  router.post('/thread', validateRequest(PostOllamaThreadNew), threadNewPost());
+  fastify.get('/thread/:id', createRouteSchema({}), threadIdGet());
 
-  router.get('/thread/:id', validateRequest(GetOllamaThreadId), threadIdGet());
+  fastify.post('/thread/:id', createRouteSchema({ body: PostOllamaThreadId }), threadIdPost());
+};
 
-  router.post('/thread/:id', validateRequest(PostOllamaThreadId), threadIdPost());
-
-  return router;
-})();
+export default ollamaRouter;

@@ -1,7 +1,5 @@
 import config from 'config';
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { LLM } from 'langchain/llms/base';
-import { Ollama } from '@langchain/community/llms/ollama';
+import { ChatOllama, Ollama } from '@langchain/ollama';
 import { ChatGroq } from '@langchain/groq';
 import { Logger } from '@/libraries';
 
@@ -21,7 +19,7 @@ const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
   });
 };
 
-const getLLMOllama = (temperature: number, logger: Logger): LLM => {
+const getLLMOllama = (temperature: number, logger: Logger): Ollama => {
   logger.info('Getting LLM...');
   return new Ollama({
     baseUrl: config.get('ollama.baseUrl'),

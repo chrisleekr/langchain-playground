@@ -1,8 +1,13 @@
+/**
+ * Test Ollama
+ *
+ * How to run:
+ *   $ npm run dev:script src/test-ollama.ts ./data/ "What is the capital city of France?"
+ */
 import config from 'config';
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { ChatOllama, OllamaEmbeddings } from '@langchain/ollama';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { UnstructuredDirectoryLoader } from 'langchain/document_loaders/fs/unstructured';
+import { UnstructuredDirectoryLoader } from '@langchain/community/document_loaders/fs/unstructured';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
@@ -98,7 +103,6 @@ Question: {input}`
   } catch (err) {
     logger.error({ err }, 'An error has occurred.');
 
-    // eslint-disable-next-line no-process-exit
     process.exit(1);
   }
 })();

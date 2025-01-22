@@ -2,19 +2,34 @@ import config from 'config';
 import { logger } from '@/libraries/logger';
 import { app } from './server';
 
-const server = app.listen(config.get('port'), () => {
-  logger.info(`Server mode: ${config.get('mode')}`);
-  logger.info(`Server running on port ${config.get('port')}...`);
-});
-
-const onCloseSignal = () => {
-  logger.info('SIGINT received, closing server...');
-  server.close(() => {
-    logger.info('Server closed successfully.');
-    process.exit();
-  });
-  setTimeout(() => process.exit(1), 10000).unref();
+const startServer = async () => {
+  try {
+    const address = await app.listen({
+      port: config.get('port'),
+      host: config.get('host')
+    });
+    logger.info(`Server mode: ${config.get('mode')}`);
+    logger.info(`Server listening at ${address}`);
+    return app;
+  } catch (error) {
+    logger.error({ error }, 'Failed to start server:');
+    process.exit(1);
+  }
 };
 
-process.on('SIGINT', onCloseSignal);
-process.on('SIGTERM', onCloseSignal);
+const gracefulShutdown = async () => {
+  try {
+    await app.close();
+    logger.info('Server closed successfully.');
+    process.exit(0);
+  } catch (error) {
+    logger.error({ error }, 'Error while closing server:');
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Start the server
+void startServer();

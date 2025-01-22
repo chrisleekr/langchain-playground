@@ -1,6 +1,7 @@
 import config from 'config';
 import { Embeddings } from '@langchain/core/embeddings';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { OllamaEmbeddings } from '@langchain/ollama';
+
 import { Logger } from '@/libraries';
 
 const getOllamaEmbeddings = (logger: Logger): Embeddings => {

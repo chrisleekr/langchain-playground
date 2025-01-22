@@ -5,6 +5,7 @@ import { compilerOptions } from './tsconfig.json';
 const config: Config = {
   setupFiles: ['dotenv/config'],
   globalSetup: '<rootDir>/test/globalSetup.ts',
+  setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   testPathIgnorePatterns: ['<rootDir>/src/config/', '<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],

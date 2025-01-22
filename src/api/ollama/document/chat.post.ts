@@ -1,13 +1,14 @@
-import { Request, Response } from 'express';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
-import { RunnableSequence } from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
-
 import { formatDocumentsAsString } from 'langchain/util/document';
-import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { handleServiceResponse } from '@/libraries/httpHandlers';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence } from '@langchain/core/runnables';
+
 import { getChatOllama, getOllamaEmbeddings, getChromaVectorStore } from '@/libraries';
+import { sendResponse } from '@/libraries/httpHandlers';
+import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 const systemTemplate = `Answer the user's question based on the context below. And improve your answers from previous answer in History.
 
@@ -35,38 +36,46 @@ const serializeMessages = (messages: Array<{ role: string; content: string }>): 
   messages.map(message => `${message.role}: ${message.content}`).join('\n');
 
 export default function documentChatPost(collectionName: string) {
-  return async (req: Request, res: Response): Promise<Response<unknown, Record<string, unknown>>> => {
-    const logger = req.log;
+  return async (
+    request: FastifyRequest<{
+      Body: {
+        messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+      };
+    }>,
+    reply: FastifyReply
+  ): Promise<void> => {
+    const logger = request.log as Logger;
+    const { messages } = request.body;
 
-    const { messages } = req.body;
-    logger.info({ messages }, 'Received messages.');
+    logger.info({ messages }, 'Received messages');
 
-    // Get embeddings
+    // Initialise embeddings
     const embeddings = getOllamaEmbeddings(logger);
-    logger.info({ embeddings }, 'Got embeddings.');
+    logger.info({ embeddings }, 'Initialised embeddings');
 
-    logger.info('Getting Vector Store...');
+    // Setup vector store
+    logger.info('Initializing vector store...');
     const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
 
     logger.info('Ensuring collection exists...');
     const collection = await vectorStore.ensureCollection();
-    logger.info({ collection }, 'Ensured collection exists');
+    logger.info({ collection }, 'Collection ensured');
 
-    // Get retriever. It seems Chroma Vector Store retriever is good as getParentDocumentRetriever.
-    // const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
+    // Initialise retriever
     const retriever = vectorStore.asRetriever();
-    logger.info({ retriever }, 'Got retriever.');
+    logger.info({ retriever }, 'Initialised retriever');
 
-    // Get chat
+    // Initialise chat model
     const chat = getChatOllama(0.5, logger);
 
+    // Setup chain
     const chain = RunnableSequence.from([
       {
         question: (input: { question: string; chatHistory?: string }) => input.question,
         chatHistory: (input: { question: string; chatHistory?: string }) => input.chatHistory ?? '',
         context: async (input: { question: string; chatHistory?: string }) => {
           const relevantDocs = await retriever.invoke(input.question);
-          logger.info({ relevantDocs, input }, 'Relevant documents');
+          logger.info({ relevantDocs, input }, 'Retrieved relevant documents');
           return formatDocumentsAsString(relevantDocs);
         }
       },
@@ -74,23 +83,29 @@ export default function documentChatPost(collectionName: string) {
       chat
     ]);
 
+    // Process query
     const query = messages[messages.length - 1].content;
-    logger.info({ query, messages, chain, systemTemplate }, 'Invoking chain...');
+    logger.info({ query, messages }, 'Processing query');
+
     const invokeResult = await chain.invoke({
       question: query,
       chatHistory: serializeMessages(messages)
     });
+    logger.info({ invokeResult }, 'Query processed');
 
-    logger.info({ invokeResult }, 'Completed invoking chain.');
-
-    const response = {
-      message: {
-        role: 'assistant',
-        content: invokeResult?.content
-      }
-    };
-
-    const serviceResponse = new ServiceResponse(ResponseStatus.Success, 'OK', response, StatusCodes.OK);
-    return handleServiceResponse(serviceResponse, res);
+    await sendResponse(
+      reply,
+      new ServiceResponse(
+        ResponseStatus.Success,
+        'OK',
+        {
+          message: {
+            role: 'assistant',
+            content: invokeResult?.content
+          }
+        },
+        StatusCodes.OK
+      )
+    );
   };
 }

@@ -1,3 +1,9 @@
+/**
+ * Test OpenAI
+ *
+ * How to run:
+ *   $ npm run dev:script src/test-openai.ts "What is the capital city of France?"
+ */
 import config from 'config';
 import { ChatOpenAI } from '@langchain/openai';
 import { logger } from '@/libraries/logger';
@@ -23,7 +29,6 @@ console.log(config);
   } catch (err) {
     logger.error({ err }, 'An error has occurred.');
 
-    // eslint-disable-next-line no-process-exit
     process.exit(1);
   }
 })();

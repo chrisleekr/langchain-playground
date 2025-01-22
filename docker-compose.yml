@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   ollama:
     container_name: ollama
@@ -31,27 +30,18 @@ services:
     volumes:
       - open_webui_data:/app/backend/data
 
-  # chatgpt:
-  #   container_name: chatgpt
-  #   image: pawanosman/chatgpt:latest
-  #   networks:
-  #     - internal
-  #   env_file:
-  #     - .env
-  #   restart: unless-stopped
-  #   ports:
-  #     - '3040:3040'
-
   unstructured-api:
     container_name: unstructured-api
-    image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    # image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    # Use unofficial image until the official one is updated for ARM64
+    image: robwilkes/unstructured-api:latest
     networks:
       - internal
     env_file:
       - .env
     restart: unless-stopped
     ports:
-      - '8082:8000'
+      - '8082:8080'
 
   chroma:
     container_name: chroma
@@ -74,6 +64,24 @@ services:
       - '6379:6379'
     volumes:
       - redis_data:/data
+
+  localai:
+    container_name: localai
+    image: localai/localai:latest-aio-cpu
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/readyz']
+      interval: 1m
+      timeout: 20m
+      retries: 5
+    restart: unless-stopped
+    ports:
+      - '8083:8080'
+    environment:
+      - DEBUG=true
+    volumes:
+      - ./models:/build/models:cached
 
   langchain-playground:
     container_name: langchain-playground

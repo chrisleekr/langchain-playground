@@ -1,15 +1,18 @@
-import { Request, Response } from 'express';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
+import { v4 as uuidv4 } from 'uuid';
 
-import { handleServiceResponse } from '@/libraries/httpHandlers';
+import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 export default function threadNewPost() {
-  return async (_req: Request, res: Response): Promise<Response<unknown, Record<string, unknown>>> => {
-    /**
-     * WIP
-     */
-    const serviceResponse = new ServiceResponse(ResponseStatus.Success, 'OK', {}, StatusCodes.OK);
-    return handleServiceResponse(serviceResponse, res);
+  return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const logger = request.log as Logger;
+    const threadId = uuidv4();
+
+    logger.info({ threadId }, 'Created new thread.');
+
+    await sendResponse(reply, new ServiceResponse(ResponseStatus.Success, 'OK', { threadId }, StatusCodes.OK));
   };
 }
