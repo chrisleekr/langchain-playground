@@ -11,7 +11,7 @@ const openAIRouter: FastifyPluginAsync = async fastify => {
 
   fastify.get('/thread/:id', createRouteSchema({}), threadIdGet());
 
-  fastify.post('/thread/:id', createRouteSchema({ params: PostOpenAIThreadId }), threadIdPost());
+  fastify.post('/thread/:id', createRouteSchema({ body: PostOpenAIThreadId }), threadIdPost());
 };
 
 export default openAIRouter;

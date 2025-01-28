@@ -13,6 +13,8 @@ export default function threadNewPost() {
 
     logger.info({ threadId }, 'Created new thread.');
 
+    // Note: It doesn't do anything yet. It just creates a new threadId.
+
     await sendResponse(reply, new ServiceResponse(ResponseStatus.Success, 'OK', { threadId }, StatusCodes.OK));
   };
 }
