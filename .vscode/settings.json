@@ -23,6 +23,8 @@
     "chromadb",
     "commitlint",
     "cummulative",
+    "deepseek",
+    "distill",
     "docstore",
     "Groq",
     "healthcheck",

@@ -4,6 +4,11 @@ import { ChatGroq } from '@langchain/groq';
 import { OpenAI } from '@langchain/openai';
 import { Logger } from '@/libraries';
 
+let chatOllama: ChatOllama;
+let llmOllama: Ollama;
+let chatGroq: ChatGroq;
+let openAI: OpenAI;
+
 const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
   logger.info(
     {
@@ -13,48 +18,75 @@ const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
     },
     'Getting ChatOllama...'
   );
-  return new ChatOllama({
-    baseUrl: config.get('ollama.baseUrl'),
-    model: config.get('ollama.model'),
-    temperature
-  });
+  if (!chatOllama) {
+    chatOllama = new ChatOllama({
+      baseUrl: config.get('ollama.baseUrl'),
+      model: config.get('ollama.model'),
+      temperature
+    });
+  }
+  return chatOllama;
 };
 
 const getLLMOllama = (temperature: number, logger: Logger): Ollama => {
-  logger.info('Getting LLM Ollama...');
-  return new Ollama({
-    baseUrl: config.get('ollama.baseUrl'),
-    model: config.get('ollama.model'),
-    temperature
-  });
+  logger.info(
+    {
+      baseUrl: config.get('ollama.baseUrl'),
+      model: config.get('ollama.model'),
+      temperature
+    },
+    'Getting LLM Ollama...'
+  );
+  if (!llmOllama) {
+    llmOllama = new Ollama({
+      baseUrl: config.get('ollama.baseUrl'),
+      model: config.get('ollama.model'),
+      temperature
+    });
+  }
+  return llmOllama;
 };
 
 const getChatGroq = (temperature: number, logger: Logger): ChatGroq => {
-  logger.info('Getting ChatGroq...');
-  return new ChatGroq({
-    apiKey: config.get('groq.apiKey'),
-    model: config.get('groq.model'),
-    temperature
-  });
+  logger.info(
+    {
+      model: config.get('groq.model'),
+      temperature
+    },
+    'Getting ChatGroq...'
+  );
+  if (!chatGroq) {
+    chatGroq = new ChatGroq({
+      apiKey: config.get('groq.apiKey'),
+      model: config.get('groq.model'),
+      temperature
+    });
+  }
+  return chatGroq;
 };
 
 const getOpenAI = (logger: Logger): OpenAI => {
-  const baseURL = config.get<string>('openai.baseUrl') || undefined;
-  logger.info(
-    {
-      baseURL: baseURL || 'Not set'
-    },
-    'Getting OpenAI...'
-  );
+  if (!openAI) {
+    const baseURL = config.get<string>('openai.baseUrl') || undefined;
+    logger.info(
+      {
+        baseURL: baseURL || 'Not set',
+        temperature: config.get('openai.temperature'),
+        model: config.get('openai.model')
+      },
+      'Getting OpenAI...'
+    );
 
-  return new OpenAI({
-    apiKey: config.get('openai.apiKey'),
-    temperature: config.get('openai.temperature'),
-    model: config.get('openai.model'),
-    configuration: {
-      baseURL
-    }
-  });
+    openAI = new OpenAI({
+      apiKey: config.get('openai.apiKey'),
+      temperature: config.get('openai.temperature'),
+      model: config.get('openai.model'),
+      configuration: {
+        baseURL
+      }
+    });
+  }
+  return openAI;
 };
 
 export { getChatOllama, getLLMOllama, getChatGroq, getOpenAI };

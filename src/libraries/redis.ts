@@ -1,4 +1,11 @@
 import config from 'config';
 import { Redis } from 'ioredis';
 
-export const getRedisClient = () => new Redis(config.get('redis.url'));
+let redisClient: Redis;
+
+export const getRedisClient = () => {
+  if (!redisClient) {
+    redisClient = new Redis(config.get('redis.url'));
+  }
+  return redisClient;
+};
