@@ -30,13 +30,20 @@
   "openai": {
     "baseUrl": "OPENAI_BASE_URL",
     "apiKey": "OPENAI_API_KEY",
-    "temperature": "OPENAI_TEMPERATURE",
+    "temperature": {
+      "__name": "OPENAI_TEMPERATURE",
+      "__format": "number"
+    },
     "model": "OPENAI_MODEL",
     "documentSystemTemplate": "OPENAI_DOCUMENT_SYSTEM_TEMPLATE"
   },
   "groq": {
     "apiKey": "GROQ_API_KEY",
     "model": "GROQ_MODEL",
+    "temperature": {
+      "__name": "GROQ_TEMPERATURE",
+      "__format": "number"
+    },
     "documentSystemTemplate": "GROQ_DOCUMENT_SYSTEM_TEMPLATE"
   },
   "unstructuredAPI": {

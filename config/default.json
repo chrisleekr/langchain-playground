@@ -27,7 +27,8 @@
   },
   "groq": {
     "apiKey": "",
-    "model": "llama3-8b-8192",
+    "model": "deepseek-r1-distill-llama-70b",
+    "temperature": 0,
     "documentSystemTemplate": ""
   },
   "unstructuredAPI": {

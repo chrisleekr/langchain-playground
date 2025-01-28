@@ -11,7 +11,7 @@ const groqRouter: FastifyPluginAsync = async fastify => {
 
   fastify.get('/thread/:id', createRouteSchema({}), threadIdGet());
 
-  fastify.post('/thread/:id', createRouteSchema({ params: PostGroqThreadId }), threadIdPost());
+  fastify.post('/thread/:id', createRouteSchema({ body: PostGroqThreadId }), threadIdPost());
 };
 
 export default groqRouter;

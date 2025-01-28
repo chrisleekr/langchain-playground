@@ -67,7 +67,7 @@ export default function threadIdPost() {
       HumanMessagePromptTemplate.fromTemplate('{input}')
     ]);
 
-    const model = getChatGroq(0.9, logger);
+    const model = getChatGroq(config.get<number>('groq.temperature'), logger);
     const chain = new ConversationChain({
       llm: model,
       memory: chatPromptMemory,
