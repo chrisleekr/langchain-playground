@@ -19,8 +19,11 @@
     "documentSystemTemplate": ""
   },
   "openai": {
-    "baseUrl": "http://chatgpt:3040",
-    "apiKey": ""
+    "baseUrl": "",
+    "apiKey": "",
+    "temperature": 0,
+    "model": "gpt-3.5-turbo-instruct",
+    "documentSystemTemplate": ""
   },
   "groq": {
     "apiKey": "",
