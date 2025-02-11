@@ -39,6 +39,7 @@
     "Ollama",
     "openai",
     "openweb",
+    "pinecone",
     "pino",
     "redlock",
     "tradingview",

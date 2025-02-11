@@ -42,5 +42,8 @@
     "tracingV2": true,
     "endpoint": "https://api.smith.langchain.com",
     "apiKey": ""
+  },
+  "pinecone": {
+    "apiKey": ""
   }
 }

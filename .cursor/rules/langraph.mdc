@@ -1,0 +1,30 @@
+---
+description: Used LangGraph.js to load documents and write the draft email after anonymising PII
+globs: src/api/langgraph/*,src/libraries/*,packages.json
+---
+
+# Your rule content
+
+- This folder contains multiple endpoints defined at [langgraphRouter.ts](mdc:src/api/langgraph/langgraphRouter.ts) and [langgraphSchema.ts](mdc:src/api/langgraph/langgraphSchema.ts)
+- Make sure the code is clean, easy to read, maintain, and extendable.
+- Always follow the best practice.
+- If anything uncertain, find in the web to make sure it's following best practice.
+
+## Responsibilities for each file
+  - [load.get.ts](mdc:src/api/langgraph/document/load.get.ts): Loads the document directory and store embeddings to the vector store.
+  - [new.post.ts](mdc:src/api/langgraph/thread/new.post.ts): Creates a thread
+  - [[id].get.ts](mdc:src/api/langgraph/thread/[id].get.ts): Gets requested thread history
+  - [[id].post.ts](mdc:src/api/langgraph/thread/[id].post.ts): Receives a email that is received from 3rd party. Proceess LangGraph nodes and return with a draft email
+    - StateGraph nodes should process in the following orders.
+      - [anonymise-pii.ts](mdc:src/api/langgraph/thread/node/anonymise-pii.ts): Entry point. Use Ollama (Local LLM) to anonymise PII.
+      -> [extract-keywords.ts](mdc:src/api/langgraph/thread/node/extract-keywords.ts): Extracts keywords from the email. Use Groq (External LLM).
+      -> [get-contexts.ts](mdc:src/api/langgraph/thread/node/get-contexts.ts): Retreives contexts from vector stores based on the keywords. Use Groq (External LLM).
+      -> [write-draft-email.ts](mdc:src/api/langgraph/thread/node/write-draft-email.ts): Writes a draft email. Use Groq (External LLM).
+      -> [should-rewrite-draft-email.ts](mdc:src/api/langgraph/thread/node/should-rewrite-draft-email.ts): Conditional edge. Checks whether the draft email is good or not. If not, rewrite by going back to [write-draft-email.ts](mdc:src/api/langgraph/thread/node/write-draft-email.ts). Otherwise, go to [un-anonymise-pii.ts](mdc:src/api/langgraph/thread/node/un-anonymise-pii.ts). Use Groq (External LLM).
+      -> [un-anonymise-pii.ts](mdc:src/api/langgraph/thread/node/un-anonymise-pii.ts): End point. Use Ollama (Local LLM) to un-anonymise PII.
+
+
+## References
+- Annotation reference: https://langchain-ai.github.io/langgraphjs/reference/modules/langgraph.Annotation.html
+- Langraph API References: https://langchain-ai.github.io/langgraphjs/reference/
+- Langraph Tutorials: https://langchain-ai.github.io/langgraphjs/tutorials/

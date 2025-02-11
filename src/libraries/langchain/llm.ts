@@ -22,7 +22,8 @@ const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
     chatOllama = new ChatOllama({
       baseUrl: config.get('ollama.baseUrl'),
       model: config.get('ollama.model'),
-      temperature
+      temperature,
+      keepAlive: 300
     });
   }
   return chatOllama;
@@ -41,7 +42,8 @@ const getLLMOllama = (temperature: number, logger: Logger): Ollama => {
     llmOllama = new Ollama({
       baseUrl: config.get('ollama.baseUrl'),
       model: config.get('ollama.model'),
-      temperature
+      temperature,
+      keepAlive: 300
     });
   }
   return llmOllama;
