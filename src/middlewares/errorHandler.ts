@@ -23,7 +23,17 @@ const errorHandler: () => ErrorHandler = () => async (error: FastifyError, reque
   const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
   const errorMessage = error.message || 'Internal Server Error';
 
-  await sendResponse(reply, new ServiceResponse(ResponseStatus.Failed, errorMessage, null, statusCode));
+  await sendResponse(
+    reply,
+    new ServiceResponse(
+      ResponseStatus.Failed,
+      errorMessage,
+      {
+        trace: error.stack
+      },
+      statusCode
+    )
+  );
 };
 
 export default errorHandler;

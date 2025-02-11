@@ -57,5 +57,8 @@
     "tracingV2": "LANGCHAIN_TRACING_V2",
     "endpoint": "LANGCHAIN_ENDPOINT",
     "apiKey": "LANGCHAIN_API_KEY"
+  },
+  "pinecone": {
+    "apiKey": "PINECONE_API_KEY"
   }
 }

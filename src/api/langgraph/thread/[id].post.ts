@@ -1,13 +1,28 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
-import { StatusCodes } from 'http-status-codes';
 
-import { Annotation, StateGraph } from '@langchain/langgraph';
+import { StatusCodes } from 'http-status-codes';
+import { StateGraph, Annotation, START, END } from '@langchain/langgraph';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
+import { anonymisePIINode, AnonymisePIIOutput } from './node/anonymise-pii';
+import { extractKeywordsNode, ExtractKeywordsOutput } from './node/extract-keywords';
+import { getContextsNode, GetContextsOutput } from './node/get-contexts';
+import { unAnonymisePIINode, UnAnonymisePIIOutput } from './node/un-anonymise-pii';
+import { WriteDraftEmailOutput, writeDraftEmailNode } from './node/write-draft-email';
+import { shouldRewriteDraftEmailNode } from './node/should-rewrite-draft-email';
 
-// Reference:
-// https://langchain-ai.github.io/langgraphjs/concepts/low_level/#multiple-schemas
+export const OverallStateAnnotation = Annotation.Root({
+  customer_email: Annotation<string>,
+  anonymise_pii_output: Annotation<AnonymisePIIOutput>,
+  extract_keywords_output: Annotation<ExtractKeywordsOutput>,
+  get_contexts_output: Annotation<GetContextsOutput>,
+  write_draft_email_output: Annotation<WriteDraftEmailOutput>,
+  number_of_draft_email_rewrites: Annotation<number>,
+  should_rewrite_draft_email_output: Annotation<string>,
+  un_anonymise_pii_output: Annotation<UnAnonymisePIIOutput>
+});
+
 export default function threadIdPost() {
   return async (
     request: FastifyRequest<{
@@ -20,50 +35,26 @@ export default function threadIdPost() {
     const { id: threadId } = request.params;
     const { message } = request.body;
 
-    logger.info({ threadId, message }, 'Posting to thread.');
+    const graph = new StateGraph(OverallStateAnnotation)
+      .addNode('anonymise-pii', anonymisePIINode(logger))
+      .addNode('extract-keywords', extractKeywordsNode(logger))
+      .addNode('get-contexts', getContextsNode(logger))
+      .addNode('write-draft-email', writeDraftEmailNode(logger))
+      .addNode('un-anonymise-pii', unAnonymisePIINode(logger))
 
-    const InputStateAnnotation = Annotation.Root({
-      input: Annotation<string>
-    });
-
-    const OutputStateAnnotation = Annotation.Root({
-      output: Annotation<string>
-    });
-
-    const OverallStateAnnotation = Annotation.Root({
-      // input: Annotation<string>,
-      output: Annotation<string>
-    });
-
-    const node1 = async (state: typeof InputStateAnnotation.State) => {
-      return { output: state.input + 'Node1 Hello' };
-    };
-
-    const node2 = async (state: typeof OutputStateAnnotation.State) => {
-      return { output: state.output + 'Node2 Hello' };
-    };
-
-    const node3 = async (state: typeof OverallStateAnnotation.State) => {
-      return { output: state.output + 'Node3 Hello' };
-    };
-
-    // Initialise the StateGraph with this state
-    const graphBuilder = new StateGraph({
-      input: InputStateAnnotation,
-      output: OutputStateAnnotation,
-      stateSchema: OverallStateAnnotation
-    })
-      .addNode('node1', node1)
-      .addNode('node2', node2)
-      .addNode('node3', node3)
-      .addEdge('__start__', 'node1')
-      .addEdge('node1', 'node2')
-      .addEdge('node2', 'node3')
+      .addEdge(START, 'anonymise-pii')
+      .addEdge('anonymise-pii', 'extract-keywords')
+      .addEdge('extract-keywords', 'get-contexts')
+      .addEdge('get-contexts', 'write-draft-email')
+      .addConditionalEdges('write-draft-email', shouldRewriteDraftEmailNode(logger))
+      .addEdge('un-anonymise-pii', END)
       .compile();
 
-    logger.info('Invoking graph...', { message });
-    const result = await graphBuilder.invoke({ input: message });
-    logger.info('Graph result...', { result });
+    const result = await graph.invoke({
+      customer_email: message
+    });
+
+    logger.info({ result }, 'Result');
 
     await sendResponse(
       reply,

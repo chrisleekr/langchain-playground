@@ -1,36 +1,40 @@
-// import { formatDocumentsAsString } from 'langchain/util/document';
-// import { getOllamaEmbeddings, getChromaVectorStore, Logger } from '@/libraries';
-// import { collectionName } from '../../langgraphRouter';
-// import { AgentState } from '../[id].post';
+import { formatDocumentsAsString } from 'langchain/util/document';
+import { getOllamaEmbeddings, getChromaVectorStore, Logger } from '@/libraries';
+import { collectionName } from '../../langgraphRouter';
+import { OverallStateAnnotation } from '../[id].post';
 
-// export const getContextsNode = (nodeLogger: Logger) => async (state: AgentState) => {
-//   const logger = nodeLogger.child({ node: 'get-contexts' });
+export interface GetContextsOutput {
+  contexts: string[];
+}
 
-//   logger.info('Getting Vector Store...');
-//   const embeddings = getOllamaEmbeddings(logger);
-//   logger.info({ embeddings }, 'Got embeddings.');
+export const getContextsNode =
+  (nodeLogger: Logger) =>
+  async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
+    const logger = nodeLogger.child({ node: 'get-contexts' });
 
-//   const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
+    logger.info('Getting Vector Store...');
+    const embeddings = getOllamaEmbeddings(logger);
+    logger.info({ embeddings }, 'Got embeddings.');
 
-//   const retriever = vectorStore.asRetriever();
-//   logger.info({ retriever }, 'Got retriever.');
+    const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
 
-//   const relevantDocs: string[] = [];
+    const retriever = vectorStore.asRetriever();
+    logger.info({ retriever }, 'Got retriever.');
 
-//   for (const keyword of state.extractKeywordsOutput.keywords) {
-//     const relevantDoc = await retriever.invoke(keyword);
-//     logger.info({ keyword, relevantDoc }, 'Relevant documents');
+    const relevantDocs: string[] = [];
 
-//     relevantDocs.push(formatDocumentsAsString(relevantDoc));
-//   }
+    for (const keyword of state.extract_keywords_output.keywords) {
+      const relevantDoc = await retriever.invoke(keyword);
+      logger.info({ keyword, relevantDoc }, 'Relevant documents');
 
-//   const deduplicatedRelevantDocs = Array.from(new Set(relevantDocs));
+      relevantDocs.push(formatDocumentsAsString(relevantDoc));
+    }
 
-//   logger.info({ deduplicatedRelevantDocs }, 'Deduplicated Relevant documents');
+    const deduplicatedRelevantDocs = Array.from(new Set(relevantDocs));
 
-//   state.getContextsOutput = { contexts: deduplicatedRelevantDocs };
+    logger.info({ deduplicatedRelevantDocs }, 'Deduplicated Relevant documents');
 
-//   return {
-//     ...state
-//   };
-// };
+    state.get_contexts_output = { contexts: deduplicatedRelevantDocs };
+
+    return state;
+  };
