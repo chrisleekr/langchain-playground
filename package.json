@@ -55,7 +55,7 @@
     "@sinclair/typebox": "0.34.37",
     "chromadb": "3.0.6",
     "config": "4.0.0",
-    "dotenv": "16.4.5",
+    "dotenv": "16.6.1",
     "fastify": "5.4.0",
     "http-status-codes": "2.3.0",
     "ioredis": "5.6.1",
