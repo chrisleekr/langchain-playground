@@ -1,5 +1,5 @@
 import { formatDocumentsAsString } from 'langchain/util/document';
-import { getOllamaEmbeddings, getChromaVectorStore, Logger } from '@/libraries';
+import { getOllamaEmbeddings, getQdrantVectorStore, Logger } from '@/libraries';
 import { collectionName } from '../../langgraphRouter';
 import { OverallStateAnnotation } from '../[id].post';
 
@@ -16,7 +16,7 @@ export const getContextsNode =
     const embeddings = getOllamaEmbeddings(logger);
     logger.info({ embeddings }, 'Got embeddings.');
 
-    const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
+    const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);
 
     const retriever = vectorStore.asRetriever();
     logger.info({ retriever }, 'Got retriever.');
@@ -24,8 +24,9 @@ export const getContextsNode =
     const relevantDocs: string[] = [];
 
     for (const keyword of state.extract_keywords_output.keywords) {
+      logger.info({ keyword }, 'Getting relevant documents...');
       const relevantDoc = await retriever.invoke(keyword);
-      logger.info({ keyword, relevantDoc }, 'Relevant documents');
+      logger.info({ keyword, relevantDoc }, 'Got relevant documents.');
 
       relevantDocs.push(formatDocumentsAsString(relevantDoc));
     }

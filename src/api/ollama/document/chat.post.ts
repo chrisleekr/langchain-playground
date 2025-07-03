@@ -6,7 +6,7 @@ import { formatDocumentsAsString } from 'langchain/util/document';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 
-import { getChatOllama, getOllamaEmbeddings, getChromaVectorStore } from '@/libraries';
+import { getChatOllama, getOllamaEmbeddings, getQdrantVectorStore } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
@@ -55,7 +55,7 @@ export default function documentChatPost(collectionName: string) {
 
     // Setup vector store
     logger.info('Initializing vector store...');
-    const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
+    const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);
 
     logger.info('Ensuring collection exists...');
     const collection = await vectorStore.ensureCollection();

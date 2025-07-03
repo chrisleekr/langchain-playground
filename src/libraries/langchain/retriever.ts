@@ -2,6 +2,7 @@ import { ParentDocumentRetriever } from 'langchain/retrievers/parent_document';
 
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Chroma } from '@langchain/community/vectorstores/chroma';
+import { QdrantVectorStore } from '@langchain/qdrant';
 import { Logger, RedisDocstore } from '@/libraries';
 
 /**
@@ -14,7 +15,11 @@ import { Logger, RedisDocstore } from '@/libraries';
  * @param logger - The logger to use for logging.
  * @returns A Promise that resolves to a ParentDocumentRetriever instance.
  */
-const getParentDocumentRetriever = async (vectorStore: Chroma, collectionName: string, logger: Logger): Promise<ParentDocumentRetriever> => {
+const getParentDocumentRetriever = async (
+  vectorStore: Chroma | QdrantVectorStore,
+  collectionName: string,
+  logger: Logger
+): Promise<ParentDocumentRetriever> => {
   const redisStore = new RedisDocstore(collectionName);
   logger.info('Created RedisDocstore');
 

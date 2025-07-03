@@ -45,10 +45,7 @@ export const writeDraftEmailNode =
 
     state.write_draft_email_output = result;
 
-    if (state.number_of_draft_email_rewrites === null) {
-      state.number_of_draft_email_rewrites = 0;
-    }
-    state.number_of_draft_email_rewrites += 1;
+    state.number_of_draft_email_rewrites = (state.number_of_draft_email_rewrites ?? 0) + 1;
     logger.info({ state }, 'State');
     return state;
   };
