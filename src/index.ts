@@ -3,7 +3,6 @@ import { logger } from '@/libraries/logger';
 import { app } from './server';
 
 // FIXME: REMOVE
-console.log(config);
 const startServer = async () => {
   try {
     const address = await app.listen({
