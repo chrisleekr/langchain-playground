@@ -1,40 +1,8 @@
 services:
-  ollama:
-    container_name: ollama
-    image: ollama/ollama:latest
-    networks:
-      - internal
-    env_file:
-      - .env
-    restart: unless-stopped
-    ports:
-      - '11434:11434'
-    volumes:
-      - ~/.ollama:/root/.ollama
-
-  openweb-ui:
-    container_name: openweb-ui
-    image: ghcr.io/open-webui/open-webui:main
-    networks:
-      - internal
-    depends_on:
-      - ollama
-    env_file:
-      - .env
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - WEBUI_SECRET_KEY=
-    restart: unless-stopped
-    ports:
-      - '8081:8080'
-    volumes:
-      - open_webui_data:/app/backend/data
-
   unstructured-api:
     container_name: unstructured-api
-    # image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
-    # Use unofficial image until the official one is updated for ARM64
-    image: robwilkes/unstructured-api:latest
+    image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    platform: linux/amd64
     networks:
       - internal
     env_file:
@@ -43,16 +11,16 @@ services:
     ports:
       - '8082:8080'
 
-  chroma:
-    container_name: chroma
-    image: ghcr.io/chroma-core/chroma:latest
+  qdrant:
+    container_name: qdrant
+    image: qdrant/qdrant:latest
     networks:
       - internal
     restart: unless-stopped
     ports:
-      - '8084:8000'
+      - '6333:6333'
     volumes:
-      - chroma_data:/chroma/chroma/
+      - qdrant_data:/qdrant/storage
 
   redis:
     container_name: redis
@@ -65,36 +33,82 @@ services:
     volumes:
       - redis_data:/data
 
-  localai:
-    container_name: localai
-    image: localai/localai:latest-aio-cpu
-    networks:
-      - internal
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8080/readyz']
-      interval: 1m
-      timeout: 20m
-      retries: 5
-    restart: unless-stopped
-    ports:
-      - '8083:8080'
-    environment:
-      - DEBUG=true
-    volumes:
-      - ./models:/build/models:cached
+  # Use desktop ollama. docker was too slow.
+  # ollama:
+  #   container_name: ollama
+  #   image: ollama/ollama:latest
+  #   networks:
+  #     - internal
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
+  #   ports:
+  #     - '11434:11434'
+  #   volumes:
+  #     - ~/.ollama:/root/.ollama
 
-  langchain-playground:
-    container_name: langchain-playground
-    build:
-      context: .
-      dockerfile: Dockerfile
-    networks:
-      - internal
-    env_file:
-      - .env
-    restart: unless-stopped
-    ports:
-      - '8080:8080'
+  # openweb-ui:
+  #   container_name: openweb-ui
+  #   image: ghcr.io/open-webui/open-webui:main
+  #   networks:
+  #     - internal
+  #   depends_on:
+  #     - ollama
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - OLLAMA_BASE_URL=http://ollama:11434
+  #     - REDIS_URL=redis://redis:6379
+  #     - WEBUI_SECRET_KEY=
+  #   restart: unless-stopped
+  #   ports:
+  #     - '8081:8080'
+  #   volumes:
+  #     - open_webui_data:/app/backend/data
+
+  # Chroma throws the error with unstructured-api response. Change to Qdrant.
+  # ChromaValueError: Expected metadata to be a string, number, boolean, or nullable
+  # chroma:
+  #   container_name: chroma
+  #   image: ghcr.io/chroma-core/chroma:latest
+  #   networks:
+  #     - internal
+  #   restart: unless-stopped
+  #   ports:
+  #     - '8084:8000'
+  #   volumes:
+  #     - chroma_data:/chroma/chroma/
+
+  # localai:
+  #   container_name: localai
+  #   image: localai/localai:latest-aio-cpu
+  #   networks:
+  #     - internal
+  #   healthcheck:
+  #     test: ['CMD', 'curl', '-f', 'http://localhost:8080/readyz']
+  #     interval: 1m
+  #     timeout: 20m
+  #     retries: 5
+  #   restart: unless-stopped
+  #   ports:
+  #     - '8083:8080'
+  #   environment:
+  #     - DEBUG=true
+  #   volumes:
+  #     - ./models:/build/models:cached
+
+  # langchain-playground:
+  #   container_name: langchain-playground
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   networks:
+  #     - internal
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
+  #   ports:
+  #     - '8080:8080'
 
 networks:
   internal:
@@ -104,3 +118,4 @@ volumes:
   open_webui_data:
   redis_data:
   chroma_data:
+  qdrant_data:

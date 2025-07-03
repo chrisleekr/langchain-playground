@@ -1,3 +1,4 @@
+import config from 'config';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
@@ -5,9 +6,6 @@ import { BufferMemory } from 'langchain/memory';
 import { RedisChatMessageHistory } from '@langchain/redis';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { getRedisClient } from '@/libraries/redis';
-
-const redisClient = getRedisClient();
 
 export default function threadIdGet() {
   return async (
@@ -23,11 +21,18 @@ export default function threadIdGet() {
 
     const sessionId = `groq-thread-${threadId}`;
 
+    const chatHistory = new RedisChatMessageHistory({
+      sessionId,
+      config: {
+        url: config.get('redis.url')
+      }
+    });
+
+    const messages = await chatHistory.getMessages();
+    logger.info({ messages }, 'Messages');
+
     const memory = new BufferMemory({
-      chatHistory: new RedisChatMessageHistory({
-        sessionId,
-        client: redisClient
-      })
+      chatHistory
     });
 
     const history = await memory.loadMemoryVariables({});

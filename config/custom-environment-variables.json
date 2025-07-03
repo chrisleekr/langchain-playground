@@ -52,6 +52,9 @@
   "chroma": {
     "url": "CHROMA_HOST"
   },
+  "qdrant": {
+    "url": "QDRANT_URL"
+  },
   "langchain": {
     "project": "LANGCHAIN_PROJECT",
     "tracingV2": "LANGCHAIN_TRACING_V2",

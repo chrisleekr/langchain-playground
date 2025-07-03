@@ -1,13 +1,13 @@
 import config from 'config';
 import { ChatOllama, Ollama } from '@langchain/ollama';
 import { ChatGroq } from '@langchain/groq';
-import { OpenAI } from '@langchain/openai';
+import { ChatOpenAI } from '@langchain/openai';
 import { Logger } from '@/libraries';
 
 let chatOllama: ChatOllama;
 let llmOllama: Ollama;
 let chatGroq: ChatGroq;
-let openAI: OpenAI;
+let chatOpenAI: ChatOpenAI;
 
 const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
   logger.info(
@@ -67,8 +67,8 @@ const getChatGroq = (temperature: number, logger: Logger): ChatGroq => {
   return chatGroq;
 };
 
-const getOpenAI = (logger: Logger): OpenAI => {
-  if (!openAI) {
+const getChatOpenAI = (logger: Logger): ChatOpenAI => {
+  if (!chatOpenAI) {
     const baseURL = config.get<string>('openai.baseUrl') || undefined;
     logger.info(
       {
@@ -79,7 +79,7 @@ const getOpenAI = (logger: Logger): OpenAI => {
       'Getting OpenAI...'
     );
 
-    openAI = new OpenAI({
+    chatOpenAI = new ChatOpenAI({
       apiKey: config.get('openai.apiKey'),
       temperature: config.get('openai.temperature'),
       model: config.get('openai.model'),
@@ -88,7 +88,7 @@ const getOpenAI = (logger: Logger): OpenAI => {
       }
     });
   }
-  return openAI;
+  return chatOpenAI;
 };
 
-export { getChatOllama, getLLMOllama, getChatGroq, getOpenAI };
+export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI };

@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { UnstructuredDirectoryLoader } from '@langchain/community/document_loaders/fs/unstructured';
 import { DocumentInterface } from '@langchain/core/documents';
-import { getOllamaEmbeddings, getParentDocumentRetriever, getChromaVectorStore } from '@/libraries';
+import { getOllamaEmbeddings, getParentDocumentRetriever, getQdrantVectorStoreWithFreshCollection } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { sendResponse } from '@/libraries/httpHandlers';
 
@@ -30,32 +30,14 @@ export default function documentLoadGet(collectionName: string) {
       const embeddings = getOllamaEmbeddings(logger);
       logger.info({ embeddings }, 'Got embeddings.');
 
-      logger.info('Getting Vector Store...');
-      const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
-      logger.info({ collectionName: vectorStore.collectionName }, 'Got Vector Store...');
-
-      logger.info('Ensuring collection exists...');
-      const collection = await vectorStore.ensureCollection();
-      logger.info({ collection }, 'Ensured collection exists, checking collection IDs...');
-
-      const existingCollectionIds = (await collection.get()).ids;
-      if (existingCollectionIds.length > 0) {
-        logger.info(
-          {
-            existingCollectionIds
-          },
-          'Deleting existing docs from collection to create fresh collection...'
-        );
-        await collection.delete({ ids: existingCollectionIds });
-        logger.info({ existingCollectionIds }, 'Deleted existing docs from collection');
-      } else {
-        logger.info('No existing docs found in collection');
-      }
+      logger.info('Getting Vector Store with fresh collection...');
+      const vectorStore = await getQdrantVectorStoreWithFreshCollection(embeddings, collectionName, logger);
+      logger.info({ collectionName: vectorStore.collectionName }, 'Got Vector Store with fresh collection...');
 
       const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
       logger.info({ retriever }, 'Got retriever.');
 
-      logger.info('Adding documents to the retriever...');
+      logger.info({ docs }, 'Adding documents to the retriever...');
       const addDocumentsResult = await retriever.addDocuments(docs);
       logger.info({ addDocumentsResult }, 'Added documents to the retriever.');
 
@@ -69,9 +51,12 @@ export default function documentLoadGet(collectionName: string) {
         throw new Error('Retriever did not return relevant documents for test query.');
       }
 
-      const collectionCount = await collection.count();
-      const collectionDocs = await collection.get();
-      logger.info({ collectionCount }, 'Document loading completed successfully');
+      // Get collection info for response
+      const client = vectorStore.client;
+      const collectionInfo = await client.getCollection(collectionName);
+      const scrollResult = await client.scroll(collectionName, { limit: 1 });
+
+      logger.info({ collectionInfo }, 'Document loading completed successfully');
 
       // Send the final response
       await sendResponse(
@@ -80,19 +65,19 @@ export default function documentLoadGet(collectionName: string) {
           ResponseStatus.Success,
           'Document loading completed successfully',
           {
-            collectionCount,
-            collectionDocs
+            collectionInfo,
+            sampleDoc: scrollResult.points?.[0] || null
           },
           StatusCodes.OK
         )
       );
-    } catch (error) {
-      logger.error({ error }, 'Error in document loading process');
+    } catch (err) {
+      logger.error({ err }, 'Error in document loading process');
       await sendResponse(
         reply,
         new ServiceResponse(
           ResponseStatus.Failed,
-          error instanceof Error ? error.message : 'Unknown error occurred',
+          err instanceof Error ? err.message : 'Unknown error occurred',
           null,
           StatusCodes.INTERNAL_SERVER_ERROR
         )

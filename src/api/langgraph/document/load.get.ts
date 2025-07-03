@@ -10,7 +10,7 @@ import { ParentDocumentRetriever } from 'langchain/retrievers/parent_document';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { TextLoader } from 'langchain/document_loaders/fs/text';
 
-import { getChromaVectorStore, getParentDocumentRetriever, getPineconeEmbeddings } from '@/libraries';
+import { getParentDocumentRetriever, getPineconeEmbeddings, getQdrantVectorStoreWithFreshCollection } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { collectionName } from '../langgraphRouter';
@@ -64,32 +64,8 @@ export default function documentLoadGet() {
     logger.info({ embeddings }, 'Embeddings Initialised');
 
     logger.info('Initializing vector store...');
-    const vectorStore = await getChromaVectorStore(embeddings, collectionName, logger);
+    const vectorStore = await getQdrantVectorStoreWithFreshCollection(embeddings, collectionName, logger);
     logger.info({ collectionName: vectorStore.collectionName }, 'Vector store Initialised');
-
-    // Setup collection
-    logger.info('Ensuring collection exists...');
-    // Delete collection if it exists
-    // await vectorStore.delete({ ids: [collectionName] });
-    // Create collection
-    const collection = await vectorStore.ensureCollection();
-    logger.info({ collection }, 'Collection ensured');
-
-    // Clear existing documents
-    logger.info('Clearing existing documents...');
-    const existingCollectionIds = (await collection.get()).ids;
-    if (existingCollectionIds.length > 0) {
-      logger.info(
-        {
-          existingCollectionIds
-        },
-        'Deleting existing docs from collection to create fresh collection...'
-      );
-      await collection.delete({ ids: existingCollectionIds });
-      logger.info({ existingCollectionIds }, 'Deleted existing docs from collection');
-    } else {
-      logger.info('No existing docs found in collection');
-    }
 
     // Initialise retriever
     const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
@@ -104,10 +80,10 @@ export default function documentLoadGet() {
     try {
       await verifyDocs(retriever, logger);
       logger.info('Retriever verification passed');
-    } catch (error) {
-      logger.error(error, 'Retriever verification failed');
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack = error instanceof Error ? error.stack : 'Unknown stack';
+    } catch (err) {
+      logger.error({ err }, 'Retriever verification failed');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorStack = err instanceof Error ? err.stack : 'Unknown stack';
       await sendResponse(
         reply,
         new ServiceResponse(
@@ -121,8 +97,8 @@ export default function documentLoadGet() {
     }
 
     // Get collection stats
-    const collectionCount = await collection.count();
-    const collectionDocs = await collection.get();
+    const collectionCount = await vectorStore.client.getCollection(collectionName);
+    const collectionDocs = await vectorStore.client.scroll(collectionName, { limit: 1 });
     logger.info({ collectionCount }, 'Collection stats retrieved');
 
     // Send the final response

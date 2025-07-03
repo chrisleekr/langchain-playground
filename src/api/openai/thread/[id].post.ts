@@ -9,7 +9,7 @@ import { ConversationChain } from 'langchain/chains';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { getRedisClient } from '@/libraries/redis';
-import { getOpenAI } from '../../../libraries';
+import { getChatOpenAI } from '@/libraries/langchain/llm';
 
 const redisClient = getRedisClient();
 
@@ -34,7 +34,7 @@ export default function threadIdPost() {
     logger.info({ sessionId, systemTemplate }, 'Session ID and system template');
 
     const memory = new ConversationSummaryBufferMemory({
-      llm: getOpenAI(logger),
+      llm: getChatOpenAI(logger),
       maxTokenLimit: 10,
       chatHistory: new RedisChatMessageHistory({
         sessionId,
@@ -46,7 +46,7 @@ export default function threadIdPost() {
     logger.info({ history }, 'Memory history');
 
     const chatPromptMemory = new ConversationSummaryBufferMemory({
-      llm: getOpenAI(logger),
+      llm: getChatOpenAI(logger),
       chatHistory: new RedisChatMessageHistory({
         sessionId,
         client: redisClient
@@ -66,7 +66,7 @@ export default function threadIdPost() {
       HumanMessagePromptTemplate.fromTemplate('{input}')
     ]);
 
-    const model = getOpenAI(logger);
+    const model = getChatOpenAI(logger);
     const chain = new ConversationChain({
       llm: model,
       memory: chatPromptMemory,

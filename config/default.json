@@ -37,6 +37,9 @@
   "chroma": {
     "url": "http://chroma:8000"
   },
+  "qdrant": {
+    "url": "http://qdrant:6333"
+  },
   "langchain": {
     "project": "default",
     "tracingV2": true,
