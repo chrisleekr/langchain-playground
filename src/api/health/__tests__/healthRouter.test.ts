@@ -1,12 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
-import { app } from '@/src/server';
 import { ServiceResponse } from '@/models/serviceResponse';
+import { startServerWithFastify } from '@/src/serverWithFastify';
 
 describe('Health Check API endpoints', () => {
   let result: ServiceResponse;
 
   describe('GET /', () => {
     beforeEach(async () => {
+      const { app } = await startServerWithFastify();
       const response = await app.inject({
         method: 'GET',
         url: '/health'

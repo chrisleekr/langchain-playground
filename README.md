@@ -1,6 +1,8 @@
 # A LangChain playground using TypeScript
 
-This is a simple example of how to use LangChain with TypeScript.
+A playground for LangChain.js, LangGraph, and other LLM-related tools.
+
+This project provides both REST API endpoints or Slack bot integration for interacting with different language models and LangChain and LangGraph workflows.
 
 ## How to start
 
@@ -8,13 +10,48 @@ This is a simple example of how to use LangChain with TypeScript.
 docker-compose up -d --build
 ```
 
-This will launch the following services:
+## Architecture
+
+### Core components
+
+- [langchain.js](https://js.langchain.com/): Framework for building applications with LLMs.
+- [langgraph](https://langchain-ai.github.io/langgraphjs/): Framework for building applications with advanced workflow orchestration for multi-step processes.
+- [slack/bolt](https://www.npmjs.com/package/@slack/bolt): Integration with Slack for building Slack apps.
+
+### LLM providers
+
+- [openai](https://openai.com/)
+- [ollama](https://ollama.com/)
+- [groq](https://groq.com/)
+
+### Services
 
 - [ollama](https://ollama.com/): Ollama enables the execution of LLM models locally.
 - [openweb-ui](https://docs.openwebui.com/): OpenWeb UI is a self-hosted WebUI that interacts with Ollama.
 - [unstructured-api](https://github.com/Unstructured-IO/unstructured-api): The Unstructured API is designed to ingest/digest files of various types and sizes.
-- [chroma](https://www.trychroma.com/): Chroma serves as an embedding database.
+- [qdrant](https://qdrant.tech/): Qdrant serves as a vector database.
+- [chroma](https://www.trychroma.com/): Chroma serves as an embedding database. Not used anymore.
 - [redis](https://redis.io/): Redis is an open-source in-memory data structure store.
+
+## Server mode
+
+- `fastify`: serves as a web server in `src/api`
+- `slack`: serves as a Slack app in `src/slack`
+
+## Slack integration
+
+In this project, I used [slack/bolt](https://www.npmjs.com/package/@slack/bolt) and LangGraph to build a Slack app.
+
+- When a user mentions the bot in a channel, the bot will respond with a message.
+- It will execute the following steps:
+  - Intent classifier: Classify the intent of the user's message.
+  - Intent router: Route the user's message to the appropriate node.
+  - Get message history: Get the message history of the channel.
+  - Summarise thread: Summarise the thread.
+  - Translate message: Translate the message to the user's language.
+  - Find information: Find information from the RAG database.
+  - General response: Generate a general response.
+  - Final response: Respond to the user's message.
 
 ## Endpoints
 

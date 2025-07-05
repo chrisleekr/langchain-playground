@@ -1,5 +1,6 @@
 {
   "mode": "development",
+  "serverMode": "fastify",
   "port": 8080,
   "host": "0.0.0.0",
   "cors": {
@@ -48,5 +49,9 @@
   },
   "pinecone": {
     "apiKey": ""
+  },
+  "slack": {
+    "botToken": "",
+    "signingSecret": ""
   }
 }

@@ -44,7 +44,7 @@ export default function documentLoadGet() {
     const logger = request.log as Logger;
     const directoryPath = __dirname + '/../../../../data/langgraph';
 
-    // Initialise document loader
+    // Initialize document loader
     logger.info({ directoryPath }, 'Initializing document loader');
     const loader = new DirectoryLoader(directoryPath, {
       '.json': path => new JSONLoader(path, '/texts'),
@@ -58,18 +58,18 @@ export default function documentLoadGet() {
     const docs = await loader.load();
     logger.info({ docs }, 'Documents loaded');
 
-    // Initialise embeddings and vector store
+    // Initialize embeddings and vector store
     // const embeddings = getOllamaEmbeddings(logger);
     const embeddings = getPineconeEmbeddings(logger);
-    logger.info({ embeddings }, 'Embeddings Initialised');
+    logger.info({ embeddings }, 'Embeddings Initialized');
 
     logger.info('Initializing vector store...');
     const vectorStore = await getQdrantVectorStoreWithFreshCollection(embeddings, collectionName, logger);
-    logger.info({ collectionName: vectorStore.collectionName }, 'Vector store Initialised');
+    logger.info({ collectionName: vectorStore.collectionName }, 'Vector store Initialized');
 
-    // Initialise retriever
+    // Initialize retriever
     const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
-    logger.info({ retriever }, 'Retriever Initialised');
+    logger.info({ retriever }, 'Retriever Initialized');
 
     // Add documents
     logger.info('Adding documents to retriever...');

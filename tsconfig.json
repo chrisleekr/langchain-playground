@@ -27,6 +27,8 @@
       "@/middlewares": ["src/middlewares"],
       "@/middlewares/*": ["src/middlewares/*"],
       "@/models/*": ["src/models/*"],
+      "@/slack": ["src/slack"],
+      "@/slack/*": ["src/slack/*"],
       "@/test/*": ["test/*"]
     }
   },

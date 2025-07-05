@@ -24,6 +24,7 @@ module.exports = {
       '@/libraries': path.resolve(__dirname, 'src/libraries'),
       '@/middlewares': path.resolve(__dirname, 'src/middlewares'),
       '@/models': path.resolve(__dirname, 'src/models'),
+      '@/slack': path.resolve(__dirname, 'src/slack'),
       '@/test': path.resolve(__dirname, 'test')
     }
   },
