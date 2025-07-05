@@ -18,7 +18,6 @@
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
-
     "baseUrl": ".",
     "paths": {
       "@/src/*": ["src/*"],
