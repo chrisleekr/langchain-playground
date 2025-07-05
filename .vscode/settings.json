@@ -1,11 +1,9 @@
 {
   "editor.insertSpaces": true,
-  "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "files.trimTrailingWhitespace": true,
   "files.exclude": {},
   "files.insertFinalNewline": true,
-  "typescript.preferences.importModuleSpecifier": "relative",
   "search.exclude": {
     ".git": true,
     ".build": true,
@@ -14,6 +12,34 @@
     "**/coverage": true,
     "**/node_modules": true
   },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "js/ts.implicitProjectConfig.checkJs": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[sql]": {
+    "editor.defaultFormatter": "bradymholt.pgformatter"
+  },
+  "cSpell.language": "en-US",
   "cSpell.words": [
     "analyzer",
     "anonymised",
@@ -30,6 +56,7 @@
     "dind",
     "distill",
     "docstore",
+    "fastify",
     "Groq",
     "healthcheck",
     "hgetall",
@@ -41,6 +68,7 @@
     "localai",
     "localize",
     "MACD",
+    "Millis",
     "minimize",
     "minimizer",
     "mrkdwn",
@@ -57,7 +85,9 @@
     "redlock",
     "robwilkes",
     "rspack",
+    "slackify",
     "srvaroa",
+    "summarise",
     "tradingview",
     "tulind",
     "typebox",
@@ -68,6 +98,5 @@
     "WEBUI"
   ],
   "eslint.format.enable": true,
-  "eslint.codeActionsOnSave.mode": "all",
-  "cSpell.language": "en-AU"
+  "eslint.codeActionsOnSave.mode": "all"
 }

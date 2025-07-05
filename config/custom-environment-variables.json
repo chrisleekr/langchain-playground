@@ -1,5 +1,6 @@
 {
   "mode": "NODE_ENV",
+  "serverMode": "SERVER_MODE",
   "port": {
     "__name": "PORT",
     "__format": "number"
@@ -63,5 +64,9 @@
   },
   "pinecone": {
     "apiKey": "PINECONE_API_KEY"
+  },
+  "slack": {
+    "botToken": "SLACK_BOT_TOKEN",
+    "signingSecret": "SLACK_SIGNING_SECRET"
   }
 }

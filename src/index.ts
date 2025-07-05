@@ -1,36 +1,43 @@
 import config from 'config';
+import type { App } from '@slack/bolt';
+import type { FastifyInstance } from 'fastify';
 import { logger } from '@/libraries/logger';
-import { app } from './server';
+import { startServerWithFastify } from './serverWithFastify';
+import { startServerWithSlack } from './serverWithSlack';
 
-// FIXME: REMOVE
-const startServer = async () => {
-  try {
-    const address = await app.listen({
-      port: config.get('port'),
-      host: config.get('host')
-    });
-    logger.info(`Server mode: ${config.get('mode')}`);
-    logger.info(`Server listening at ${address}`);
-    return app;
-  } catch (err) {
-    logger.error({ err }, 'Failed to start server:');
-    process.exit(1);
+(async () => {
+  const serverMode = config.get<string>('serverMode');
+
+  let actualStartServer: () => Promise<{ app: FastifyInstance | App }>;
+  switch (serverMode) {
+    case 'fastify':
+      actualStartServer = startServerWithFastify;
+      break;
+    case 'slack':
+      actualStartServer = startServerWithSlack;
+      break;
+    default:
+      throw new Error('Invalid server mode');
   }
-};
 
-const gracefulShutdown = async () => {
-  try {
-    await app.close();
-    logger.info('Server closed successfully.');
-    process.exit(0);
-  } catch (err) {
-    logger.error({ err }, 'Error while closing server:');
-    process.exit(1);
-  }
-};
+  actualStartServer().then(({ app }: { app: FastifyInstance | App }) => {
+    const gracefulShutdown = async () => {
+      try {
+        if (serverMode === 'fastify') {
+          await (app as FastifyInstance).close();
+        } else if (serverMode === 'slack') {
+          await (app as App).stop();
+        }
 
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+        logger.info('Server closed successfully.');
+        process.exit(0);
+      } catch (err) {
+        logger.error({ err }, 'Error while closing server:');
+        process.exit(1);
+      }
+    };
 
-// Start the server
-void startServer();
+    process.on('SIGTERM', gracefulShutdown);
+    process.on('SIGINT', gracefulShutdown);
+  });
+})();

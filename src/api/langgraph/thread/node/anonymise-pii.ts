@@ -66,7 +66,7 @@ export const anonymisePIINode =
     });
     logger.info({ result }, 'Invoked chain');
 
-    // Initialise the overall state
+    // Initialize the overall state
     state.anonymise_pii_output = result;
     return state;
   };
