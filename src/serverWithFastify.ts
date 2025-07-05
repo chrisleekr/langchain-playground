@@ -16,10 +16,10 @@ import { groqRouter } from '@/api/groq';
 import { langgraphRouter } from '@/api/langgraph';
 import { logger } from '@/libraries/logger';
 
-const startServerWithFastify = async (): Promise<{ app: FastifyInstance }> => {
+const startServerWithFastify = async (options?: { skipListen?: boolean }): Promise<{ app: FastifyInstance }> => {
   try {
     const app = fastify({
-      logger: true,
+      logger: !options?.skipListen, // Disable logging in test mode
       trustProxy: true,
       bodyLimit: 1048576, // 1MB
       maxParamLength: 100
@@ -58,17 +58,20 @@ const startServerWithFastify = async (): Promise<{ app: FastifyInstance }> => {
     // Register error handler
     app.setErrorHandler(errorHandler());
 
-    const address = await app.listen({
-      port: config.get('port'),
-      host: config.get('host')
-    });
-    logger.info(`Server mode: ${config.get('mode')}`);
-    logger.info(`Server listening at ${address}`);
+    if (!options?.skipListen) {
+      const address = await app.listen({
+        port: config.get('port'),
+        host: config.get('host')
+      });
+      logger.info(`Server mode: ${config.get('mode')}`);
+      logger.info(`Server listening at ${address}`);
+    }
 
     return { app };
   } catch (err) {
     logger.error({ err }, 'Failed to start server:');
-    process.exit(1);
+
+    throw err;
   }
 };
 

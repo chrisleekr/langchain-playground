@@ -3,7 +3,7 @@ import { OverallStateAnnotation } from '../constants';
 
 // Router node to handle sequential execution
 export const intentRouterNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const currentIndex = state.currentIntentIndex || 0;
+  const currentIndex = state.currentIntentIndex ?? 0;
   const intentsToExecute = state.intentsToExecute || [];
   const executedIntents = state.executedIntents || [];
 

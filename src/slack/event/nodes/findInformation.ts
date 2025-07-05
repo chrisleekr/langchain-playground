@@ -1,5 +1,5 @@
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
-import z from 'zod';
+import { z } from 'zod';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { getChatOllama, getOllamaEmbeddings, getQdrantVectorStore, logger } from '@/libraries';

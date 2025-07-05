@@ -7,7 +7,7 @@ describe('Health Check API endpoints', () => {
 
   describe('GET /', () => {
     beforeEach(async () => {
-      const { app } = await startServerWithFastify();
+      const { app } = await startServerWithFastify({ skipListen: true });
       const response = await app.inject({
         method: 'GET',
         url: '/health'

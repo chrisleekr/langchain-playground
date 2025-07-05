@@ -28,7 +28,7 @@ import { logger } from '@/libraries';
 import { OverallStateAnnotation, intentToNodeMap } from '../constants';
 
 export const routeToNextIntent = (state: typeof OverallStateAnnotation.State): string => {
-  const currentIndex = state.currentIntentIndex || 0;
+  const currentIndex = state.currentIntentIndex ?? 0;
   const intentsToExecute = state.intentsToExecute || [];
   const executedIntents = state.executedIntents || [];
 

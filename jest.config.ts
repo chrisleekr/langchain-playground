@@ -5,6 +5,14 @@ import { compilerOptions } from './tsconfig.json';
 const config: Config = {
   setupFiles: ['dotenv/config'],
   globalSetup: '<rootDir>/test/globalSetup.ts',
+  transform: {
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json'
+      }
+    ]
+  },
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
   preset: 'ts-jest',
   testEnvironment: 'node',
