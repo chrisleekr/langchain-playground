@@ -1,12 +1,13 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import slackifyMarkdown from 'slackify-markdown';
-import { getChatOllama, logger } from '@/libraries';
+import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
+import { getChatLLM } from '../utils';
 
 export const finalResponseNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { event, client, finalResponse } = state;
-  const { text: message, channel, thread_ts: threadTs, ts: messageTs } = event;
+  const { originalMessage, client, finalResponse } = state;
+  const { text: message, channel, thread_ts: threadTs, ts: messageTs } = originalMessage;
 
   logger.info({ message, finalResponse }, 'finalResponseNode request');
 
@@ -14,23 +15,21 @@ export const finalResponseNode = async (state: typeof OverallStateAnnotation.Sta
 
   if (finalResponse !== '') {
     if (finalResponse.length > 4000) {
-      const model = getChatOllama(0, logger);
+      const model = getChatLLM(0, logger);
 
       const prompt = PromptTemplate.fromTemplate(`
-        You are a helpful assistant that summarise the final response from the bot. The response should not exceed 4000 characters. Please respond with ONLY a JSON object that follows the format specified below.
-
-        Do not return any additional text. Just return the summary in markdown format.
+        You are a helpful assistant that summarise the final response from the bot. The response should not exceed 4000 characters. Do not return any additional text. Just return the summary in markdown format.
 
         Bot message:
-        {message}
+        {final_response}
       `);
 
       logger.info({ prompt, message: finalResponse }, 'finalResponseNode before invoke');
 
-      const chain = RunnableSequence.from([prompt, model]);
+      const chain = RunnableSequence.from([prompt, model, removeThinkTag]);
 
       const result = await chain.invoke({
-        message: finalResponse
+        final_response: finalResponse
       });
 
       logger.info({ result }, 'finalResponseNode after invoke');
@@ -57,19 +56,23 @@ export const finalResponseNode = async (state: typeof OverallStateAnnotation.Sta
     });
   }
 
-  // Remove the reaction eyes
-  await client.reactions.remove({
-    channel,
-    name: 'eyes',
-    timestamp: event.ts
-  });
+  try {
+    // Remove the reaction eyes
+    await client.reactions.remove({
+      channel,
+      name: 'eyes',
+      timestamp: originalMessage.ts
+    });
 
-  // Add the reaction check mark
-  await client.reactions.add({
-    channel,
-    name: 'white_check_mark',
-    timestamp: event.ts
-  });
+    // Add the reaction check mark
+    await client.reactions.add({
+      channel,
+      name: 'white_check_mark',
+      timestamp: originalMessage.ts
+    });
+  } catch (error) {
+    logger.error({ error }, 'finalResponseNode error for removing reaction eyes');
+  }
 
   return state;
 };

@@ -81,4 +81,58 @@ const getQdrantVectorStoreWithFreshCollection = async (
   }
 };
 
-export { getChromaVectorStore, getQdrantVectorStore, getQdrantVectorStoreWithFreshCollection };
+const cleanupQdrantVectorStoreWithSource = async (
+  embeddings: Embeddings,
+  collectionName: string,
+  source: string,
+  logger: Logger
+): Promise<number> => {
+  logger.info({ collectionName }, 'Getting Qdrant Vector Store with fresh collection...');
+  const qdrantUrl = config.get<string>('qdrant.url');
+  logger.info({ qdrantUrl }, 'Qdrant URL');
+
+  try {
+    const existingVectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, {
+      collectionName,
+      url: qdrantUrl
+    });
+
+    logger.info({ collectionName }, 'Found existing collection, clearing it...');
+
+    const client = existingVectorStore.client;
+
+    const scrollResult = await client.scroll(collectionName, {
+      limit: 10000,
+      with_payload: true,
+      filter: {
+        must: [
+          {
+            key: 'source',
+            match: {
+              value: source
+            }
+          }
+        ]
+      }
+    });
+
+    const existingIds = scrollResult.points?.map(point => point.id) || [];
+
+    if (existingIds.length > 0) {
+      logger.info({ existingIds: existingIds.length, source }, 'Deleting existing documents from collection...');
+      await client.delete(collectionName, {
+        points: existingIds
+      });
+      logger.info({ source }, 'Successfully cleared existing collection');
+    } else {
+      logger.info({ source }, 'Collection was already empty');
+    }
+
+    return existingIds.length;
+  } catch (error) {
+    logger.error({ error }, 'Error getting Qdrant Vector Store with fresh collection...');
+    throw error;
+  }
+};
+
+export { getChromaVectorStore, getQdrantVectorStore, getQdrantVectorStoreWithFreshCollection, cleanupQdrantVectorStoreWithSource };

@@ -1,17 +1,7 @@
-import { END, START, StateGraph } from '@langchain/langgraph';
+import type { AppMentionEvent } from '@slack/types';
 import { logger } from '@/libraries';
-import {
-  finalResponseNode,
-  findInformationNode,
-  generalResponseNode,
-  intentClassifierNode,
-  intentRouterNode,
-  getMessageHistoryNode,
-  summariseThreadNode,
-  translateMessageNode
-} from './nodes';
-import { routeToNextIntent } from './utils';
-import { EventAppMention, OverallStateAnnotation } from './constants';
+import { EventAppMention, NormalizedMessage } from './constants';
+import { executeStateGraph } from './stateGraph';
 
 /**
  * LangGraph vs Simple Intent Classifier. Why analysis.
@@ -68,40 +58,40 @@ import { EventAppMention, OverallStateAnnotation } from './constants';
  *
  */
 
-const eventAppMention = async ({ event, client }: EventAppMention) => {
+const normalizeMessage = (event: AppMentionEvent): NormalizedMessage => {
+  const { type, subtype, channel, ts } = event;
+
+  const normalizedMessage: NormalizedMessage = {
+    type,
+    subtype,
+    channel,
+    channel_type: 'channel',
+    ts,
+    bot_id: event.bot_id,
+    bot_profile: event.bot_profile,
+    text: event.text,
+    thread_ts: event.thread_ts,
+    attachments: event.attachments,
+    blocks: event.blocks,
+    files: event.files as {
+      id: string;
+      created: number;
+      name: string | null;
+      title: string | null;
+      mimetype: string;
+      filetype: string;
+    }[]
+  };
+
+  return normalizedMessage;
+};
+
+const eventAppMention = async ({ event, client }: EventAppMention): Promise<void> => {
   try {
     logger.info({ event }, 'event app_mention');
 
-    // Use StateGraph to determine the next action
-    // If the message is a request to summarise the thread, then use the StateGraph to summarise the thread
-    // Otherwise, respond with a message that the user has been mentioned saying "Sorry, I don't know what to do with that."
-    const graph = new StateGraph(OverallStateAnnotation)
-      .addNode('intent-classifier', intentClassifierNode)
-      .addNode('intent-router', intentRouterNode)
-      .addNode('get-message-history', getMessageHistoryNode)
-      .addNode('summarise-thread', summariseThreadNode)
-      .addNode('translate-message', translateMessageNode)
-      .addNode('find-information', findInformationNode)
-      .addNode('general-response', generalResponseNode)
-      // final-response is always the last node to be executed
-      .addNode('final-response', finalResponseNode)
-
-      .addEdge(START, 'intent-classifier')
-      .addEdge('intent-classifier', 'get-message-history')
-      .addEdge('get-message-history', 'intent-router')
-      .addConditionalEdges('intent-router', routeToNextIntent)
-      // All intent nodes route back to the router for next intent
-      .addEdge('summarise-thread', 'intent-router')
-      .addEdge('translate-message', 'intent-router')
-      .addEdge('find-information', 'intent-router')
-      .addEdge('general-response', 'intent-router')
-      .addEdge('final-response', END)
-      .compile();
-
-    const result = await graph.invoke({
-      event,
-      client
-    });
+    const normalizedMessage = normalizeMessage(event);
+    const result = await executeStateGraph(normalizedMessage, client);
 
     logger.info(
       {
@@ -110,7 +100,7 @@ const eventAppMention = async ({ event, client }: EventAppMention) => {
           client: undefined
         }
       },
-      'After invoke'
+      'After invoke event app_mention'
     );
   } catch (err) {
     logger.error({ err }, 'Error in event app_mention');

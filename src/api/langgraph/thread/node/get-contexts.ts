@@ -1,6 +1,6 @@
 import { formatDocumentsAsString } from 'langchain/util/document';
+import config from 'config';
 import { getOllamaEmbeddings, getQdrantVectorStore, Logger } from '@/libraries';
-import { collectionName } from '../../langgraphRouter';
 import { OverallStateAnnotation } from '../[id].post';
 
 export interface GetContextsOutput {
@@ -11,6 +11,8 @@ export const getContextsNode =
   (nodeLogger: Logger) =>
   async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
     const logger = nodeLogger.child({ node: 'get-contexts' });
+
+    const collectionName = config.get<string>('document.collectionName');
 
     logger.info('Getting Vector Store...');
     const embeddings = getOllamaEmbeddings(logger);

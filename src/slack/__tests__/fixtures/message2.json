@@ -1,0 +1,30 @@
+{
+  "user": "U912345678",
+  "type": "message",
+  "ts": "17519123456.123456",
+  "client_msg_id": "123456-1525-48c6-9b0f-418a1056f1f0",
+  "text": "Can you search something for me",
+  "team": "T912345678",
+  "thread_ts": "17519123456.123456",
+  "parent_user_id": "U912345678",
+  "blocks": [
+    {
+      "type": "rich_text",
+      "block_id": "KD5aT",
+      "elements": [
+        {
+          "type": "rich_text_section",
+          "elements": [
+            {
+              "type": "text",
+              "text": "Can you search something for me"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "channel": "C012345678",
+  "event_ts": "17519123456.123456",
+  "channel_type": "channel"
+}

@@ -1,15 +1,16 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import { getChatOllama, logger } from '@/libraries';
+import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
+import { getChatLLM } from '../utils';
 
 export const translateMessageNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { messageHistory, finalResponse, event } = state;
-  const { text: message } = event;
+  const { messageHistory, finalResponse, originalMessage } = state;
+  const { text: message } = originalMessage;
 
   logger.info({ messageHistory, finalResponse, message }, 'translateMessageNode request');
 
-  const model = getChatOllama(0, logger);
+  const model = getChatLLM(0, logger);
 
   const prompt = PromptTemplate.fromTemplate(`
     You are a helpful assistant that can translate the message to another language.
@@ -18,19 +19,19 @@ export const translateMessageNode = async (state: typeof OverallStateAnnotation.
     - The timestamp of the message is not important.
 
     User's instruction:
-    {message}
+    {original_message}
 
     Message to translate:
-    {finalResponse}
+    {final_response}
   `);
 
-  logger.info({ prompt, message }, 'translateMessageNode before invoke');
+  logger.info({ prompt, message: originalMessage.text }, 'translateMessageNode before invoke');
 
-  const chain = RunnableSequence.from([prompt, model]);
+  const chain = RunnableSequence.from([prompt, model, removeThinkTag]);
 
   const result = await chain.invoke({
-    message,
-    finalResponse: finalResponse !== '' ? finalResponse : messageHistory.join('\n')
+    original_message: originalMessage.text,
+    final_response: finalResponse !== '' ? finalResponse : messageHistory.join('\n')
   });
 
   logger.info({ content: result.content }, 'translateMessageNode after invoke');

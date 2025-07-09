@@ -68,5 +68,24 @@
   "slack": {
     "botToken": "SLACK_BOT_TOKEN",
     "signingSecret": "SLACK_SIGNING_SECRET"
+  },
+  "mcp": {
+    "github": {
+      "personalAccessToken": "MCP_GITHUB_PERSONAL_ACCESS_TOKEN"
+    },
+    "brave": {
+      "apiKey": "MCP_BRAVE_API_KEY"
+    }
+  },
+  "document": {
+    "collectionName": "DOCUMENT_COLLECTION_NAME",
+    "confluence": {
+      "baseUrl": "DOCUMENT_CONFLUENCE_BASE_URL",
+      "spaceKey": "DOCUMENT_CONFLUENCE_SPACE_KEY",
+      "username": "DOCUMENT_CONFLUENCE_USERNAME",
+      "accessToken": "DOCUMENT_CONFLUENCE_ACCESS_TOKEN",
+      "maxPages": "DOCUMENT_CONFLUENCE_MAX_PAGES",
+      "updateInterval": "DOCUMENT_CONFLUENCE_UPDATE_INTERVAL"
+    }
   }
 }

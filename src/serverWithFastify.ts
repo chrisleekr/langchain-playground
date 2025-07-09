@@ -15,6 +15,7 @@ import { openAIRouter } from '@/api/openai';
 import { groqRouter } from '@/api/groq';
 import { langgraphRouter } from '@/api/langgraph';
 import { logger } from '@/libraries/logger';
+import { documentRouter } from '@/api/document';
 
 const startServerWithFastify = async (options?: { skipListen?: boolean }): Promise<{ app: FastifyInstance }> => {
   try {
@@ -54,6 +55,7 @@ const startServerWithFastify = async (options?: { skipListen?: boolean }): Promi
     app.register(openAIRouter, { prefix: '/openai' });
     app.register(groqRouter, { prefix: '/groq' });
     app.register(langgraphRouter, { prefix: '/langgraph' });
+    app.register(documentRouter, { prefix: '/document' });
 
     // Register error handler
     app.setErrorHandler(errorHandler());
