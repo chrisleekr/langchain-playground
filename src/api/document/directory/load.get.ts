@@ -62,7 +62,7 @@ export default function directoryLoadGet() {
 
     // Validate we got documents
     if (docs.length === 0) {
-      throw new Error('No documents loaded from Confluence. Check your space key and permissions.');
+      throw new Error('No documents loaded from directory. Check your directory path.');
     }
 
     // Enhanced document metadata
@@ -78,7 +78,7 @@ export default function directoryLoadGet() {
       };
 
       if (index === 0) {
-        logger.info({ enhancedDocSample: enhanced }, '📝 Enhanced document sample');
+        logger.info({ enhancedDocSample: enhanced }, 'Enhanced document sample');
       }
 
       return enhanced;
