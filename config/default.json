@@ -65,7 +65,7 @@
   "document": {
     "collectionName": "langgraph",
     "confluence": {
-      "baseUrl": "https://chrisleekr.atlassian.net/wiki/rest/api/content",
+      "baseUrl": "https://chrisleekr.atlassian.net/wiki",
       "spaceKey": "CHRISLEEKR",
       "username": "my@email.com",
       "accessToken": "",
