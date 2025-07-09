@@ -53,5 +53,24 @@
   "slack": {
     "botToken": "",
     "signingSecret": ""
+  },
+  "mcp": {
+    "github": {
+      "personalAccessToken": ""
+    },
+    "brave": {
+      "apiKey": ""
+    }
+  },
+  "document": {
+    "collectionName": "langgraph",
+    "confluence": {
+      "baseUrl": "https://chrisleekr.atlassian.net/wiki/rest/api/content",
+      "spaceKey": "CHRISLEEKR",
+      "username": "my@email.com",
+      "accessToken": "",
+      "maxPages": 100,
+      "updateInterval": "24h"
+    }
   }
 }

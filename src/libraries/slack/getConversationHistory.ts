@@ -1,15 +1,17 @@
-import type { AppMentionEvent, ConversationsHistoryResponse, WebClient } from '@slack/web-api';
+import type { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { logger } from '@/libraries';
+import { formatTimestamp } from './utils';
+import { NormalizedMessage } from '../../slack/event/constants';
 
 export const getConversationHistory = async (
   client: WebClient,
   channel: string,
   limit: number = 10,
   {
-    event,
+    originalMessage,
     includeAppMention = true
   }: {
-    event: AppMentionEvent;
+    originalMessage: NormalizedMessage;
     includeAppMention?: boolean;
   }
 ): Promise<string[]> => {
@@ -24,7 +26,7 @@ export const getConversationHistory = async (
   result.messages?.forEach(message => {
     logger.info({ message }, 'getConversationHistory message');
     // Ignore app mention message
-    if (message.ts === event.ts && !includeAppMention) {
+    if (message.ts === originalMessage.ts && !includeAppMention) {
       logger.info('Ignore original message');
       return;
     }
@@ -36,7 +38,7 @@ export const getConversationHistory = async (
         text += `\n${attachment.text}`;
       });
 
-      messages.push(`[${message.ts}] <@${message.bot_id}>: ${text}`);
+      messages.push(`[${formatTimestamp(message.ts ?? '')}] @${message.bot_profile?.name || 'Unknown'}: ${text}`);
     } else {
       messages.push(`[${message.ts}] <@${message.user}>: ${message.text}`);
     }

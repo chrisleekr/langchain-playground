@@ -2,6 +2,8 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
+import config from 'config';
+
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
 import { Document } from 'langchain/document';
@@ -10,10 +12,9 @@ import { ParentDocumentRetriever } from 'langchain/retrievers/parent_document';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { TextLoader } from 'langchain/document_loaders/fs/text';
 
-import { getParentDocumentRetriever, getPineconeEmbeddings, getQdrantVectorStoreWithFreshCollection } from '@/libraries';
+import { cleanupQdrantVectorStoreWithSource, getParentDocumentRetriever, getPineconeEmbeddings, getQdrantVectorStore } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { collectionName } from '../langgraphRouter';
 
 const verifyDocs = async (retriever: ParentDocumentRetriever, logger: Logger) => {
   // Verify relevant document retrieval
@@ -39,9 +40,10 @@ const verifyDocs = async (retriever: ParentDocumentRetriever, logger: Logger) =>
   // }
 };
 
-export default function documentLoadGet() {
+export default function directoryLoadGet() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const logger = request.log as Logger;
+    const collectionName = config.get<string>('document.collectionName');
     const directoryPath = __dirname + '/../../../../data/langgraph';
 
     // Initialize document loader
@@ -58,14 +60,42 @@ export default function documentLoadGet() {
     const docs = await loader.load();
     logger.info({ docs }, 'Documents loaded');
 
+    // Validate we got documents
+    if (docs.length === 0) {
+      throw new Error('No documents loaded from Confluence. Check your space key and permissions.');
+    }
+
+    // Enhanced document metadata
+    const enhancedDocs = docs.map((doc, index) => {
+      const enhanced = {
+        ...doc,
+        metadata: {
+          ...doc.metadata,
+          source: 'directory',
+          lastUpdated: new Date().toISOString(),
+          documentType: 'directory'
+        }
+      };
+
+      if (index === 0) {
+        logger.info({ enhancedDocSample: enhanced }, '📝 Enhanced document sample');
+      }
+
+      return enhanced;
+    });
+
     // Initialize embeddings and vector store
     // const embeddings = getOllamaEmbeddings(logger);
     const embeddings = getPineconeEmbeddings(logger);
     logger.info({ embeddings }, 'Embeddings Initialized');
 
     logger.info('Initializing vector store...');
-    const vectorStore = await getQdrantVectorStoreWithFreshCollection(embeddings, collectionName, logger);
+    const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);
     logger.info({ collectionName: vectorStore.collectionName }, 'Vector store Initialized');
+
+    // Delete existing documents from collection
+    const deletedCount = await cleanupQdrantVectorStoreWithSource(embeddings, collectionName, 'directory', logger);
+    logger.info({ deletedCount }, 'Deleted existing documents from collection');
 
     // Initialize retriever
     const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
@@ -73,7 +103,7 @@ export default function documentLoadGet() {
 
     // Add documents
     logger.info('Adding documents to retriever...');
-    const addDocumentsResult = await retriever.addDocuments(docs);
+    const addDocumentsResult = await retriever.addDocuments(enhancedDocs);
     logger.info({ addDocumentsResult }, 'Documents added');
 
     // Verify retriever
