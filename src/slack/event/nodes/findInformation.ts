@@ -9,7 +9,7 @@ import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../utils';
 
 export const findInformationNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { messageHistory, originalMessage } = state;
+  const { messageHistory, userMessage } = state;
 
   const collectionName = config.get<string>('document.collectionName');
 
@@ -44,15 +44,15 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
     {message_history}
 
     User message:
-    {original_message}
+    {user_message}
   `);
 
   const keywordChain = RunnableSequence.from([keywordPrompt, model, removeThinkTag, keywordParser]);
 
   const keywordResult = await keywordChain.invoke({
-    original_message: originalMessage.text,
+    user_message: userMessage.text,
     message_history: messageHistory.length > 0 ? messageHistory.join('\n') : '',
-    mcp_tools_response: state.mcpToolsOutput?.response || '',
+    mcp_tools_response: state.mcpToolsOutput?.mcpToolsResponse || '',
     format_instructions: keywordParser.getFormatInstructions()
   });
 
@@ -95,7 +95,7 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
 
   logger.info({ relevantInformation: state.findInformationOutput.relevantInformation }, 'findInformationNode relevant information');
 
-  const summarisePrompt = PromptTemplate.fromTemplate(`
+  const summarizePrompt = PromptTemplate.fromTemplate(`
     You are a helpful assistant that summarizes the information found from the RAG.
 
     Do not return any additional text. Just return the information in markdown format.
@@ -109,18 +109,18 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
     {relevant_information}
   `);
 
-  const summariseChain = RunnableSequence.from([summarisePrompt, model, removeThinkTag]);
+  const summarizeChain = RunnableSequence.from([summarizePrompt, model, removeThinkTag]);
 
-  const summariseResult = await summariseChain.invoke({
-    message_history: messageHistory.length > 0 ? messageHistory.join('\n') : originalMessage.text,
+  const summarizeResult = await summarizeChain.invoke({
+    message_history: messageHistory.length > 0 ? messageHistory.join('\n') : userMessage.text,
     relevant_information: state.findInformationOutput.relevantInformation.join('\n---\n')
   });
 
-  logger.info({ summariseResult }, 'findInformationNode after invoke');
+  logger.info({ summarizeResult }, 'findInformationNode after invoke');
 
-  state.findInformationOutput.summary = summariseResult.content.toString();
+  state.findInformationOutput.summary = summarizeResult.content.toString();
 
-  state.finalResponse += `${state.finalResponse ? '\n\n' : ''}${summariseResult.content.toString()}`;
+  state.finalResponse += `${state.finalResponse ? '\n\n' : ''}${summarizeResult.content.toString()}`;
 
   logger.info({ state: { ...state, client: undefined } }, 'findInformationNode final state');
 

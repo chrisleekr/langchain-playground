@@ -14,6 +14,7 @@ const config: Config = {
     ]
   },
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
+  bail: true,
   preset: 'ts-jest',
   testEnvironment: 'node',
   testPathIgnorePatterns: ['<rootDir>/src/config/', '<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],

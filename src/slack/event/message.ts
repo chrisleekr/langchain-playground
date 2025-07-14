@@ -29,6 +29,9 @@ const normalizeMessage = (event: AllMessageEvents): NormalizedMessage => {
     files
   };
 
+  if (attachments) {
+    normalizedMessage.text += attachments.map(attachment => attachment.text).join('\n');
+  }
   return normalizedMessage;
 };
 

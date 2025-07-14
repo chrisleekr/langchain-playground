@@ -50,7 +50,7 @@ export interface NormalizedMessage {
 }
 
 export const OverallStateAnnotation = Annotation.Root({
-  originalMessage: Annotation<NormalizedMessage>,
+  userMessage: Annotation<NormalizedMessage>,
   client: Annotation<WebClient>,
   messageHistory: Annotation<string[]>,
   finalResponse: Annotation<string>,
@@ -60,24 +60,24 @@ export const OverallStateAnnotation = Annotation.Root({
   getMessageHistoryOutput: Annotation<GetMessageHistoryOutput>,
   mcpToolsOutput: Annotation<McpToolsOutput>,
   intentClassifierOutput: Annotation<IntentClassifierOutput>,
-  summariseThreadOutput: Annotation<SummariseThreadOutput>,
+  summarizeThreadOutput: Annotation<SummarizeThreadOutput>,
   translateMessageOutput: Annotation<TranslateMessageOutput>,
   findInformationOutput: Annotation<FindInformationOutput>,
   generalResponseOutput: Annotation<GeneralResponseOutput>
 });
 
 export const intentToNodeMap: Record<string, IntentToNodeMap> = {
-  'summarise-thread': {
-    node: 'summarise-thread',
-    description: 'Summarise the message history'
-  },
-  'translate-message': {
-    node: 'translate-message',
-    description: 'Translate the last message to another language'
+  translate: {
+    node: 'translate',
+    description: 'Translate the message to another language for language conversion'
   },
   'find-information': {
     node: 'find-information',
-    description: 'Find information'
+    description: 'Find information for discovering or searching for information'
+  },
+  summarize: {
+    node: 'summarize',
+    description: 'Summarize the message for understanding context, events, or content'
   }
 };
 
@@ -89,6 +89,7 @@ export interface IntentToNodeMap {
 
 export interface IntentClassifierOutput {
   reasoningOutput: string;
+  confidence: number;
   intentsToExecute: string[];
 }
 
@@ -99,12 +100,13 @@ export interface GetMessageHistoryOutput {
 
 export interface McpToolsOutput {
   useMCPTools: boolean;
+  confidence: number;
   reasoningOutput: string;
   suggestedTools: string[];
-  response: string;
+  mcpToolsResponse: string;
 }
 
-export interface SummariseThreadOutput {
+export interface SummarizeThreadOutput {
   summary: string;
 }
 

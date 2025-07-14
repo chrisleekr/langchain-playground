@@ -3,22 +3,22 @@
  *
  * 1st call:
  *  - currentIndex: -1
- *  - intentsToExecute: ['summarise-thread', 'translate-message']
+ *  - intentsToExecute: ['translate', 'summarize']
  *  - executedIntents: []
  *  - set currentIndex to 0
- *  - return: 'summarise-thread'
+ *  - return: 'translate'
  *
  * 2nd call:
  *  - currentIndex: 0
- *  - intentsToExecute: ['summarise-thread', 'translate-message']
- *  - executedIntents: ['summarise-thread']
+ *  - intentsToExecute: ['translate', 'summarize']
+ *  - executedIntents: ['translate']
  *  - set currentIndex to 1
- *  - return: 'translate-message'
+ *  - return: 'summarize'
  *
  * 3rd call:
  *  - currentIndex: 1
- *  - intentsToExecute: ['summarise-thread', 'translate-message']
- *  - executedIntents: ['summarise-thread', 'translate-message']
+ *  - intentsToExecute: ['translate', 'summarize']
+ *  - executedIntents: ['translate', 'summarize']
  *  - set currentIndex to 2
  *  - return: 'final-response'
  *

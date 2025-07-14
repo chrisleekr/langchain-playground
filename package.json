@@ -57,6 +57,7 @@
     "@slack/bolt": "4.4.0",
     "chromadb": "3.0.6",
     "config": "4.0.0",
+    "dayjs": "^1.11.13",
     "dotenv": "16.6.1",
     "fastify": "5.4.0",
     "html-to-text": "^9.0.5",

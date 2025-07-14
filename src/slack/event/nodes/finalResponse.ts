@@ -6,8 +6,8 @@ import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../utils';
 
 export const finalResponseNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { originalMessage, client, finalResponse } = state;
-  const { text: message, channel, thread_ts: threadTs, ts: messageTs } = originalMessage;
+  const { userMessage, client, finalResponse } = state;
+  const { text: message, channel, thread_ts: threadTs, ts: messageTs } = userMessage;
 
   logger.info({ message, finalResponse }, 'finalResponseNode request');
 
@@ -18,7 +18,7 @@ export const finalResponseNode = async (state: typeof OverallStateAnnotation.Sta
       const model = getChatLLM(0, logger);
 
       const prompt = PromptTemplate.fromTemplate(`
-        You are a helpful assistant that summarise the final response from the bot. The response should not exceed 4000 characters. Do not return any additional text. Just return the summary in markdown format.
+        You are a helpful assistant that summarize the final response from the bot. The response should not exceed 4000 characters. Do not return any additional text. Just return the summary in markdown format.
 
         Bot message:
         {final_response}
@@ -61,17 +61,17 @@ export const finalResponseNode = async (state: typeof OverallStateAnnotation.Sta
     await client.reactions.remove({
       channel,
       name: 'eyes',
-      timestamp: originalMessage.ts
+      timestamp: userMessage.ts
     });
 
     // Add the reaction check mark
     await client.reactions.add({
       channel,
       name: 'white_check_mark',
-      timestamp: originalMessage.ts
+      timestamp: userMessage.ts
     });
   } catch (error) {
-    logger.error({ error }, 'finalResponseNode error for removing reaction eyes');
+    logger.warn({ error }, 'finalResponseNode error for removing reaction eyes');
   }
 
   return state;

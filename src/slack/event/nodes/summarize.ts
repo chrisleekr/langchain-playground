@@ -4,8 +4,8 @@ import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../utils';
 
-export const summariseNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { messageHistory, originalMessage } = state;
+export const summarizeNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
+  const { messageHistory, userMessage } = state;
 
   const model = getChatLLM(0, logger);
 
@@ -37,32 +37,32 @@ export const summariseNode = async (state: typeof OverallStateAnnotation.State):
     {message_history}
 
     User message:
-    {original_message}
+    {user_message}
 
     Final response:
     {final_response}
   `);
 
-  logger.info({ prompt }, 'summariseNode before invoke');
+  logger.info({ prompt }, 'summarizeNode before invoke');
 
   const chain = RunnableSequence.from([prompt, model, removeThinkTag]);
 
   const result = await chain.invoke({
-    original_message: originalMessage.text,
+    user_message: userMessage.text,
     message_history: messageHistory.join('\n'),
-    mcp_tools_response: state.mcpToolsOutput?.response || '',
+    mcp_tools_response: state.mcpToolsOutput?.mcpToolsResponse || '',
     final_response: state.finalResponse || ''
   });
 
-  logger.info({ content: result.content }, 'summariseNode after invoke');
+  logger.info({ content: result.content }, 'summarizeNode after invoke');
 
-  state.summariseThreadOutput = {
+  state.summarizeThreadOutput = {
     summary: result.content.toString()
   };
 
   state.finalResponse += `${state.finalResponse ? '\n\n' : ''}${result.content.toString()}`;
 
-  logger.info({ state: { ...state, client: undefined } }, 'summariseNode final state');
+  logger.info({ state: { ...state, client: undefined } }, 'summarizeNode final state');
 
   return state;
 };

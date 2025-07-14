@@ -5,8 +5,8 @@ import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../utils';
 
 export const generalResponseNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { originalMessage } = state;
-  const { text: message } = originalMessage;
+  const { userMessage } = state;
+  const { text: message } = userMessage;
 
   logger.info({ message }, 'generalResponseNode request');
 
@@ -28,7 +28,7 @@ export const generalResponseNode = async (state: typeof OverallStateAnnotation.S
     {message_history}
 
     User message:
-    {original_message}
+    {user_message}
   `);
 
   logger.info({ prompt, message }, 'generalResponseNode before invoke');
@@ -36,9 +36,9 @@ export const generalResponseNode = async (state: typeof OverallStateAnnotation.S
   const chain = RunnableSequence.from([prompt, model, removeThinkTag]);
 
   const result = await chain.invoke({
-    original_message: originalMessage.text,
+    user_message: userMessage.text,
     message_history: state.messageHistory.join('\n'),
-    mcp_tools_response: state.mcpToolsOutput?.response || ''
+    mcp_tools_response: state.mcpToolsOutput?.mcpToolsResponse || ''
   });
 
   logger.info({ content: result.content }, 'generalResponseNode after invoke');

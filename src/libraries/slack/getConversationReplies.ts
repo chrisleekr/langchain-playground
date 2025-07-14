@@ -9,10 +9,10 @@ export const getConversationReplies = async (
   ts: string,
   limit: number = 10,
   {
-    originalMessage,
+    userMessage,
     includeAppMention = true
   }: {
-    originalMessage: NormalizedMessage;
+    userMessage: NormalizedMessage;
     includeAppMention?: boolean;
   }
 ): Promise<string[]> => {
@@ -29,7 +29,7 @@ export const getConversationReplies = async (
   result.messages?.forEach(message => {
     logger.info({ message }, 'getConversationReplies message');
     // Ignore app mention message
-    if (message.ts === originalMessage.ts && !includeAppMention) {
+    if (message.ts === userMessage.ts && !includeAppMention) {
       logger.info('Ignore original message');
       return;
     }
