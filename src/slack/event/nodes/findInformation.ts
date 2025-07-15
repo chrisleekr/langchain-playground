@@ -9,7 +9,7 @@ import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../utils';
 
 export const findInformationNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
-  const { messageHistory, originalMessage } = state;
+  const { messageHistory, userMessage } = state;
 
   const collectionName = config.get<string>('document.collectionName');
 
@@ -25,34 +25,63 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
   );
 
   const keywordPrompt = PromptTemplate.fromTemplate(`
-    Extract EXACT keywords and phrases for document retrieval. You must always return valid JSON. Do not return any additional text.
+You are an expert keyword extraction system for document retrieval. Your goal is to identify the most effective search terms that will find relevant information. You must always return valid JSON. Do not return any additional text. Do not wrap JSON in markdown code blocks. Return only the raw JSON object.
 
-    Focus on:
-    1. Specific technical terms, proper nouns, and unique identifiers
-    2. Exact phrases that must appear in relevant documents
-    3. Avoid generic terms unless they're critical
+STEP 1: ANALYZE THE REQUEST
+Understand what information the user is seeking:
+- What is the core topic or domain?
+- What specific aspects are they interested in?
+- What type of documents would contain this information?
 
-    Return keywords that would appear LITERALLY in relevant documents.
+STEP 2: EXTRACT STRATEGIC KEYWORDS
+Focus on terms that would appear LITERALLY in relevant documents:
 
-    Format instructions:
-    {format_instructions}
+A. PRIORITY KEYWORDS (Most Important):
+- Specific technical terms, proper nouns, and unique identifiers
+- Exact phrases that must appear in relevant documents
+- Domain-specific terminology and jargon
+- Product names, feature names, or specific concepts
 
-    Relevant information:
-    {mcp_tools_response}
+B. CONTEXTUAL KEYWORDS (Supporting):
+- Related terms that provide context
+- Alternative phrasings or synonyms
+- Broader category terms when specific terms might not exist
 
-    Message history:
-    {message_history}
+C. AVOID:
+- Generic terms unless they're critical to the domain
+- Common words that appear in many documents
+- Overly broad terms that would return too many irrelevant results
 
-    User message:
-    {original_message}
-  `);
+STEP 3: KEYWORD VALIDATION
+Before finalizing, ensure:
+- Keywords are specific enough to find relevant documents
+- Keywords would actually appear in target documents
+- Mix of specific and contextual terms for comprehensive coverage
+- Reasonable number of keywords (3-8 typically optimal)
+
+STEP 4: RESPONSE FORMATTING
+{format_instructions}
+
+CONTEXT:
+<user_message>
+{user_message}
+</user_message>
+
+<message_history>
+{message_history}
+</message_history>
+
+<mcp_tools_response>
+{mcp_tools_response}
+</mcp_tools_response>
+`);
 
   const keywordChain = RunnableSequence.from([keywordPrompt, model, removeThinkTag, keywordParser]);
 
   const keywordResult = await keywordChain.invoke({
-    original_message: originalMessage.text,
+    user_message: userMessage.text,
     message_history: messageHistory.length > 0 ? messageHistory.join('\n') : '',
-    mcp_tools_response: state.mcpToolsOutput?.response || '',
+    mcp_tools_response: state.mcpToolsOutput?.mcpToolsResponse || '',
     format_instructions: keywordParser.getFormatInstructions()
   });
 
@@ -95,7 +124,7 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
 
   logger.info({ relevantInformation: state.findInformationOutput.relevantInformation }, 'findInformationNode relevant information');
 
-  const summarisePrompt = PromptTemplate.fromTemplate(`
+  const summarizePrompt = PromptTemplate.fromTemplate(`
     You are a helpful assistant that summarizes the information found from the RAG.
 
     Do not return any additional text. Just return the information in markdown format.
@@ -109,18 +138,18 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
     {relevant_information}
   `);
 
-  const summariseChain = RunnableSequence.from([summarisePrompt, model, removeThinkTag]);
+  const summarizeChain = RunnableSequence.from([summarizePrompt, model, removeThinkTag]);
 
-  const summariseResult = await summariseChain.invoke({
-    message_history: messageHistory.length > 0 ? messageHistory.join('\n') : originalMessage.text,
+  const summarizeResult = await summarizeChain.invoke({
+    message_history: messageHistory.length > 0 ? messageHistory.join('\n') : userMessage.text,
     relevant_information: state.findInformationOutput.relevantInformation.join('\n---\n')
   });
 
-  logger.info({ summariseResult }, 'findInformationNode after invoke');
+  logger.info({ summarizeResult }, 'findInformationNode after invoke');
 
-  state.findInformationOutput.summary = summariseResult.content.toString();
+  state.findInformationOutput.summary = summarizeResult.content.toString();
 
-  state.finalResponse += `${state.finalResponse ? '\n\n' : ''}${summariseResult.content.toString()}`;
+  state.finalResponse += `${state.finalResponse ? '\n\n' : ''}${summarizeResult.content.toString()}`;
 
   logger.info({ state: { ...state, client: undefined } }, 'findInformationNode final state');
 

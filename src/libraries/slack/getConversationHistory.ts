@@ -8,10 +8,10 @@ export const getConversationHistory = async (
   channel: string,
   limit: number = 10,
   {
-    originalMessage,
+    userMessage,
     includeAppMention = true
   }: {
-    originalMessage: NormalizedMessage;
+    userMessage: NormalizedMessage;
     includeAppMention?: boolean;
   }
 ): Promise<string[]> => {
@@ -26,7 +26,7 @@ export const getConversationHistory = async (
   result.messages?.forEach(message => {
     logger.info({ message }, 'getConversationHistory message');
     // Ignore app mention message
-    if (message.ts === originalMessage.ts && !includeAppMention) {
+    if (message.ts === userMessage.ts && !includeAppMention) {
       logger.info('Ignore original message');
       return;
     }
@@ -40,7 +40,7 @@ export const getConversationHistory = async (
 
       messages.push(`[${formatTimestamp(message.ts ?? '')}] @${message.bot_profile?.name || 'Unknown'}: ${text}`);
     } else {
-      messages.push(`[${message.ts}] <@${message.user}>: ${message.text}`);
+      messages.push(`[${message.ts}] @${message.user}: ${message.text}`);
     }
   });
 

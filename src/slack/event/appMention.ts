@@ -59,7 +59,7 @@ import { executeStateGraph } from './stateGraph';
  */
 
 const normalizeMessage = (event: AppMentionEvent): NormalizedMessage => {
-  const { type, subtype, channel, ts } = event;
+  const { type, subtype, channel, ts, attachments, blocks, files, text, thread_ts, bot_id, bot_profile } = event;
 
   const normalizedMessage: NormalizedMessage = {
     type,
@@ -67,13 +67,13 @@ const normalizeMessage = (event: AppMentionEvent): NormalizedMessage => {
     channel,
     channel_type: 'channel',
     ts,
-    bot_id: event.bot_id,
-    bot_profile: event.bot_profile,
-    text: event.text,
-    thread_ts: event.thread_ts,
-    attachments: event.attachments,
-    blocks: event.blocks,
-    files: event.files as {
+    bot_id,
+    bot_profile,
+    text,
+    thread_ts,
+    attachments,
+    blocks,
+    files: files as {
       id: string;
       created: number;
       name: string | null;
@@ -82,6 +82,10 @@ const normalizeMessage = (event: AppMentionEvent): NormalizedMessage => {
       filetype: string;
     }[]
   };
+
+  if (attachments) {
+    normalizedMessage.text += attachments.map(attachment => attachment.text).join('\n');
+  }
 
   return normalizedMessage;
 };
