@@ -55,7 +55,7 @@ jobs:
             ollama-${{ runner.os }}-
 
       - name: Run ollama
-        uses: ai-sdk/ollama-action@v1
+        uses: ai-action/setup-ollama@v1
 
       - name: Pull Ollama models (if not cached)
         run: |
