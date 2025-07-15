@@ -55,7 +55,7 @@ jobs:
             ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-
             ollama-${{ runner.os }}-
 
-      - name: Run ollama
+      - name: Run Ollama
         uses: ai-action/setup-ollama@v1
 
       - name: Pull Ollama models (if not cached)

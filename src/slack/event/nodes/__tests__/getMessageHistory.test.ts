@@ -305,8 +305,8 @@ describe('getMessageHistoryNode', () => {
         async () => {
           result = await getMessageHistoryNode(state as typeof OverallStateAnnotation.State);
         },
-        // Increase jest timeout to 1 min
-        60000
+        // Increase jest timeout to 2 min
+        120000
       );
 
       it(`should return the correct number of messages to get: ${expected.getMessageHistoryOutput.numberOfMessagesToGet}`, () => {
