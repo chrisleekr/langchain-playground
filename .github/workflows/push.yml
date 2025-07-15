@@ -45,37 +45,37 @@ jobs:
         run: npm run build
 
       # To save the cost, comment out the following steps
-      - name: Cache Ollama models and data
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.ollama
-          key: ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-v2
-          restore-keys: |
-            ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-
-            ollama-${{ runner.os }}-
+      # - name: Cache Ollama models and data
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.ollama
+      #     key: ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-v2
+      #     restore-keys: |
+      #       ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-
+      #       ollama-${{ runner.os }}-
 
-      - name: Run Ollama
-        uses: ai-action/setup-ollama@v1
+      # - name: Run Ollama
+      #   uses: ai-action/setup-ollama@v1
 
-      - name: Pull Ollama models (if not cached)
-        run: |
-          if ! ollama list | grep -q "${{ env.OLLAMA_MODEL }}"; then
-            echo "Pulling ${{ env.OLLAMA_MODEL }}..."
-            ollama pull ${{ env.OLLAMA_MODEL }}
-          else
-            echo "${{ env.OLLAMA_MODEL }} already available"
-          fi
+      # - name: Pull Ollama models (if not cached)
+      #   run: |
+      #     if ! ollama list | grep -q "${{ env.OLLAMA_MODEL }}"; then
+      #       echo "Pulling ${{ env.OLLAMA_MODEL }}..."
+      #       ollama pull ${{ env.OLLAMA_MODEL }}
+      #     else
+      #       echo "${{ env.OLLAMA_MODEL }} already available"
+      #     fi
 
-          if ! ollama list | grep -q "${{ env.OLLAMA_EMBEDDING_MODEL }}"; then
-            echo "Pulling ${{ env.OLLAMA_EMBEDDING_MODEL }}..."
-            ollama pull ${{ env.OLLAMA_EMBEDDING_MODEL }}
-          else
-            echo "${{ env.OLLAMA_EMBEDDING_MODEL }} already available"
-          fi
+      #     if ! ollama list | grep -q "${{ env.OLLAMA_EMBEDDING_MODEL }}"; then
+      #       echo "Pulling ${{ env.OLLAMA_EMBEDDING_MODEL }}..."
+      #       ollama pull ${{ env.OLLAMA_EMBEDDING_MODEL }}
+      #     else
+      #       echo "${{ env.OLLAMA_EMBEDDING_MODEL }} already available"
+      #     fi
 
-      - name: Run test
-        run: npm run test
+      # - name: Run test
+      #   run: npm run test
 
   semantic-release-dev:
     name: Semantic Release - Dev

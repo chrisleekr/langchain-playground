@@ -16,7 +16,7 @@ export const summarizeNode = async (state: typeof OverallStateAnnotation.State):
     - TL;DR: A very short summary at the beginning
     - Key points: Key topics and debates discussed with author if applicable
     - Data & Insights: Important information, metrics, or findings shared with sources
-    - Key Timeline: Critical thread messages using format '[HH:MM AM/PM] <@username>: summarized message' (limit to 5 most important messages).
+    - Key Timeline: Critical thread messages using format '[HH:MM AM/PM] summarized message' (limit to 5 most important messages).
     - Action items: Tasks or decisions that were made if applicable
     - Use appropriate emojis to make it engaging
     - Do not include sections if nothing to mention
