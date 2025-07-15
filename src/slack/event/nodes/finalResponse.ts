@@ -18,11 +18,12 @@ export const finalResponseNode = async (state: typeof OverallStateAnnotation.Sta
       const model = getChatLLM(0, logger);
 
       const prompt = PromptTemplate.fromTemplate(`
-        You are a helpful assistant that summarize the final response from the bot. The response should not exceed 4000 characters. Do not return any additional text. Just return the summary in markdown format.
+You are a helpful assistant that summarize the final response from the bot. The response should not exceed 4000 characters. Do not return any additional text. Just return the summary in markdown format.
 
-        Bot message:
-        {final_response}
-      `);
+<final_response>
+{final_response}
+</final_response>
+`);
 
       logger.info({ prompt, message: finalResponse }, 'finalResponseNode before invoke');
 

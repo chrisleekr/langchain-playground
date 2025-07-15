@@ -78,7 +78,7 @@ describe('intentClassifierNode', () => {
         userMessage: { text: 'summarize this thread and find information about errors', channel: 'C0666666', thread_ts: '1715769600.000000' },
         messageHistory: []
       },
-      expected: { intentClassifierOutput: { intentsToExecute: ['summarize', 'find-information'] } }
+      expected: { intentClassifierOutput: { intentsToExecute: ['find-information', 'summarize'] } }
     },
     {
       state: {

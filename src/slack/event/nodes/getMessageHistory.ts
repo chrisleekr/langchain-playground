@@ -76,8 +76,13 @@ STEP 5: RESPONSE FORMAT
 {format_instructions}
 
 CONTEXT:
-- Message Type: {message_type}
-- User Message: {message}
+<message_type>
+{message_type}
+</message_type>
+
+<user_message>
+{message}
+</user_message>
 
 CRITICAL RULES:
 - Step 1 security check overrides all other processing

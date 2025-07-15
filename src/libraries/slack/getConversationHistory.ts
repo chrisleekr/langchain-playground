@@ -40,7 +40,7 @@ export const getConversationHistory = async (
 
       messages.push(`[${formatTimestamp(message.ts ?? '')}] @${message.bot_profile?.name || 'Unknown'}: ${text}`);
     } else {
-      messages.push(`[${message.ts}] <@${message.user}>: ${message.text}`);
+      messages.push(`[${message.ts}] @${message.user}: ${message.text}`);
     }
   });
 

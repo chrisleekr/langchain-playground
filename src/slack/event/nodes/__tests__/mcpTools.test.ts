@@ -68,7 +68,7 @@ describe('mcpToolsNode', () => {
       expected: {
         mcpToolsOutput: {
           useMCPTools: true,
-          suggestedTools: ['mcp__brave-search__brave_web_search', 'mcp__kubernetes-readonly__kubectl_get'],
+          suggestedTools: ['mcp__kubernetes-readonly__kubectl_get', 'mcp__kubernetes-readonly__kubectl_describe'],
           confidence: 0.8
         }
       }
@@ -107,7 +107,7 @@ describe('mcpToolsNode', () => {
       expected: {
         mcpToolsOutput: {
           useMCPTools: true,
-          suggestedTools: ['mcp__kubernetes-readonly__kubectl_get', 'mcp__kubernetes-readonly__kubectl_describe'],
+          suggestedTools: ['mcp__brave-search__brave_web_search'],
           confidence: 0.8
         }
       }
@@ -120,7 +120,7 @@ describe('mcpToolsNode', () => {
       expected: {
         mcpToolsOutput: {
           useMCPTools: true,
-          suggestedTools: ['mcp__kubernetes-readonly__kubectl_get', 'mcp__kubernetes-readonly__kubectl_describe'],
+          suggestedTools: ['mcp__brave-search__brave_web_search'],
           confidence: 0.8
         }
       }
@@ -140,7 +140,7 @@ describe('mcpToolsNode', () => {
       expected: {
         mcpToolsOutput: {
           useMCPTools: true,
-          suggestedTools: ['mcp__brave-search__brave_web_search'],
+          suggestedTools: ['mcp__brave-search__brave_web_search', 'mcp__context7__resolve-library-id'],
           confidence: 0.8
         }
       }

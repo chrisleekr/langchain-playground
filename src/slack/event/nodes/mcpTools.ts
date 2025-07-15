@@ -92,7 +92,7 @@ A. ANALYZE USER INTENT
 - Would multiple MCP tools be helpful?
 
 B. VALIDATION RULES
-- Only suggest tools that exist in available_tools
+- Only suggest tools that exist in available_mcp_tools
 - Don't use MCP tools for basic conversation
 - Don't use MCP tools for summarization or translation
 - Multiple tools can be suggested if genuinely needed
@@ -106,18 +106,25 @@ How confident are you that MCP tools would be genuinely helpful?
 STEP 5: RESPONSE FORMATTING
 {format_instructions}
 
-AVAILABLE MCP TOOLS:
-{available_tools}
-
 CONTEXT:
-- User Message: {user_message}
-- Message History: {message_history}
+
+<available_mcp_tools>
+{available_mcp_tools}
+</available_mcp_tools>
+
+<user_message>
+{user_message}
+</user_message>
+
+<message_history>
+{message_history}
+</message_history>
 `);
 
     const availableTools = mcpTools.map(tool => `- ${tool.name}: ${tool.description.replace(/\n/g, ' ')}`).join('\n');
 
     const invokeParams = {
-      available_tools: availableTools,
+      available_mcp_tools: availableTools,
       // Limit the user message to 1000 characters to avoid context bloat
       user_message: removeJSONCodeBlock(userMessage.text ?? '').slice(0, 1000),
       // Reverse the message history and limit to 1000 characters to avoid context bloat

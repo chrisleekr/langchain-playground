@@ -25,27 +25,56 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
   );
 
   const keywordPrompt = PromptTemplate.fromTemplate(`
-    Extract EXACT keywords and phrases for document retrieval. You must always return valid JSON. Do not return any additional text.
+You are an expert keyword extraction system for document retrieval. Your goal is to identify the most effective search terms that will find relevant information. You must always return valid JSON. Do not return any additional text. Do not wrap JSON in markdown code blocks. Return only the raw JSON object.
 
-    Focus on:
-    1. Specific technical terms, proper nouns, and unique identifiers
-    2. Exact phrases that must appear in relevant documents
-    3. Avoid generic terms unless they're critical
+STEP 1: ANALYZE THE REQUEST
+Understand what information the user is seeking:
+- What is the core topic or domain?
+- What specific aspects are they interested in?
+- What type of documents would contain this information?
 
-    Return keywords that would appear LITERALLY in relevant documents.
+STEP 2: EXTRACT STRATEGIC KEYWORDS
+Focus on terms that would appear LITERALLY in relevant documents:
 
-    Format instructions:
-    {format_instructions}
+A. PRIORITY KEYWORDS (Most Important):
+- Specific technical terms, proper nouns, and unique identifiers
+- Exact phrases that must appear in relevant documents
+- Domain-specific terminology and jargon
+- Product names, feature names, or specific concepts
 
-    Relevant information:
-    {mcp_tools_response}
+B. CONTEXTUAL KEYWORDS (Supporting):
+- Related terms that provide context
+- Alternative phrasings or synonyms
+- Broader category terms when specific terms might not exist
 
-    Message history:
-    {message_history}
+C. AVOID:
+- Generic terms unless they're critical to the domain
+- Common words that appear in many documents
+- Overly broad terms that would return too many irrelevant results
 
-    User message:
-    {user_message}
-  `);
+STEP 3: KEYWORD VALIDATION
+Before finalizing, ensure:
+- Keywords are specific enough to find relevant documents
+- Keywords would actually appear in target documents
+- Mix of specific and contextual terms for comprehensive coverage
+- Reasonable number of keywords (3-8 typically optimal)
+
+STEP 4: RESPONSE FORMATTING
+{format_instructions}
+
+CONTEXT:
+<user_message>
+{user_message}
+</user_message>
+
+<message_history>
+{message_history}
+</message_history>
+
+<mcp_tools_response>
+{mcp_tools_response}
+</mcp_tools_response>
+`);
 
   const keywordChain = RunnableSequence.from([keywordPrompt, model, removeThinkTag, keywordParser]);
 
