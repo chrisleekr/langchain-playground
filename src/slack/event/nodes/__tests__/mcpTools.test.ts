@@ -16,8 +16,6 @@ jest.mock('@langchain/langgraph/prebuilt', () => ({
 import { mcpToolsNode } from '../mcpTools';
 
 describe('mcpToolsNode', () => {
-  const mockAgentInvoke = jest.fn();
-
   beforeEach(() => {
     // Re-mock because it will reset the mock after each test
     mockAgentInvoke.mockResolvedValue({

@@ -128,7 +128,7 @@ CONTEXT:
       // Limit the user message to 1000 characters to avoid context bloat
       user_message: removeJSONCodeBlock(userMessage.text ?? '').slice(0, 1000),
       // Reverse the message history and limit to 1000 characters to avoid context bloat
-      message_history: removeJSONCodeBlock(messageHistory.reverse().join('\n').slice(0, 1000)),
+      message_history: removeJSONCodeBlock([...messageHistory].reverse().join('\n').slice(0, 1000)),
       format_instructions: parser.getFormatInstructions()
     };
 
