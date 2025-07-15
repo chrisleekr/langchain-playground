@@ -60,17 +60,17 @@ jobs:
       - name: Pull Ollama models (if not cached)
         run: |
           if ! ollama list | grep -q "${{ env.OLLAMA_MODEL }}"; then
-            echo "Pulling ${env.OLLAMA_MODEL}..."
-            ollama pull ${env.OLLAMA_MODEL}
+            echo "Pulling ${{ env.OLLAMA_MODEL }}..."
+            ollama pull ${{ env.OLLAMA_MODEL }}
           else
-            echo "${env.OLLAMA_MODEL} already available"
+            echo "${{ env.OLLAMA_MODEL }} already available"
           fi
 
           if ! ollama list | grep -q "${{ env.OLLAMA_EMBEDDING_MODEL }}"; then
-            echo "Pulling ${env.OLLAMA_EMBEDDING_MODEL}..."
-            ollama pull ${env.OLLAMA_EMBEDDING_MODEL}
+            echo "Pulling ${{ env.OLLAMA_EMBEDDING_MODEL }}..."
+            ollama pull ${{ env.OLLAMA_EMBEDDING_MODEL }}
           else
-            echo "${env.OLLAMA_EMBEDDING_MODEL} already available"
+            echo "${{ env.OLLAMA_EMBEDDING_MODEL }} already available"
           fi
 
       - name: Run test
