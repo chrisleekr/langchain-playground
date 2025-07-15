@@ -14,6 +14,10 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  OLLAMA_MODEL: 'llama3.1:8b'
+  OLLAMA_EMBEDDING_MODEL: 'mxbai-embed-large:latest'
+
 jobs:
   lint-and-test:
     name: Lint & Test
@@ -37,11 +41,40 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Run test
-        run: npm run test
-
       - name: Run build
         run: npm run build
+
+      - name: Cache Ollama models and data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ollama
+          key: ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-v2
+          restore-keys: |
+            ollama-${{ runner.os }}-${{ hashFiles('**/modelfile') }}-
+            ollama-${{ runner.os }}-
+
+      - name: Run ollama
+        uses: ai-sdk/ollama-action@v1
+
+      - name: Pull Ollama models (if not cached)
+        run: |
+          if ! ollama list | grep -q "${{ env.OLLAMA_MODEL }}"; then
+            echo "Pulling ${env.OLLAMA_MODEL}..."
+            ollama pull ${env.OLLAMA_MODEL}
+          else
+            echo "${env.OLLAMA_MODEL} already available"
+          fi
+
+          if ! ollama list | grep -q "${{ env.OLLAMA_EMBEDDING_MODEL }}"; then
+            echo "Pulling ${env.OLLAMA_EMBEDDING_MODEL}..."
+            ollama pull ${env.OLLAMA_EMBEDDING_MODEL}
+          else
+            echo "${env.OLLAMA_EMBEDDING_MODEL} already available"
+          fi
+
+      - name: Run test
+        run: npm run test
 
   semantic-release-dev:
     name: Semantic Release - Dev

@@ -14,9 +14,9 @@
     "url": "redis://redis:6379"
   },
   "ollama": {
-    "baseUrl": "http://ollama:11434",
-    "model": "llama2:13b",
-    "embeddingModel": "mxbai-embed-large",
+    "baseUrl": "http://localhost:11434",
+    "model": "llama3.1:8b",
+    "embeddingModel": "mxbai-embed-large:latest",
     "documentSystemTemplate": ""
   },
   "openai": {
