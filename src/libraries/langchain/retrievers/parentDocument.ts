@@ -37,18 +37,18 @@ const getParentDocumentRetriever = async (
     docstore: redisStore,
     // childDocumentRetriever,
     parentSplitter: new RecursiveCharacterTextSplitter({
-      chunkSize: 1500, // Balanced chunk size
-      chunkOverlap: 200 // Moderate overlap
+      chunkSize: 1200, // Reduced for better precision
+      chunkOverlap: 150 // Proportionally adjusted
     }),
     childSplitter: new RecursiveCharacterTextSplitter({
-      chunkSize: 500, // Smaller chunks for better matching
-      chunkOverlap: 100 // Moderate overlap
+      chunkSize: 450, // CRITICAL: Must be under 512 tokens for mxbai-embed-large
+      chunkOverlap: 75 // Reduced proportionally to maintain safety margin
     }),
     childK: 4, // Increased for better recall
     parentK: 2 // Allow up to 2 most relevant parent documents
   });
 
-  logger.info({ retriever }, 'Created ParentDocumentRetriever.');
+  logger.info('Created ParentDocumentRetriever.');
   return retriever;
 };
 

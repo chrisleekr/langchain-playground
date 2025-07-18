@@ -3,7 +3,7 @@ import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { z } from 'zod';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import { getMCPTools, logger, removeJSONCodeBlock, removeThinkTag } from '@/libraries';
+import { getMCPTools, logger, removeCodeBlock, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../utils';
 
@@ -126,9 +126,9 @@ CONTEXT:
     const invokeParams = {
       available_mcp_tools: availableTools,
       // Limit the user message to 1000 characters to avoid context bloat
-      user_message: removeJSONCodeBlock(userMessage.text ?? '').slice(0, 1000),
+      user_message: removeCodeBlock(userMessage.text ?? '').slice(0, 1000),
       // Reverse the message history and limit to 1000 characters to avoid context bloat
-      message_history: removeJSONCodeBlock([...messageHistory].reverse().join('\n').slice(0, 1000)),
+      message_history: removeCodeBlock([...messageHistory].reverse().join('\n').slice(0, 1000)),
       format_instructions: parser.getFormatInstructions()
     };
 
