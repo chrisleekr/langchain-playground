@@ -56,7 +56,7 @@ Routes:
 
 ### Document query process
 
-<img width="1418" height="1278" alt="Document query process" src="https://github.com/user-attachments/assets/1aeb3e5c-bcfd-49fd-9437-4a3b0f141f44" />
+<img width="852" height="233" alt="Image" src="https://github.com/user-attachments/assets/678294fe-e229-4bd6-ab8a-0a952fa4804a" />
 
 ## Slack integration
 
