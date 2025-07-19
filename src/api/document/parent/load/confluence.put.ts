@@ -1,14 +1,17 @@
+/**
+ * This endpoint is to load the confluence pages using the parent document retriever.
+ */
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 import config from 'config';
 import { Logger } from 'pino';
 import { ConfluencePagesLoader } from '@langchain/community/document_loaders/web/confluence';
 import { StatusCodes } from 'http-status-codes';
-import { cleanupQdrantVectorStoreWithSource, getParentDocumentRetriever, getPineconeEmbeddings, getQdrantVectorStore } from '@/libraries';
+import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getParentDocumentRetriever, getQdrantVectorStore } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
-export default function confluenceLoadGet() {
+export default function parentLoadConfluencePut() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const logger = request.log as Logger;
     const collectionName = config.get<string>('document.collectionName');
@@ -52,6 +55,7 @@ export default function confluenceLoadGet() {
         metadata: {
           ...doc.metadata,
           source: 'confluence',
+          method: 'vectorStore',
           confluenceSpace: spaceKey,
           lastUpdated: new Date().toISOString(),
           confluencePageId: doc.metadata.confluencePageId,
@@ -66,8 +70,9 @@ export default function confluenceLoadGet() {
       return enhanced;
     });
 
-    const embeddings = getPineconeEmbeddings(logger);
-    logger.info({ embeddings }, 'Embeddings Initialized');
+    const embeddings = getOllamaEmbeddings(logger);
+    // const embeddings = getPineconeEmbeddings(logger);
+    logger.info('Embeddings Initialized');
 
     logger.info('Initializing vector store...');
     const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);
@@ -77,12 +82,9 @@ export default function confluenceLoadGet() {
     const deletedCount = await cleanupQdrantVectorStoreWithSource(embeddings, collectionName, 'confluence', logger);
     logger.info({ deletedCount }, 'Deleted existing documents from collection');
 
-    // Initialize retriever
-    const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
-    logger.info({ retriever }, 'Retriever Initialized');
-
     // Add documents
-    logger.info('Adding documents to retriever...');
+    logger.info('Adding documents to vector store...');
+    const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
     const addDocumentsResult = await retriever.addDocuments(enhancedDocs);
     logger.info({ addDocumentsResult }, 'Documents added');
 
@@ -105,11 +107,7 @@ export default function confluenceLoadGet() {
 
     // Test retriever functionality
     logger.info('Testing retriever functionality...');
-    const testQueries = [
-      'confluence',
-      'documentation',
-      docs[0].pageContent.split(' ').slice(0, 3).join(' ') // First few words from first doc
-    ];
+    const testQueries = ['How to test?'];
 
     for (const query of testQueries) {
       try {
@@ -131,22 +129,6 @@ export default function confluenceLoadGet() {
         logger.error({ query, err }, `Test query failed: "${query}"`);
       }
     }
-
-    // Test direct vector store search
-    logger.info('Testing direct vector store search...');
-    const directSearchResults = await vectorStore.similaritySearch('confluence', 3);
-    logger.info(
-      {
-        directSearchCount: directSearchResults.length,
-        firstDirectResult: directSearchResults[0]
-          ? {
-              pageContent: directSearchResults[0].pageContent.substring(0, 100) + '...',
-              metadata: directSearchResults[0].metadata
-            }
-          : null
-      },
-      'Direct vector store search results'
-    );
 
     // Final collection stats
     const finalCollectionInfo = await vectorStore.client.getCollection(collectionName);
@@ -172,7 +154,6 @@ export default function confluenceLoadGet() {
           totalDocuments: docs.length,
           confluenceSpace: spaceKey,
           testResults: {
-            directSearchResults: directSearchResults.length,
             retrieverTests: testQueries.length
           }
         },

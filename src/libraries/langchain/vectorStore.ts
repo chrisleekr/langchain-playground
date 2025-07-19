@@ -71,7 +71,14 @@ const getQdrantVectorStoreWithFreshCollection = async (
   } catch (error) {
     // If collection doesn't exist, create a new one
     logger.info(
-      { collectionName, error: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        collectionName,
+        error: {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          name: error instanceof Error ? error.name : 'Unknown error',
+          stack: error instanceof Error ? error.stack : 'Unknown stack'
+        }
+      },
       'Collection does not exist, creating new one...'
     );
     return new QdrantVectorStore(embeddings, {
@@ -87,7 +94,7 @@ const cleanupQdrantVectorStoreWithSource = async (
   source: string,
   logger: Logger
 ): Promise<number> => {
-  logger.info({ collectionName }, 'Getting Qdrant Vector Store with fresh collection...');
+  logger.info({ collectionName }, 'Getting Qdrant Vector Store...');
   const qdrantUrl = config.get<string>('qdrant.url');
   logger.info({ qdrantUrl }, 'Qdrant URL');
 
@@ -107,7 +114,7 @@ const cleanupQdrantVectorStoreWithSource = async (
       filter: {
         must: [
           {
-            key: 'source',
+            key: 'metadata.source',
             match: {
               value: source
             }

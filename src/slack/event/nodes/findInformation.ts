@@ -100,7 +100,7 @@ CONTEXT:
 
   const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);
 
-  state.findInformationOutput.relevantInformation.push(formatDocumentsAsString([]));
+  state.findInformationOutput.relevantInformation = [];
 
   for (const keyword of keywordResult.keywords) {
     const keywordEmbedding = await embeddings.embedQuery(keyword);
@@ -109,7 +109,7 @@ CONTEXT:
     logger.info({ relevantResults }, 'findInformationNode relevant results after checking score');
 
     if (relevantResults.length > 0) {
-      const documents = searchResult.map(([doc]) => doc);
+      const documents = relevantResults.map(([doc]) => doc);
       state.findInformationOutput.relevantInformation.push(formatDocumentsAsString(documents));
       logger.info({ keyword, documents }, 'findInformationNode found relevant information');
     } else {

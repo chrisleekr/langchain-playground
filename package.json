@@ -66,6 +66,7 @@
     "langchain": "0.3.29",
     "pdf-parse": "1.1.1",
     "pino": "9.7.0",
+    "semantic-chunking": "^2.4.4",
     "slackify-markdown": "^4.5.0",
     "uuid": "11.1.0",
     "zod": "^3.25.74"

@@ -39,6 +39,25 @@ This project provides both REST API endpoints or Slack bot integration for inter
 - `fastify`: serves as a web server in `src/api`
 - `slack`: serves as a Slack app in `src/slack`
 
+## Answer from Retriever-Augmented Generation (RAG)
+
+In this project, there are following routes to answer user's question from the document RAG retrieval.
+
+Routes:
+
+- `DELETE /document/reset`: Reset the document RAG retrieval.
+- `PUT /document/parent/load/directory`: Load documents from a directory using Unstructured API + Parent document retriever.
+- `PUT /document/parent/load/confluence`: Load documents from Confluence + Parent document retriever.
+- `POST /document/parent/query`: Answer user's question from the document RAG retrieval.
+
+### Document loader process
+
+<img width="851" height="268" alt="Document loader process" src="https://github.com/user-attachments/assets/f72bf705-a89d-4016-8320-22d7f03dcc55" />
+
+### Document query process
+
+<img width="852" height="233" alt="Image" src="https://github.com/user-attachments/assets/678294fe-e229-4bd6-ab8a-0a952fa4804a" />
+
 ## Slack integration
 
 In this project, I used [slack/bolt](https://www.npmjs.com/package/@slack/bolt) and LangGraph to build a Slack app.
