@@ -1,5 +1,5 @@
 /**
- * Loads documents using the parent document retriever
+ * This endpoint is to load the directory using the parent document retriever.
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
@@ -17,7 +17,7 @@ import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getParentDocum
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
-export default function loadVectorStoreDirectoryPut() {
+export default function parentLoadDirectoryPut() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const logger = request.log as Logger;
     const collectionName = config.get<string>('document.collectionName');

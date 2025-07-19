@@ -9,6 +9,8 @@ let llmOllama: Ollama;
 let chatGroq: ChatGroq;
 let chatOpenAI: ChatOpenAI;
 
+type LLM = ChatOllama | Ollama | ChatGroq | ChatOpenAI;
+
 const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
   logger.info(
     {
@@ -91,4 +93,4 @@ const getChatOpenAI = (logger: Logger): ChatOpenAI => {
   return chatOpenAI;
 };
 
-export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI };
+export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI, LLM };

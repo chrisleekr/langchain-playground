@@ -41,7 +41,7 @@ const getParentDocumentRetriever = async (
       chunkOverlap: 150 // Proportionally adjusted
     }),
     childSplitter: new RecursiveCharacterTextSplitter({
-      chunkSize: 450, // CRITICAL: Must be under 512 tokens for mxbai-embed-large
+      chunkSize: 450, // Must be under 512 tokens for mxbai-embed-large in Ollama embedding
       chunkOverlap: 75 // Reduced proportionally to maintain safety margin
     }),
     childK: 4, // Increased for better recall
