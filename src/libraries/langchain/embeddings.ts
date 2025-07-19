@@ -23,7 +23,7 @@ const getOllamaEmbeddings = (logger: Logger): Embeddings => {
 const getPineconeEmbeddings = (logger: Logger): Embeddings => {
   if (!pineconeEmbeddings) {
     const apiKey = config.get<string>('pinecone.apiKey');
-    console.log('apiKey', apiKey);
+
     logger.info('Getting Pinecone Embeddings...');
     pineconeEmbeddings = new PineconeEmbeddings({
       apiKey,
