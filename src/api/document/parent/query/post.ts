@@ -92,7 +92,17 @@ export default function parentQueryPost() {
 
       await sendResponse(reply, new ServiceResponse(ResponseStatus.Success, 'Query executed successfully', responseData, StatusCodes.OK));
     } catch (error) {
-      logger.error({ error, query: request.body.query }, 'Error processing query');
+      logger.error(
+        {
+          error: {
+            name: error instanceof Error ? error.name : 'Unknown error',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          },
+          query: request.body.query
+        },
+        'Error processing query'
+      );
       await sendResponse(reply, new ServiceResponse(ResponseStatus.Failed, 'Internal server error', null, StatusCodes.INTERNAL_SERVER_ERROR));
     }
   };
@@ -213,11 +223,12 @@ async function invokeParentDocumentRetriever(
 
   // Batch process to avoid any bottle neck by processing one query variation at a time.
   logger.info('Retrieving documents from vector store');
-  const queryVariationPromises = queryVariations.map(queryVariation => retriever.invoke(queryVariation.query));
-  const queryVariationResults = await Promise.allSettled(queryVariationPromises);
-  logger.info({ queryVariationResults }, 'Retrieving documents from vector store completed');
+  const retrieverPromises = queryVariations.map(queryVariation => retriever.invoke(queryVariation.query));
+  const retrieverResults = await Promise.allSettled(retrieverPromises);
+  logger.info({ retrieverResults }, 'Retrieving documents from vector store completed');
 
-  queryVariationResults.forEach(result => {
+  retrieverResults.forEach(result => {
+    logger.info({ result }, 'Retriever result');
     if (result.status === 'fulfilled') {
       result.value.forEach(doc => {
         if (doc.metadata.url) {
@@ -309,9 +320,10 @@ Query variations:
 Document excerpt:
 {document}
 
-Return your analysis as JSON only. No additional text or formatting.
-
+Format instructions:
 {format_instructions}
+
+You must always return valid JSON fenced by a markdown code block. Do not return any additional text.
 `);
 
   // Batch process to avoid any bottle neck by processing one document at a time.
