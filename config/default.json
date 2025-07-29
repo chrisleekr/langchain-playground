@@ -3,6 +3,7 @@
   "serverMode": "fastify",
   "port": 8080,
   "host": "0.0.0.0",
+  "timezone": "Australia/Melbourne",
   "cors": {
     "origin": "*"
   },
@@ -71,6 +72,28 @@
       "accessToken": "",
       "maxPages": 100,
       "updateInterval": "24h"
+    }
+  },
+  "aws": {
+    "region": "us-east-1",
+    "credentials": {
+      "profile": "default",
+      "accessKeyId": "",
+      "secretAccessKey": ""
+    }
+  },
+  "newrelic": {
+    "accountId": 123456,
+    "apiKey": "",
+    "excludeProperties": ["unrelated-log-property"],
+    "envoyLogs": {
+      "excludeServices": ["unrelated-service-name"]
+    },
+    "urlLogs": {
+      "properties": ["url-related-log-property"]
+    },
+    "getRelevantURLs": {
+      "additionalInstructions": "- URL Construction Rules:\n  - If the field key 'url' is present, convert to 'http://my-url.com/<value>' replacing <value> with the field value"
     }
   }
 }

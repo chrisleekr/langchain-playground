@@ -39,6 +39,18 @@ This project provides both REST API endpoints or Slack bot integration for inter
 - `fastify`: serves as a web server in `src/api`
 - `slack`: serves as a Slack app in `src/slack`
 
+## New Relic log analysis
+
+In this project, I used LangGraph to build a workflow to analyze New Relic logs.
+
+The workflow in big picture is as follows:
+
+1. Get New Relic logs
+2. Analyze New Relic logs to get the request timeline, service error logs and relevant URLs
+3. Generate a summary of the investigation by analyzing the request timeline, service error logs and relevant URLs
+
+<img width="1068" height="581" alt="New Relic log analysis using LangGraph" src="https://github.com/user-attachments/assets/cb45da95-43a2-4a32-a00d-03540cc775db" />
+
 ## Answer from Retriever-Augmented Generation (RAG)
 
 In this project, there are following routes to answer user's question from the document RAG retrieval.
