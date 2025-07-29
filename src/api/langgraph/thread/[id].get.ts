@@ -23,7 +23,7 @@ export default function threadIdGet() {
 
     logger.info({ threadId }, 'Processing thread request');
 
-    // Initialise memory
+    // Initialize memory
     const sessionId = `groq-langgraph-thread-${threadId}`;
     const memory = new BufferMemory({
       chatHistory: new RedisChatMessageHistory({
@@ -31,7 +31,7 @@ export default function threadIdGet() {
         client: redisClient
       })
     });
-    logger.info({ memory }, 'Memory Initialised');
+    logger.info({ memory }, 'Memory Initialized');
 
     // Load history
     const history = await memory.loadMemoryVariables({});

@@ -6,6 +6,7 @@
     "__format": "number"
   },
   "host": "HOST",
+  "timezone": "TIMEZONE",
   "cors": {
     "origin": "CORS_ORIGIN"
   },
@@ -86,6 +87,40 @@
       "accessToken": "DOCUMENT_CONFLUENCE_ACCESS_TOKEN",
       "maxPages": "DOCUMENT_CONFLUENCE_MAX_PAGES",
       "updateInterval": "DOCUMENT_CONFLUENCE_UPDATE_INTERVAL"
+    }
+  },
+  "aws": {
+    "region": "AWS_REGION",
+    "credentials": {
+      "profile": "AWS_PROFILE",
+      "accessKeyId": "AWS_ACCESS_KEY_ID",
+      "secretAccessKey": "AWS_SECRET_ACCESS_KEY"
+    }
+  },
+  "newrelic": {
+    "accountId": {
+      "__name": "NEWRELIC_ACCOUNT_ID",
+      "__format": "number"
+    },
+    "apiKey": "NEWRELIC_API_KEY",
+    "excludeProperties": {
+      "__name": "NEWRELIC_EXCLUDE_PROPERTIES",
+      "__format": "json"
+    },
+    "envoyLogs": {
+      "excludeServices": {
+        "__name": "NEWRELIC_ENVOY_LOGS_EXCLUDE_SERVICES",
+        "__format": "json"
+      }
+    },
+    "urlLogs": {
+      "properties": {
+        "__name": "NEWRELIC_URL_LOGS_PROPERTIES",
+        "__format": "json"
+      }
+    },
+    "getRelevantURLs": {
+      "additionalInstructions": "NEWRELIC_GET_RELEVANT_URLS_ADDITIONAL_INSTRUCTIONS"
     }
   }
 }
