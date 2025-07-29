@@ -28,7 +28,7 @@ export const normalizeContextData = (data: Record<string, unknown>[]): Record<st
       if (item[key] === null) {
         delete item[key];
       } else if (['createdAt', 'updatedAt', 'acknowledgedAt', 'closedAt'].includes(key)) {
-        const timestamp = parseInt((item as Record<string, unknown>)[key] as string) / 1000;
+        const timestamp = Number((item as Record<string, unknown>)[key]) / 1000;
         (item as Record<string, unknown>)[`${key}Formatted`] = formatTimestamp(timestamp.toString());
       }
     });
