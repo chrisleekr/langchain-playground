@@ -12,7 +12,7 @@ export const normalizeLogs = (data: Record<string, unknown>[]): Record<string, u
       }
       // Convert timestamp to date time timezone
       if (['timestamp', 'createdAt', 'updatedAt'].includes(key)) {
-        const timestamp = parseInt((log as Record<string, unknown>)[key] as string) / 1000;
+        const timestamp = Number((log as Record<string, unknown>)[key]) / 1000;
         (log as Record<string, unknown>)[`${key}Formatted`] = formatTimestamp(timestamp.toString());
       }
     });
