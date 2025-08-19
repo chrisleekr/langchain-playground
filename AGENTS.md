@@ -58,28 +58,40 @@ langchain-playground/
 └── package.json               # Dependencies and scripts
 ```
 
-## Development Commands
+## Build & Commands
 
-- **Development**: `npm run dev` (auto-reload with pretty logging)
-- **Build**: `npm run build` (Rspack bundler)
-- **Production**: `npm start`
-- **Type Check**: `npm run typecheck`
-- **Lint**: `npm run lint` / `npm run lint:fix`
-- **Format**: `npm run format`
-- **Test**: `npm test` (Jest with coverage)
-- **Docker**: `npm run docker:build` / `npm run docker:run`
-- **Services**: `docker-compose up -d` (start Redis, Qdrant, Unstructured API)
+- **Check everything**: `npm run typecheck && npm run lint && npm test`
+- **Fix linting/formatting**: `npm run lint:fix && npm run format:fix`
+- **Run all tests**: `npm test` (Jest with coverage)
+- **Run single test**: `npm test -- src/path/to/file.test.ts`
+- **Start development**: `npm run dev` (auto-reload with pretty logging)
+- **Build for production**: `npm run build` (Rspack bundler)
+- **Run production build**: `npm start`
+- **Build and run Docker**: `npm run docker:build && npm run docker:run`
 
-## TypeScript & Code Style
+### Development Environment
 
-- **Language**: TypeScript with strict mode enabled (`target: ES2022`, `module: nodenext`)
-- **Path Aliases**: Use path mapping (`@/src/*`, `@/api/*`, `@/libraries/*`, etc.)
-- **Module System**: ESM with NodeNext resolution
-- **Import Organization**: Auto-sorted imports, external → builtin → internal → sibling → parent
-- **Naming**: Use meaningful names; prefer "URL" (not "Url"), "API" (not "Api"), "ID" (not "Id")
-- **Error Handling**: No floating promises, strict boolean expressions
-- **Functions**: Prefer functional programming, `const` over `let`, async/await patterns
-- **Comments**: JSDoc for complex logic and public APIs; avoid redundant comments
+- **API Server**: [http://localhost:8080](http://localhost:8080) (Fastify mode)
+- **Slack Bot**: Connects to Slack workspace (Slack mode)
+- **Redis**: localhost:6379 (caching and sessions)
+- **Qdrant**: [http://localhost:6333](http://localhost:6333) (vector database)
+- **Unstructured API**: [http://localhost:8082](http://localhost:8082) (document processing)
+- **Services**: `docker-compose up -d` (starts Redis, Qdrant, Unstructured API)
+
+## Code Style
+
+- **TypeScript**: Strict mode with `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`
+- **Line Length**: 120 characters maximum
+- **Indentation**: 2 spaces (consistent across all files)
+- **Quotes**: Single quotes preferred, double quotes for strings containing single quotes
+- **Semicolons**: Required (enforced by ESLint)
+- **Trailing Commas**: Always use trailing commas in multiline structures
+- **Path Aliases**: Always use `@/` imports instead of relative paths
+- **Import Organization**: External → builtin → internal → sibling → parent (auto-sorted)
+- **Naming Conventions**: Use "URL" (not "Url"), "API" (not "Api"), "ID" (not "Id")
+- **Type Safety**: NEVER use `@ts-expect-error` or `@ts-ignore` - fix type issues properly
+- **Functions**: Prefer `const` over `let`, use async/await, include explicit return types
+- **Comments**: Use JSDoc for complex logic; avoid redundant comments explaining obvious code
 
 **ESLint Rules:**
 
@@ -136,25 +148,43 @@ Uses `config` npm package with environment-specific files:
 - **External Services**: Redis, Qdrant, Unstructured API, New Relic
 - **Environment Variables**: Override any config value via environment variables
 
-**Required Environment Variables:**
+**Environment Variables:**
+
+Create a `.env` file for local development (gitignored) with the following variables:
+
+Refer @.env.dist for the full list of environment variables.
+
+**Minimal Setup:**
+
+For basic functionality, you only need:
 
 ```bash
-# Server configuration
+# Core
+NODE_ENV=development
+SERVER_MODE=fastify
 PORT=8080
-SERVER_MODE=fastify  # or 'slack'
 
-# LLM Provider APIs (at least one required)
+# At least one LLM provider
 OPENAI_API_KEY=your_openai_key
-GROQ_API_KEY=your_groq_key
 
-# External services
+# Redis for caching
 REDIS_URL=redis://localhost:6379
-QDRANT_URL=http://localhost:6333
 
-# Slack (if using slack mode)
-SLACK_BOT_TOKEN=xoxb-your-bot-token
-SLACK_SIGNING_SECRET=your_signing_secret
+# Vector database
+QDRANT_URL=http://localhost:6333
 ```
+
+**Adding New Configuration:**
+
+When adding new configuration options, update all relevant places:
+
+1. Add to `config/default.json` with default values
+2. Add to `config/custom-environment-variables.json` for environment variable mapping
+3. Update TypeScript types if using typed config access
+4. Document in `README.md` and environment variable examples
+5. Update Docker and deployment configurations as needed
+
+All configuration keys MUST use consistent naming and be documented.
 
 ## API Endpoints
 
@@ -209,27 +239,31 @@ SLACK_SIGNING_SECRET=your_signing_secret
 ## Testing
 
 - **Framework**: Jest with ts-jest preset and Node.js environment
-- **Structure**: `*.test.ts` files alongside source or in `__tests__/` directories
-- **Coverage**: Enabled with text, lcov, and json reporters
-- **Path Mapping**: Configured to use same aliases as main code
-- **Setup**: Global setup and teardown for test environment
-- **Timeout**: 10 seconds default with auto-clear mocks
+- **Test Files**: `*.test.ts` alongside source or in `__tests__/` directories
+- **Writing Tests**: Write one test case at a time, use descriptive names
+- **Test Names**: Omit "should" from test descriptions (e.g., `it("validates input")` not `it("should validate input")`)
+- **Assertions**: Use `expect(VALUE).toXyz(...)` instead of storing in variables
+- **Mocking**: Mock external dependencies appropriately, auto-clear mocks enabled
+- **Coverage**: Enabled with json, lcov, and text-summary reporters
+- **Path Mapping**: Uses same aliases as main code (`@/src/*`, etc.)
+- **Timeout**: 10 seconds default with global setup and teardown
 
 **Test Commands:**
 
 ```bash
 npm test                    # Run all tests with coverage
-npm test -- --watch        # Watch mode
-npm test -- path/to/test   # Run specific test
+npm test -- --watch        # Watch mode for development
+npm test -- src/path/to/file.test.ts  # Run specific test file
+npm test -- --coverage     # Explicit coverage report
 ```
 
 ## External Services
 
 **Required Services (via Docker Compose):**
 
-- **Redis**: Caching and session storage (`redis:6379`)
-- **Qdrant**: Vector database for embeddings (`qdrant:6333`)
-- **Unstructured API**: Document processing (`unstructured-api:8000`)
+- **Redis**: Caching and session storage (`localhost:6379`)
+- **Qdrant**: Vector database for embeddings (`localhost:6333`)
+- **Unstructured API**: Document processing (`localhost:8082`)
 
 **Optional Services:**
 
@@ -237,15 +271,19 @@ npm test -- path/to/test   # Run specific test
 - **New Relic**: Log analysis and monitoring
 - **Confluence**: Document source integration
 
-## Security & Best Practices
+## Security
 
-- **API Keys**: Never commit secrets; use environment variables
-- **Input Validation**: Zod schemas for request validation where applicable
-- **Rate Limiting**: Configured in Fastify setup
-- **CORS**: Properly configured for API endpoints
-- **Logging**: Structured logging with Pino, including request correlation
-- **Error Handling**: Centralized error middleware
-- **Content Security**: Slack message validation and sanitization
+- **Secrets Management**: NEVER commit API keys, tokens, or secrets to repository
+- **Environment Variables**: Use `.env` files for local development (`.env` is gitignored)
+- **Data Types**: Use appropriate TypeScript types that limit exposure of sensitive information
+- **Input Validation**: Validate all user inputs with Zod schemas on both client and server
+- **Rate Limiting**: Configured in Fastify setup to prevent abuse
+- **CORS**: Properly configured for API endpoints with specific origins
+- **HTTPS**: Use HTTPS in production environments
+- **Dependencies**: Regular `npm audit` and dependency updates
+- **Principle of Least Privilege**: Grant minimum necessary permissions
+- **Logging**: Structured logging with Pino; avoid logging sensitive data
+- **Content Security**: Slack message validation and sanitization to prevent injection attacks
 
 ## Quality Checks
 
@@ -259,7 +297,18 @@ npm test              # Jest test suite
 npm run build         # Production build verification
 ```
 
-All checks must pass. Use `npm run lint:fix` and `npm run format` for auto-fixes.
+All checks must pass. Use `npm run lint -- --fix` and `npm run format` for auto-fixes.
+
+## Git Workflow
+
+- **ALWAYS run quality checks**: `npm run typecheck && npm run lint && npm test` before committing
+- **Fix issues automatically**: `npm run lint -- --fix && npm run format` for auto-fixable problems
+- **Verify build passes**: `npm run build` before pushing to ensure production build works
+- **NEVER force push**: Never use `git push --force` on main branch
+- **Feature branches**: Use `git push --force-with-lease` only on feature branches if needed
+- **Branch verification**: Always verify current branch before any force operations
+- **Commit messages**: Use conventional commit format (enforced by commitlint)
+- **Pre-commit hooks**: Husky + lint-staged automatically format and lint on commit
 
 ## Pull Request Guidelines
 
