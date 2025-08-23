@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --omit=optional --ignore-platform
+        run: npm ci --omit=optional || npm install
 
       - name: Run lint
         run: npm run lint
