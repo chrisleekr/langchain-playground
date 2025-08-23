@@ -107,6 +107,11 @@
     "tsconfig-paths": "4.2.0",
     "typescript": "5.9.2"
   },
+  "optionalDependencies": {
+    "fsevents": "2.3.2",
+    "@types/express": "5.0.3",
+    "@types/express-serve-static-core": "4.19.6"
+  },
   "lint-staged": {
     "**/*": "npm run format:fix",
     "**/*.{js,ts}": "npm run lint:fix"
