@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
-        run: npm install --frozen-lockfile --omit=optional
+        run: npm ci --omit=optional --frozen-lockfile
 
       - name: Run lint
         run: npm run lint
