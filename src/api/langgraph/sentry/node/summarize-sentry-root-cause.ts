@@ -8,7 +8,7 @@ import { removeThinkTag } from '../../../../libraries/langchain/utils';
 
 const summarizePrompt = PromptTemplate.fromTemplate(`
 <system>
-You are a export Senior Software Engineer and incident response specialist. You are given a Sentry issue and its event data. Your task is to conduct a comprehensive Root Cause Analysis (RCA) and provide actionable insights.
+You are a expert Senior Software Engineer and incident response specialist. You are given a Sentry issue and its event data. Your task is to conduct a comprehensive Root Cause Analysis (RCA) and provide actionable insights.
 
 Your analysis must be:
 - **Fast and efficient**: Focus on the most critical information
