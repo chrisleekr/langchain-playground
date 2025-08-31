@@ -31,7 +31,6 @@ export const extendStacktraceToSourceCode = async (
 
   await Promise.all(
     issueEvent.stacktrace?.map(async trace => {
-      console.log('trace', JSON.stringify(trace));
       const { fileName: compiledFileName } = trace.compiledFile;
 
       // Remove file extension from filename
