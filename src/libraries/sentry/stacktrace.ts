@@ -49,12 +49,14 @@ export const extendStacktraceToSourceCode = async (
         return trace;
       }
 
-      const searchCode = await searchGitHubCode(`repo:${config.get<string>('github.owner')}/${issue.project.slug} filename:${normalizedFileName}`, {
+      const githubSearchQuery = `repo:${config.get<string>('github.owner')}/${issue.project.slug} filename:${normalizedFileName}`;
+      logger.info({ githubSearchQuery }, 'Searching GitHub code');
+      const searchCode = await searchGitHubCode(githubSearchQuery, {
         perPage: 1
       });
 
       if (searchCode.items.length === 0) {
-        logger.warn({ normalizedFileName }, 'No code found in GitHub');
+        logger.warn({ githubSearchQuery }, 'No code found in GitHub');
         return trace;
       }
 

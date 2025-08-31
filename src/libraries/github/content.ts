@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import {
   createSourceFile,
   Node,
@@ -115,7 +114,16 @@ export const extractFunctionInfo = (node: Node, sourceFile: SourceFile, function
       endColumn: sourceFile.getLineAndCharacterOfPosition(node.getEnd()).character + 1
     };
   } catch (error) {
-    console.error(`Error extracting function ${functionName}:`, error);
+    logger.error(
+      {
+        functionName,
+        error: {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : 'Unknown stack'
+        }
+      },
+      'Error extracting function'
+    );
     return null;
   }
 };
