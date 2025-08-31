@@ -1,6 +1,8 @@
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { Config } from 'jest';
-import { compilerOptions } from './tsconfig.json';
+
+import fs from 'fs';
+const compilerOptions = JSON.parse(fs.readFileSync('./tsconfig.json', 'utf8')).compilerOptions;
 
 const config: Config = {
   setupFiles: ['dotenv/config'],

@@ -191,9 +191,9 @@ All configuration keys MUST use consistent naming and be documented.
 **Document Management (RAG):**
 
 - `DELETE /document/reset` - Reset document store
-- `PUT /document/parent/load/directory` - Load documents from directory
-- `PUT /document/parent/load/confluence` - Load from Confluence
-- `POST /document/parent/query` - Query documents with RAG
+- `PUT /document/load/directory` - Load documents from directory
+- `PUT /document/load/confluence` - Load from Confluence
+- `POST /document/query` - Query documents with RAG
 
 **LLM Provider Endpoints:**
 
@@ -206,6 +206,7 @@ All configuration keys MUST use consistent naming and be documented.
 
 - `POST /langgraph/thread` - Create LangGraph workflow thread
 - `POST /langgraph/newrelic/investigate` - New Relic log analysis workflow
+- `POST /langgraph/sentry/investigate` - Sentry issue investigation workflow
 
 **Health & Monitoring:**
 

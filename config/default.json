@@ -95,5 +95,13 @@
     "getRelevantURLs": {
       "additionalInstructions": "- URL Construction Rules:\n  - If the field key 'url' is present, convert to 'http://my-url.com/<value>' replacing <value> with the field value"
     }
+  },
+  "sentry": {
+    "organizationSlug": "",
+    "authToken": ""
+  },
+  "github": {
+    "personalAccessToken": "",
+    "owner": ""
   }
 }

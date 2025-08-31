@@ -1,0 +1,21 @@
+export const test = () => {
+  console.log('test');
+  test2();
+};
+
+const test2 = () => {
+  console.log('test2');
+};
+
+export const getItems = createSelector(
+  (state: State) => getItems(state),
+  (items): Array<App.Item> => items.filter(isItem),
+)
+
+const {
+  code
+} = useAppSelector((state) => {
+  return {
+    code: state.code
+  }
+}, shallowEqual)

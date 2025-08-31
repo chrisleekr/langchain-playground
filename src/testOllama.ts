@@ -98,8 +98,6 @@ Question: {input}`
       input: humanMessage
     });
     logger.info({ result }, 'Invoking the retrieval chain...done');
-
-    logger.info(result.answer, 'Answer:');
   } catch (err) {
     logger.error({ err }, 'An error has occurred.');
 
