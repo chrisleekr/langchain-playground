@@ -31,7 +31,10 @@ console.log(config);
     const runnable = graph.compile();
 
     // For Message graph, input should always be a message or list of messages.
-    const res = await runnable.invoke(new HumanMessage(humanMessage));
+    const input = {
+      messages: [new HumanMessage(humanMessage)]
+    };
+    const res = await runnable.invoke(input);
 
     console.log(res);
   } catch (err) {

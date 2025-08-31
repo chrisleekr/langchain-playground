@@ -122,5 +122,13 @@
     "getRelevantURLs": {
       "additionalInstructions": "NEWRELIC_GET_RELEVANT_URLS_ADDITIONAL_INSTRUCTIONS"
     }
+  },
+  "sentry": {
+    "organizationSlug": "SENTRY_ORGANIZATION_SLUG",
+    "authToken": "SENTRY_AUTH_TOKEN"
+  },
+  "github": {
+    "personalAccessToken": "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "owner": "GITHUB_OWNER"
   }
 }

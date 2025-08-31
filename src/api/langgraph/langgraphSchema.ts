@@ -7,3 +7,7 @@ export const PostLanggraphThreadId = Type.Object({
 export const PostLanggraphNewRelicInvestigate = Type.Object({
   issueId: Type.String()
 });
+
+export const PostLanggraphSentryInvestigate = Type.Object({
+  issueId: Type.String()
+});
