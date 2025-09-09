@@ -11,7 +11,6 @@ import { QdrantVectorStore } from '@langchain/qdrant';
 import {
   getChatOllama,
   getOllamaEmbeddings,
-  getParentDocumentRetriever,
   getQdrantVectorStore,
   removeCodeBlock,
   removeThinkTag,
@@ -217,13 +216,15 @@ async function invokeParentDocumentRetriever(
   collectionName: string,
   logger: Logger
 ): Promise<Array<Document>> {
-  const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
+  const retriever = vectorStore.asRetriever();
 
   const matchedDocs = new Map<string, DocumentSource>();
 
   // Batch process to avoid any bottle neck by processing one query variation at a time.
-  logger.info('Retrieving documents from vector store');
-  const retrieverPromises = queryVariations.map(queryVariation => retriever.invoke(queryVariation.query));
+  const retrieverPromises = queryVariations.map(queryVariation => {
+    logger.info({ query: queryVariation.query }, 'Retrieving documents from vector store');
+    return retriever.invoke(queryVariation.query);
+  });
   const retrieverResults = await Promise.allSettled(retrieverPromises);
   logger.info({ retrieverResults }, 'Retrieving documents from vector store completed');
 

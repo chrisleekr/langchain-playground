@@ -23,6 +23,7 @@ This project provides both REST API endpoints or Slack bot integration for inter
 
 - [DirectoryLoader](https://js.langchain.com/docs/integrations/document_loaders/file_loaders/directory/): Loads documents from a directory via Unstructured API.
 - [ConfluenceLoader](https://js.langchain.com/docs/integrations/document_loaders/web_loaders/confluence/): Loads documents from Confluence.
+- [RecursiveCharacterTextSplitter](https://js.langchain.com/docs/how_to/code_splitter/#markdown): Splits documents into chunks of text.
 - [GitHubLoader](https://js.langchain.com/docs/integrations/document_loaders/web_loaders/github/): TODO.
 
 ### Services
