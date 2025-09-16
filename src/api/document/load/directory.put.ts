@@ -21,7 +21,7 @@ export default function parentLoadDirectoryPut() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const logger = request.log as Logger;
     const collectionName = config.get<string>('document.collectionName');
-    const directoryPath = __dirname + '/../../../../data/langgraph';
+    const directoryPath = __dirname + '/../../../../../data/langgraph';
 
     // Initialize document loader
     logger.info({ directoryPath }, 'Initializing document loader');

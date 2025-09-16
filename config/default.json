@@ -75,11 +75,21 @@
     }
   },
   "aws": {
-    "region": "us-east-1",
-    "credentials": {
-      "profile": "default",
-      "accessKeyId": "",
-      "secretAccessKey": ""
+    "bedrock": {
+      "region": "us-east-1",
+      "model": "anthropic.claude-sonnet-4-20250514-v1:0",
+      "embeddingModel": "amazon.titan-embed-text-v2:0",
+      "knowledgeBaseId": "",
+      "credentials": {
+        "profile": "default",
+        "accessKeyId": "",
+        "secretAccessKey": ""
+      }
+    },
+    "opensearch": {
+      "region": "us-east-1",
+      "endpoint": "https://xxx.us-east-1.aoss.amazonaws.com",
+      "index": "document_chunks"
     }
   },
   "newrelic": {

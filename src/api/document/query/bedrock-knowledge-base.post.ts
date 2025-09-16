@@ -1,36 +1,24 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
-import config from 'config';
 import { Document } from '@langchain/core/documents';
-import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { PromptTemplate } from '@langchain/core/prompts';
+import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { RunnableSequence } from '@langchain/core/runnables';
 import z from 'zod';
-import { QdrantVectorStore } from '@langchain/qdrant';
-import {
-  getChatOllama,
-  getOllamaEmbeddings,
-  getQdrantVectorStore,
-  removeCodeBlock,
-  removeThinkTag,
-  LLM,
-  truncateStructuredContent,
-  DocumentSource
-} from '@/libraries';
+import { AmazonKnowledgeBaseRetriever } from '@langchain/aws';
+import { getChatBedrockConverse, removeThinkTag, LLM, truncateStructuredContent, removeCodeBlock } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ServiceResponse, ResponseStatus } from '@/models/serviceResponse';
-
-type QueryVariation = {
-  query: string;
-  weight: number;
-};
+import { getAmazonKnowledgeBaseRetriever } from '@/libraries/langchain/retrievers';
+import { fetchDocumentChunksBySource } from '@/libraries/aws';
+import { QueryVariation } from './types';
 
 /**
  * This endpoint is to answer the query by finding relevant documents from vector store and generating answer using LLM.
  * @returns
  */
-export default function parentQueryPost() {
+export default function bedrockKnowledgeBaseQueryPost() {
   return async (
     request: FastifyRequest<{
       Body: {
@@ -51,17 +39,15 @@ export default function parentQueryPost() {
         return;
       }
 
-      const model = getChatOllama(0, logger);
-      const embeddings = getOllamaEmbeddings(logger);
-      const collectionName = config.get<string>('document.collectionName');
-      const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);
+      const model = getChatBedrockConverse({ temperature: 0, maxTokens: 1000 }, logger);
+      const retriever = await getAmazonKnowledgeBaseRetriever({ topK: 3 }, logger);
 
       // Generates query variations with query and weight using LLM. Weight is used to indicate the relevance of the query variation. Higher weight = more relevant.
       const queryVariations = await generateQueryVariations(userQuery, model, logger);
       logger.info({ originalQuery: userQuery, variations: queryVariations }, 'Generated query variations');
 
-      // Retrieves documents from vector store by query variations using Qdrant.
-      const searchResults = await invokeParentDocumentRetriever(queryVariations, vectorStore, collectionName, logger);
+      // Retrieves documents from Amazon Knowledge Base.
+      const searchResults = await invokeAmazonKnowledgeBaseRetriever(queryVariations, retriever, logger);
       logger.info({ searchResults }, 'Search results');
 
       // Verifies if the documents are relevant to the query variations using LLM.
@@ -121,69 +107,20 @@ async function generateQueryVariations(query: string, model: LLM, logger: Logger
             })
           )
           .max(4)
-          .describe('Array of 2-4 query variations including the original')
+          .describe('Array of 2 query variations including the original')
       })
     );
 
     const queryVariationPrompt = PromptTemplate.fromTemplate(`
-You are an expert at creating query variations for document retrieval systems. Your goal is to generate intelligent alternative phrasings that will help find relevant documents from different angles. You must always return valid JSON. Do not return any additional text. Do not wrap JSON in markdown code blocks. Return only the raw JSON object.
-
-STEP 1: ANALYZE THE QUERY INTENT
-Understand what information the user is seeking:
-- What is the core topic or domain?
-- What specific aspects are they interested in?
-- What type of documents would contain this information?
-- Is this a factual, procedural, conceptual, or technical query?
-
-STEP 2: INTELLIGENT VARIATION GENERATION
-Your task is to create meaningful query variations using this mandatory process:
-
-A. IDENTIFY CORE CONCEPTS
-- Extract the main subject matter
-- Identify key terms and their potential synonyms
-- Consider domain-specific terminology
-- Think about how the same information might be expressed differently
-
-B. APPLY VARIATION STRATEGIES
-- **Procedural**: Convert concepts to "how to" format if applicable
-- **Definitional**: Add "what is" or "definition" for concept queries
-- **Technical**: Use domain-specific terminology if the query suggests a technical domain
-- **Broader**: Remove specific terms for wider coverage while maintaining relevance
-- **Alternative phrasing**: Use synonyms and different sentence structures
-- **Contextual**: Consider related concepts that might appear in relevant documents
-
-C. MANDATORY QUALITY RULES
-- Do not include the original query in the variations array.
-- Generate 2-3 additional meaningful variations (maximum 4 total including original)
-- Each variation must maintain the core intent of the original query
-- Assign weights based on likelihood to find relevant content:
-  * Higher weights (0.8-1.0): Close alternatives with same meaning
-  * Medium weights (0.6-0.7): Broader searches or alternative terminology
-  * Lower weights (0.4-0.5): Conceptually related but different phrasing
-- Avoid variations that completely change the meaning or intent
-- Each variation should target documents the original query might miss
-
-STEP 3: WEIGHT ASSIGNMENT LOGIC
-Consider these factors when assigning weights:
-- Semantic similarity to original query (higher = more weight)
-- Likelihood of finding relevant documents (higher = more weight)
-- Specificity vs. broadness (more specific usually gets higher weight)
-- Domain appropriateness (domain-specific terms get higher weight in technical queries)
-
-STEP 4: VALIDATION BEFORE RESPONSE
-Before returning your response, verify:
-- All variations maintain core intent
-- Weights are between 0.1 and 1.0
-- Maximum 4 variations total
-- Each variation has a clear purpose
-- No duplicate or near-duplicate variations
-
-STEP 5: RESPONSE FORMATTING
-{format_instructions}
+<system>
+You are a query creation agent. You will be provided a query what it searches over. The user will provide you a query, and your job is to determine the optimal query to use based on the user's query. You must return 2 query variations.
+</system>
 
 <query>
 {query}
 </query>
+
+{format_instructions}
 `);
 
     const invokeParams = {
@@ -210,90 +147,44 @@ STEP 5: RESPONSE FORMATTING
   }
 }
 
-async function invokeParentDocumentRetriever(
+async function invokeAmazonKnowledgeBaseRetriever(
   queryVariations: Array<QueryVariation>,
-  vectorStore: QdrantVectorStore,
-  collectionName: string,
+  retriever: AmazonKnowledgeBaseRetriever,
   logger: Logger
 ): Promise<Array<Document>> {
-  const retriever = vectorStore.asRetriever();
-
-  const matchedDocs = new Map<string, DocumentSource>();
-
   // Batch process to avoid any bottle neck by processing one query variation at a time.
-  const retrieverPromises = queryVariations.map(queryVariation => {
-    logger.info({ query: queryVariation.query }, 'Retrieving documents from vector store');
-    return retriever.invoke(queryVariation.query);
-  });
+  logger.info('Retrieving documents from Amazon Knowledge Base');
+  const retrieverPromises = queryVariations.map(queryVariation => retriever.invoke(queryVariation.query));
   const retrieverResults = await Promise.allSettled(retrieverPromises);
-  logger.info({ retrieverResults }, 'Retrieving documents from vector store completed');
+  logger.info({ retrieverResults }, 'Retrieving documents from Amazon Knowledge Base completed');
 
-  retrieverResults.forEach(result => {
-    logger.info({ result }, 'Retriever result');
-    if (result.status === 'fulfilled') {
-      result.value.forEach(doc => {
-        if (doc.metadata.url) {
-          const uniqueDoc: DocumentSource = { metadataPath: 'metadata.url', metadataValue: doc.metadata.url };
-          matchedDocs.set(doc.metadata.url, uniqueDoc);
-        } else if (doc.metadata.pdf?.info?.Title) {
-          const uniqueDoc: DocumentSource = { metadataPath: 'metadata.pdf.info.Title', metadataValue: doc.metadata.pdf.info.Title };
-          matchedDocs.set(doc.metadata.pdf.info.Title, uniqueDoc);
-        } else {
-          const uniqueDoc: DocumentSource = { metadataPath: 'metadata.doc_id', metadataValue: doc.metadata.doc_id };
-          matchedDocs.set(doc.metadata.doc_id, uniqueDoc);
-        }
-      });
-    }
-  });
+  const matchedDocs = new Map<string, Document>();
 
-  const uniqueDocs = Array.from(matchedDocs.values());
-
-  logger.info({ uniqueDocs }, 'Unique docs');
-
-  // Get docs from vector store by metadataPath and metadataValue
-  const allResults: Array<Document> = [];
-
-  // Batch process to avoid any bottle neck by processing one unique doc at a time.
-  // Can use filter with OR to get all docs. But for convenience, let's use scroll per unique doc. It's still fast enough.
-  logger.info('Getting docs from vector store');
-  const wholeDocPromises = uniqueDocs.map(uniqueDoc =>
-    vectorStore.client.scroll(collectionName, {
-      limit: 10000, // Try to get all docs
-      filter: {
-        must: [
-          {
-            key: uniqueDoc.metadataPath,
-            match: { value: uniqueDoc.metadataValue }
-          }
-        ]
-      },
-      order_by: { key: 'metadata.loc.lines.from', direction: 'asc' }
+  const uniqueRelevantResults = new Map<string, Document>();
+  await Promise.all(
+    retrieverResults.map(async result => {
+      logger.info({ result }, 'Retriever result');
+      if (result.status === 'fulfilled') {
+        result.value.forEach(doc => {
+          uniqueRelevantResults.set(doc.metadata.source, doc);
+        });
+      }
     })
   );
 
-  const wholeDocResults = await Promise.allSettled(wholeDocPromises);
-  logger.info({ wholeDocResults }, 'Getting docs from vector store completed');
-
-  wholeDocResults.forEach(result => {
-    if (result.status === 'fulfilled') {
-      const doc = result.value;
-      const combinedDocument = doc.points.map(point => point.payload?.content).join('\n');
-      // Get metadata from first point and remove loc because loc is no longer valid as it's full document.
-      const metadata = { ...(doc.points?.[0]?.payload?.metadata || {}), loc: undefined };
-      allResults.push(new Document({ pageContent: combinedDocument, metadata }));
-    }
-  });
-
-  logger.info({ allResults }, 'Getting docs from vector store completed');
-
-  logger.info(
-    {
-      allResults: allResults.length
-    },
-    'Search pipeline completed'
+  await Promise.all(
+    Array.from(uniqueRelevantResults.values()).map(async (doc: Document) => {
+      logger.info({ doc }, 'Document');
+      // Fetch full document from vector store opensearch
+      const fullDocument = await fetchDocumentChunksBySource(doc.metadata.source, logger);
+      logger.info({ fullDocument }, 'Full document');
+      matchedDocs.set(doc.metadata.source, { ...doc, pageContent: fullDocument });
+    })
   );
 
-  return allResults;
+  logger.info({ matchedDocs }, 'Matched docs');
+
+  return Array.from(matchedDocs.values());
 }
 
 async function verifyDocuments(
@@ -313,15 +204,18 @@ async function verifyDocuments(
   // This prompt is simplified to focus on the document relevance to the query variations.
   // Lengthy prompt does not work well with lengthy documents.
   const verifyDocumentsPrompt = PromptTemplate.fromTemplate(`
+<system>
 Analyze if this document is relevant to the query variations below.
+</system>
 
-Query variations:
+<query_variations>
 {query_variations}
+</query_variations>
 
-Document excerpt:
+<document>
 {document}
+</document>
 
-Format instructions:
 {format_instructions}
 
 You must always return valid JSON fenced by a markdown code block. Do not return any additional text.

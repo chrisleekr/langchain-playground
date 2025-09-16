@@ -3,10 +3,15 @@ import { Embeddings } from '@langchain/core/embeddings';
 import { OllamaEmbeddings } from '@langchain/ollama';
 import { PineconeEmbeddings } from '@langchain/pinecone';
 
+import { AwsCredentialIdentityProvider } from '@aws-sdk/types';
+import { fromSSO } from '@aws-sdk/credential-providers';
+import { BedrockEmbeddings } from '@langchain/aws';
 import { Logger } from '@/libraries';
 
 let ollamaEmbeddings: Embeddings;
 let pineconeEmbeddings: Embeddings;
+let bedrockEmbeddings: Embeddings;
+
 const getOllamaEmbeddings = (logger: Logger): Embeddings => {
   if (!ollamaEmbeddings) {
     const baseUrl = config.get<string>('ollama.baseUrl');
@@ -33,4 +38,26 @@ const getPineconeEmbeddings = (logger: Logger): Embeddings => {
   return pineconeEmbeddings;
 };
 
-export { getOllamaEmbeddings, getPineconeEmbeddings };
+const getBedrockEmbeddings = (logger: Logger): Embeddings => {
+  if (!bedrockEmbeddings) {
+    const model = config.get<string>('aws.bedrock.embeddingModel');
+    logger.info({ model }, 'Getting Bedrock Embeddings...');
+
+    let credentials: AwsCredentialIdentityProvider;
+    if (config.get<string>('aws.bedrock.credentials.profile')) {
+      credentials = fromSSO({
+        profile: config.get<string>('aws.bedrock.credentials.profile')
+      });
+    } else {
+      credentials = async () => ({
+        accessKeyId: config.get<string>('aws.bedrock.credentials.accessKeyId'),
+        secretAccessKey: config.get<string>('aws.bedrock.credentials.secretAccessKey')
+      });
+    }
+
+    bedrockEmbeddings = new BedrockEmbeddings({ model, credentials, region: config.get<string>('aws.bedrock.region') });
+  }
+  return bedrockEmbeddings;
+};
+
+export { getOllamaEmbeddings, getPineconeEmbeddings, getBedrockEmbeddings };

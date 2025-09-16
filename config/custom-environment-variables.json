@@ -90,11 +90,21 @@
     }
   },
   "aws": {
-    "region": "AWS_REGION",
-    "credentials": {
-      "profile": "AWS_PROFILE",
-      "accessKeyId": "AWS_ACCESS_KEY_ID",
-      "secretAccessKey": "AWS_SECRET_ACCESS_KEY"
+    "bedrock": {
+      "region": "AWS_BEDROCK_REGION",
+      "model": "AWS_BEDROCK_MODEL",
+      "embeddingModel": "AWS_BEDROCK_EMBEDDING_MODEL",
+      "knowledgeBaseId": "AWS_BEDROCK_KNOWLEDGE_BASE_ID",
+      "credentials": {
+        "profile": "AWS_BEDROCK_PROFILE",
+        "accessKeyId": "AWS_BEDROCK_ACCESS_KEY_ID",
+        "secretAccessKey": "AWS_BEDROCK_SECRET_ACCESS_KEY"
+      }
+    },
+    "opensearch": {
+      "region": "AWS_OPENSEARCH_REGION",
+      "endpoint": "AWS_OPENSEARCH_ENDPOINT",
+      "index": "AWS_OPENSEARCH_INDEX"
     }
   },
   "newrelic": {
