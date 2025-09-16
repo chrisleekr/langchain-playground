@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify/types/plugin';
 
 import { createRouteSchema } from '@/libraries/httpHandlers';
 import resetDelete from '@/api/document/reset.delete';
-import queryPost from '@/src/api/document/query/parent.post';
+import queryPost from '@/api/document/query/parent.post';
 import { PostQuery } from '@/api/document/documentSchema';
 import loadDirectoryPut from '@/api/document/load/directory.put';
 import loadConfluencePut from '@/api/document/load/confluence.put';
