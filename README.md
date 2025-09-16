@@ -81,6 +81,12 @@ Routes:
 
 ### Document query process
 
+#### AWS Bedrock Knowledge Base
+
+<img width="919" height="507" alt="Image" src="https://github.com/user-attachments/assets/7ba5dc49-33dc-451a-959d-2b9f5fc52b44" />
+
+#### Parent document retriever
+
 <img width="852" height="233" alt="Image" src="https://github.com/user-attachments/assets/678294fe-e229-4bd6-ab8a-0a952fa4804a" />
 
 ## Slack integration

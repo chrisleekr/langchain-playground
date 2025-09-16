@@ -2,14 +2,18 @@ import config from 'config';
 import { ChatOllama, Ollama } from '@langchain/ollama';
 import { ChatGroq } from '@langchain/groq';
 import { ChatOpenAI } from '@langchain/openai';
+import { ChatBedrockConverse } from '@langchain/aws';
+import { fromSSO } from '@aws-sdk/credential-providers';
+import type { AwsCredentialIdentityProvider } from '@aws-sdk/types';
 import { Logger } from '@/libraries';
 
 let chatOllama: ChatOllama;
 let llmOllama: Ollama;
 let chatGroq: ChatGroq;
 let chatOpenAI: ChatOpenAI;
+let chatBedrockConverse: ChatBedrockConverse;
 
-type LLM = ChatOllama | Ollama | ChatGroq | ChatOpenAI;
+type LLM = ChatOllama | Ollama | ChatGroq | ChatOpenAI | ChatBedrockConverse;
 
 const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
   logger.info(
@@ -93,4 +97,36 @@ const getChatOpenAI = (logger: Logger): ChatOpenAI => {
   return chatOpenAI;
 };
 
-export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI, LLM };
+interface GetChatBedrockConverseParams {
+  temperature: number;
+  maxTokens: number;
+}
+
+const getChatBedrockConverse = ({ temperature, maxTokens }: GetChatBedrockConverseParams, logger: Logger): ChatBedrockConverse => {
+  if (!chatBedrockConverse) {
+    logger.info({ temperature, maxTokens, profile: config.get('aws.bedrock.credentials.profile') }, 'Getting ChatBedrockConverse...');
+
+    let credentials: AwsCredentialIdentityProvider;
+    if (config.get<string>('aws.bedrock.credentials.profile')) {
+      credentials = fromSSO({
+        profile: config.get<string>('aws.bedrock.credentials.profile')
+      });
+    } else {
+      credentials = async () => ({
+        accessKeyId: config.get<string>('aws.bedrock.credentials.accessKeyId'),
+        secretAccessKey: config.get<string>('aws.bedrock.credentials.secretAccessKey')
+      });
+    }
+
+    chatBedrockConverse = new ChatBedrockConverse({
+      model: config.get<string>('aws.bedrock.model'),
+      temperature,
+      maxTokens,
+      region: config.get<string>('aws.bedrock.region'),
+      credentials
+    });
+  }
+  return chatBedrockConverse;
+};
+
+export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI, getChatBedrockConverse, GetChatBedrockConverseParams, LLM };
