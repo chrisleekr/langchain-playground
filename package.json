@@ -49,7 +49,7 @@
     "@fastify/cors": "11.1.0",
     "@fastify/helmet": "13.0.1",
     "@fastify/rate-limit": "10.3.0",
-    "@fastify/type-provider-typebox": "5.2.0",
+    "@fastify/type-provider-typebox": "6.0.0",
     "@langchain/aws": "^0.1.15",
     "@langchain/community": "^0.3.55",
     "@langchain/core": "^0.3.75",
