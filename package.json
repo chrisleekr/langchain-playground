@@ -52,7 +52,7 @@
     "@fastify/type-provider-typebox": "5.2.0",
     "@langchain/aws": "^0.1.15",
     "@langchain/community": "^0.3.55",
-    "@langchain/core": "^0.3.75",
+    "@langchain/core": "^0.3.78",
     "@langchain/groq": "0.2.3",
     "@langchain/langgraph": "0.4.9",
     "@langchain/mcp-adapters": "0.6.0",
