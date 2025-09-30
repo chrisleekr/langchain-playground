@@ -43,7 +43,7 @@
     "@aws-crypto/sha256-js": "^5.2.0",
     "@aws-sdk/credential-provider-node": "^3.888.0",
     "@aws-sdk/credential-providers": "^3.888.0",
-    "@aws-sdk/types": "^3.887.0",
+    "@aws-sdk/types": "^3.893.0",
     "@chroma-core/default-embed": "0.1.8",
     "@fastify/compress": "8.1.0",
     "@fastify/cors": "11.1.0",
