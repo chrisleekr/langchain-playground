@@ -76,7 +76,7 @@
     "ioredis": "5.7.0",
     "langchain": "0.3.33",
     "pdf-parse": "1.1.1",
-    "pino": "9.9.5",
+    "pino": "9.12.0",
     "semantic-chunking": "2.4.4",
     "slackify-markdown": "4.5.0",
     "typescript": "5.9.2",
