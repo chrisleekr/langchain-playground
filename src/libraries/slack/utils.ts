@@ -24,7 +24,7 @@ export const formatTimestamp = (orgTimestamp: string) => {
 export const parseArchiveURLs = (text: string): string[] => {
   // Regex pattern to match Slack archive URLs
   // Matches: https://{workspace}.slack.com/archives/{channelId}/p{timestamp}
-  const archiveUrlPattern = /https:\/\/[^\/]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+/g;
+  const archiveUrlPattern = /https:\/\/[^\/]+\.slack\.com\/archives\/[A-Za-z0-9]+\/p\d+/g;
 
   const match = text.match(archiveUrlPattern) || [];
 
@@ -45,7 +45,7 @@ export interface ParseThreadTsFromArchiveURLResult {
 export const parseThreadTsFromArchiveURL = (archiveURL: string): ParseThreadTsFromArchiveURLResult | null => {
   // Regex pattern to match and capture Slack archive URL components
   // Matches: https://{workspace}.slack.com/archives/{channelId}/p{timestamp}
-  const archiveUrlPattern = /^https:\/\/[^\/]+\.slack\.com\/archives\/([A-Z0-9]+)\/p(\d+)$/;
+  const archiveUrlPattern = /https:\/\/[^\/]+\.slack\.com\/archives\/[A-Za-z0-9]+\/p\d+/g;
 
   const match = archiveURL.match(archiveUrlPattern);
 

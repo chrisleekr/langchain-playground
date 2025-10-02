@@ -5,7 +5,7 @@ import { logger } from '@/libraries';
 const userNameCache: Record<string, string> = {};
 
 export const getUserName = async (client: WebClient, userId: string): Promise<string> => {
-  logger.info({ userNameCache }, 'getUserName userNameCache');
+  logger.debug({ cacheSize: Object.keys(userNameCache).length }, 'getUserName called');
   try {
     if (userNameCache[userId]) {
       logger.info({ userId }, 'getUserName User name cache hit');

@@ -125,7 +125,7 @@ export const formatThreadReplies = async (client: WebClient, replies: MessageEle
                   };
                 })
               )
-            ).filter(file => file !== null)
+            ).filter((file): file is NonNullable<typeof file> => file !== null)
           : []
       };
 

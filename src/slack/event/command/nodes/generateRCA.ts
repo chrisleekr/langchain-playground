@@ -103,16 +103,18 @@ export const generateRCANode = async (state: typeof OverallStateAnnotation.State
   const formattedRepliesWithImages = await Promise.all(
     formattedReplies.map(async reply => {
       if (reply.images) {
-        reply.images = await Promise.all(
+        const imagesWithDescriptions = await Promise.all(
           reply.images.map(async image => {
             if (!image.base64 || !image.mimeType) {
               logger.info({ image }, 'executeImageAnalysis image.base64 or image.mimeType is null');
               return null;
             }
-            image.description = await executeImageAnalysis(image.mimeType, image.base64);
-            return image;
+            const description = await executeImageAnalysis(image.mimeType, image.base64);
+            return { ...image, description }; // Return new object
           })
-        ).then(images => images.filter(image => image !== null));
+        ).then(images => images.filter((image): image is NonNullable<typeof image> => image !== null));
+
+        return { ...reply, images: imagesWithDescriptions }; // Return new object
       }
       return reply;
     })
