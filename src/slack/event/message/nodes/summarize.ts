@@ -2,7 +2,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
-import { getChatLLM } from '../utils';
+import { getChatLLM } from '../../utils';
 
 export const summarizeNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { messageHistory, userMessage } = state;

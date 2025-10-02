@@ -1,7 +1,6 @@
 import { END, START, StateGraph } from '@langchain/langgraph';
 import type { WebClient } from '@slack/web-api';
 import { logger } from '@/libraries';
-import { NormalizedMessage, OverallStateAnnotation } from './constants';
 import { intentClassifierNode } from './nodes/intentClassifier';
 import { intentRouterNode } from './nodes/intentRouter';
 import { getMessageHistoryNode } from './nodes/getMessageHistory';
@@ -11,6 +10,7 @@ import { translateNode } from './nodes/translate';
 import { findInformationNode } from './nodes/findInformation';
 import { generalResponseNode } from './nodes/generalResponse';
 import { finalResponseNode } from './nodes/finalResponse';
+import { NormalizedMessage, OverallStateAnnotation } from './constants';
 import { routeToNextIntent } from './utils';
 
 export const executeStateGraph = async (userMessage: NormalizedMessage, client: WebClient): Promise<typeof OverallStateAnnotation.State> => {

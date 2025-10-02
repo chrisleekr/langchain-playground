@@ -4,7 +4,7 @@ import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { getConversationHistory, getConversationReplies, logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
-import { getChatLLM } from '../utils';
+import { getChatLLM } from '../../utils';
 
 export const getMessageHistoryNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { userMessage, client } = state;
