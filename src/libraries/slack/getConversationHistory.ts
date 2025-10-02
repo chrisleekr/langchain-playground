@@ -1,7 +1,7 @@
 import type { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { logger } from '@/libraries';
 import { formatTimestamp } from './utils';
-import { NormalizedMessage } from '../../slack/event/constants';
+import { NormalizedMessage } from '../../slack/event/message/constants';
 
 export const getConversationHistory = async (
   client: WebClient,

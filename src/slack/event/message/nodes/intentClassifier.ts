@@ -4,7 +4,7 @@ import { RunnableSequence } from '@langchain/core/runnables';
 import { z } from 'zod';
 import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation, intentToNodeMap } from '../constants';
-import { getChatLLM } from '../utils';
+import { getChatLLM } from '../../utils';
 
 export const intentClassifierNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { userMessage, client } = state;

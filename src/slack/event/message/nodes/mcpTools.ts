@@ -5,7 +5,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { getMCPTools, logger, removeCodeBlock, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
-import { getChatLLM } from '../utils';
+import { getChatLLM } from '../../utils';
 
 export const mcpToolsNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { userMessage, messageHistory } = state;
