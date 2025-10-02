@@ -40,9 +40,9 @@ This project provides both REST API endpoints or Slack bot integration for inter
 - `fastify`: serves as a web server in `src/api`
 - `slack`: serves as a Slack app in `src/slack`
 
-## Sentry log analysis
+## Sentry alert analysis
 
-In this project, I used LangGraph to build a workflow to analyze Sentry logs.
+In this project, I used LangGraph to build a workflow to analyze Sentry alert.
 
 The workflow in big picture is as follows:
 
@@ -63,6 +63,21 @@ The workflow in big picture is as follows:
 3. Generate a summary of the investigation by analyzing the request timeline, service error logs and relevant URLs
 
 <img width="1083" height="581" alt="New Relic log analysis using LangGraph" src="https://github.com/user-attachments/assets/917264df-7667-4f41-b200-b4009c302f28" />
+
+## Generate Alert Runbook from Slack thread
+
+The idea of this workflow is to generate Alert Runbook from Slack thread and send it to the user. Once the user approves the Alert Runbook, then RCA will be added to the Alert Runbook.
+
+The workflow in big picture is as follows:
+
+1. Get all replies from Slack thread
+2. Enrich replies such as images, NewRelic query, etc.
+3. Use LLM to determine there is a solution to solve the problem in the replies
+4. Use LLM to generate Alert Runbook from the replies and solution
+5. Send the Alert Runbook to the user for approval
+6. If the user approves the Alert Runbook, then RCA will be added to the Alert Runbook.
+
+<img width="1271" height="460" alt="Alert Runbook generation from Slack thread" src="https://github.com/user-attachments/assets/70933b8b-fc93-4658-af8f-572b25a11399" />
 
 ## Answer from Retriever-Augmented Generation (RAG)
 
