@@ -101,29 +101,31 @@ export const formatThreadReplies = async (client: WebClient, replies: MessageEle
         text: reply.text ?? '',
         threadTs: reply.thread_ts ?? '',
         images: reply.files
-          ? await Promise.all(
-              reply.files.map(async file => {
-                // download the images
+          ? (
+              await Promise.all(
+                reply.files.map(async file => {
+                  // download the images
 
-                if (!file.url_private_download || !file.mimetype) {
-                  logger.info({ file }, 'downloadFile file.url_private_download is null');
-                  return null;
-                }
+                  if (!file.url_private_download || !file.mimetype) {
+                    logger.info({ file }, 'downloadFile file.url_private_download or file.mimetype is null');
+                    return null;
+                  }
 
-                if (!isImageMimeType(file.mimetype)) {
-                  logger.info({ file }, 'downloadFile file.mimetype is not an image');
-                  return null;
-                }
-                const fileBase64 = await downloadFile(file.url_private_download);
-                logger.info('downloadFile fileBase64');
-                return {
-                  url: file.url_private_download,
-                  mimeType: file.mimetype,
-                  base64: fileBase64,
-                  description: ''
-                };
-              })
-            ).then(files => files.filter(file => file !== null))
+                  if (!isImageMimeType(file.mimetype)) {
+                    logger.info({ file }, 'downloadFile file.mimetype is not an image');
+                    return null;
+                  }
+                  const fileBase64 = await downloadFile(file.url_private_download);
+                  logger.info('downloadFile fileBase64');
+                  return {
+                    url: file.url_private_download,
+                    mimeType: file.mimetype,
+                    base64: fileBase64,
+                    description: ''
+                  };
+                })
+              )
+            ).filter(file => file !== null)
           : []
       };
 

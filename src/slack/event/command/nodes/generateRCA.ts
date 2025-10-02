@@ -8,7 +8,7 @@ import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../../utils';
 
 export const generateRCA = async (allReplies: FormattedMessageElement[]): Promise<string> => {
-  // Normalize the allReplies to a string
+  // Convert replies to timeline format for analysis
 
   const model = getChatLLM(0, logger);
 
@@ -103,16 +103,16 @@ export const generateRCANode = async (state: typeof OverallStateAnnotation.State
   const formattedRepliesWithImages = await Promise.all(
     formattedReplies.map(async reply => {
       if (reply.images) {
-        await Promise.all(
+        reply.images = await Promise.all(
           reply.images.map(async image => {
             if (!image.base64 || !image.mimeType) {
               logger.info({ image }, 'executeImageAnalysis image.base64 or image.mimeType is null');
-              return;
+              return null;
             }
             image.description = await executeImageAnalysis(image.mimeType, image.base64);
             return image;
           })
-        );
+        ).then(images => images.filter(image => image !== null));
       }
       return reply;
     })
