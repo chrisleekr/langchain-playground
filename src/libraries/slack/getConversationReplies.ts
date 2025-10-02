@@ -1,6 +1,7 @@
 import type { ConversationsRepliesResponse, WebClient } from '@slack/web-api';
+import type { MessageElement } from '@slack/web-api/dist/types/response/ConversationsRepliesResponse';
 import { logger } from '@/libraries';
-import { NormalizedMessage } from '@/slack/event/constants';
+import { NormalizedMessage } from '@/slack/event/message/constants';
 import { formatTimestamp } from './utils';
 
 export const getConversationReplies = async (
@@ -12,7 +13,7 @@ export const getConversationReplies = async (
     userMessage,
     includeAppMention = true
   }: {
-    userMessage: NormalizedMessage;
+    userMessage: NormalizedMessage | null;
     includeAppMention?: boolean;
   }
 ): Promise<string[]> => {
@@ -29,7 +30,7 @@ export const getConversationReplies = async (
   result.messages?.forEach(message => {
     logger.info({ message }, 'getConversationReplies message');
     // Ignore app mention message
-    if (message.ts === userMessage.ts && !includeAppMention) {
+    if (userMessage && message.ts === userMessage.ts && !includeAppMention) {
       logger.info('Ignore original message');
       return;
     }
@@ -50,4 +51,15 @@ export const getConversationReplies = async (
   logger.info({ messages }, 'getConversationReplies found messages');
 
   return messages;
+};
+
+export const getConversationRepliesV2 = async (client: WebClient, channel: string, ts: string): Promise<MessageElement[]> => {
+  const result: ConversationsRepliesResponse = await client.conversations.replies({
+    channel,
+    include_all_metadata: true,
+    ts,
+    limit: 1000 // Maximum limit is 1000
+  });
+
+  return result.messages || [];
 };

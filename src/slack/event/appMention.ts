@@ -1,7 +1,7 @@
 import type { AppMentionEvent } from '@slack/types';
 import { logger } from '@/libraries';
-import { EventAppMention, NormalizedMessage } from './constants';
-import { executeStateGraph } from './stateGraph';
+import { EventAppMention, NormalizedMessage } from './message/constants';
+import { executeStateGraph } from './message/stateGraph';
 
 /**
  * LangGraph vs Simple Intent Classifier. Why analysis.

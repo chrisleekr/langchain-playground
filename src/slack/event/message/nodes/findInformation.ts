@@ -6,7 +6,7 @@ import { RunnableSequence } from '@langchain/core/runnables';
 import { getOllamaEmbeddings, getQdrantVectorStore, logger, removeThinkTag } from '@/libraries';
 import { formatDocumentsAsString } from '@/middlewares';
 import { OverallStateAnnotation } from '../constants';
-import { getChatLLM } from '../utils';
+import { getChatLLM } from '../../utils';
 
 export const findInformationNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { messageHistory, userMessage } = state;
