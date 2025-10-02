@@ -1,4 +1,4 @@
-import { OverallStateAnnotation } from '@/slack/event/constants';
+import { OverallStateAnnotation } from '@/slack/event/message/constants';
 import { getMessageHistoryNode } from '../getMessageHistory';
 
 jest.mock('@/libraries', () => {

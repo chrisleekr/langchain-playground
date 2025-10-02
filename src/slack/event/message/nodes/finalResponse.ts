@@ -3,7 +3,7 @@ import { RunnableSequence } from '@langchain/core/runnables';
 import slackifyMarkdown from 'slackify-markdown';
 import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
-import { getChatLLM } from '../utils';
+import { getChatLLM } from '../../utils';
 
 export const finalResponseNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { userMessage, client, finalResponse } = state;

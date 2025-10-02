@@ -1,6 +1,6 @@
 import type { AllMessageEvents } from '@slack/types';
-import { executeStateGraph } from './stateGraph';
-import { EventMessage, NormalizedMessage } from './constants';
+import { executeStateGraph } from './message/stateGraph';
+import { EventMessage, NormalizedMessage } from './message/constants';
 import { logger } from '../../libraries';
 
 const normalizeMessage = (event: AllMessageEvents): NormalizedMessage => {
