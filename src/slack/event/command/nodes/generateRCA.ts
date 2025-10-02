@@ -129,10 +129,14 @@ export const generateRCANode = async (state: typeof OverallStateAnnotation.State
   state.rca = rca;
 
   // Reply back to the called user's direct message
-  await client.chat.postMessage({
-    channel: command.user_id,
-    text: `- Summary: \n${slackifyMarkdown(rca)}`
-  });
+  try {
+    await client.chat.postMessage({
+      channel: command.user_id,
+      text: `- Summary: \n${slackifyMarkdown(rca)}`
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to send RCA summary DM to user');
+  }
 
   return state;
 };
