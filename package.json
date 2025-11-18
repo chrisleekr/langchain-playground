@@ -65,7 +65,7 @@
     "@opensearch-project/opensearch": "^3.5.1",
     "@qdrant/js-client-rest": "1.15.1",
     "@sinclair/typebox": "0.34.41",
-    "@slack/bolt": "4.4.0",
+    "@slack/bolt": "4.6.0",
     "aws-opensearch-connector": "^1.2.0",
     "chromadb": "3.0.17",
     "config": "4.1.1",
