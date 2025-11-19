@@ -52,7 +52,7 @@
     "@fastify/rate-limit": "10.3.0",
     "@fastify/type-provider-typebox": "6.1.0",
     "@langchain/aws": "^0.1.15",
-    "@langchain/community": "^0.3.57",
+    "@langchain/community": "^1.0.4",
     "@langchain/core": "^0.3.78",
     "@langchain/groq": "0.2.4",
     "@langchain/langgraph": "0.4.9",
