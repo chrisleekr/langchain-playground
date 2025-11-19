@@ -76,7 +76,7 @@
     "http-status-codes": "2.3.0",
     "ioredis": "5.8.2",
     "langchain": "0.3.35",
-    "pdf-parse": "1.1.1",
+    "pdf-parse": "2.4.5",
     "pino": "10.1.0",
     "semantic-chunking": "2.4.4",
     "slackify-markdown": "4.5.0",
