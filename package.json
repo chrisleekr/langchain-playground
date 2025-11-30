@@ -42,7 +42,7 @@
   "homepage": "https://github.com/chrisleekr/langchain-playground#readme",
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
-    "@aws-sdk/credential-provider-node": "^3.933.0",
+    "@aws-sdk/credential-provider-node": "^3.940.0",
     "@aws-sdk/credential-providers": "^3.933.0",
     "@aws-sdk/types": "^3.930.0",
     "@chroma-core/default-embed": "0.1.8",
