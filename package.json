@@ -54,7 +54,7 @@
     "@langchain/aws": "^0.1.15",
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
-    "@langchain/groq": "0.2.4",
+    "@langchain/groq": "1.0.2",
     "@langchain/langgraph": "0.4.9",
     "@langchain/mcp-adapters": "0.6.0",
     "@langchain/ollama": "0.2.4",
