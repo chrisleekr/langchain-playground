@@ -69,7 +69,7 @@
     "@sinclair/typebox": "0.34.41",
     "@slack/bolt": "4.6.0",
     "aws-opensearch-connector": "^1.2.0",
-    "chromadb": "3.1.4",
+    "chromadb": "3.2.0",
     "config": "4.1.1",
     "dayjs": "1.11.19",
     "dotenv": "16.6.1",
