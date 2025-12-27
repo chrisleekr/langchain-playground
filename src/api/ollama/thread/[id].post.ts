@@ -24,11 +24,12 @@ import { getChatOllama } from '@/libraries';
 import { getRedisClient } from '@/libraries/redis';
 
 /**
- * Maximum number of messages to keep in history.
- * This prevents unbounded memory usage in long conversations.
- * @see https://js.langchain.com/docs/tutorials/chatbot#managing-conversation-history
+ * Maximum tokens to keep in conversation history.
+ * This prevents context window overflow in long conversations.
+ * Uses the LLM model for accurate token counting.
+ * @see https://docs.langchain.com/oss/javascript/langgraph/add-memory#trim-messages
  */
-const MAX_HISTORY_MESSAGES = 20;
+const MAX_HISTORY_TOKENS = 4000;
 
 const redisClient = getRedisClient();
 
@@ -57,20 +58,23 @@ export default function threadIdPost() {
       client: redisClient
     });
 
-    // Get previous messages from history and trim to prevent unbounded growth
+    // Initialize model (needed for token counting)
+    const model = getChatOllama(0.9, logger);
+
+    // Get previous messages from history and trim to prevent context window overflow
+    // Refer: https://docs.langchain.com/oss/javascript/langgraph/add-memory#trim-messages
     const allMessages = await chatHistory.getMessages();
     const previousMessages: BaseMessage[] = await trimMessages(allMessages, {
-      maxTokens: MAX_HISTORY_MESSAGES,
+      maxTokens: MAX_HISTORY_TOKENS,
       strategy: 'last',
-      startOn: 'human',
-      tokenCounter: (msgs: BaseMessage[]) => msgs.length
+      tokenCounter: model,
+      includeSystem: true,
+      startOn: 'human'
     });
     logger.info({ totalMessages: allMessages.length, trimmedMessages: previousMessages.length }, 'Previous messages loaded and trimmed');
 
     // Create prompt template with message history
     const prompt = ChatPromptTemplate.fromMessages([['system', systemTemplate], new MessagesPlaceholder('history'), ['human', '{input}']]);
-
-    const model = getChatOllama(0.9, logger);
 
     // Build the chain using RunnableSequence
     const chain = RunnableSequence.from([
