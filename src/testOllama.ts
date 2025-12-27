@@ -13,7 +13,7 @@ import { ChatOllama, OllamaEmbeddings } from '@langchain/ollama';
 import { MemoryVectorStore } from '@langchain/classic/vectorstores/memory';
 import { UnstructuredDirectoryLoader } from '@langchain/community/document_loaders/fs/unstructured';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence, RunnablePassthrough } from '@langchain/core/runnables';
+import { RunnableSequence, RunnablePassthrough, RunnableLambda } from '@langchain/core/runnables';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
 
@@ -90,7 +90,7 @@ Question: {input}`;
     logger.info('Creating RAG chain...');
     const ragChain = RunnableSequence.from([
       {
-        context: retriever.pipe(formatDocs),
+        context: retriever.pipe(RunnableLambda.from(formatDocs)),
         input: new RunnablePassthrough()
       },
       prompt,
