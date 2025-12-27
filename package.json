@@ -65,7 +65,7 @@
     "@langchain/redis": "^1.0.1",
     "@langchain/textsplitters": "^1.0.1",
     "@opensearch-project/opensearch": "^3.5.1",
-    "@qdrant/js-client-rest": "1.15.1",
+    "@qdrant/js-client-rest": "1.16.2",
     "@sinclair/typebox": "0.34.41",
     "@slack/bolt": "4.6.0",
     "aws-opensearch-connector": "^1.2.0",
