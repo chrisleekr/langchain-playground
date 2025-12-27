@@ -1,7 +1,11 @@
+/**
+ * Ollama thread GET endpoint
+ *
+ * Replaces deprecated BufferMemory with direct RedisChatMessageHistory usage.
+ */
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
-import { BufferMemory } from 'langchain/memory';
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
@@ -22,17 +26,20 @@ export default function threadIdGet() {
 
     const sessionId = `ollama-thread-${threadId}`;
 
-    const memory = new BufferMemory({
-      chatHistory: new RedisChatMessageHistory({
-        sessionId,
-        client: redisClient
-      })
+    // Using RedisChatMessageHistory
+    const chatHistory = new RedisChatMessageHistory({
+      sessionId,
+      client: redisClient
     });
 
-    const history = await memory.loadMemoryVariables({});
-    logger.info({ history }, 'Memory history');
+    const messages = await chatHistory.getMessages();
+    logger.info({ messageCount: messages.length }, 'Messages loaded');
 
-    const historyArray = history.history !== '' ? history.history.split('\n') : [];
+    // Format messages for response
+    const historyArray = messages.map(msg => {
+      const type = msg._getType();
+      return `${type}: ${msg.content}`;
+    });
 
     await sendResponse(reply, new ServiceResponse(ResponseStatus.Success, 'OK', { history: historyArray }, StatusCodes.OK));
   };

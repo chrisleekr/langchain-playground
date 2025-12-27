@@ -1,5 +1,5 @@
 import { PromptTemplate } from '@langchain/core/prompts';
-import { StructuredOutputParser } from 'langchain/output_parsers';
+import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { z } from 'zod';
 import { logger, removeThinkTag } from '@/libraries';

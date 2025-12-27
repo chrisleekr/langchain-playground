@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { StructuredOutputParser } from 'langchain/output_parsers';
+import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { Logger, getChatGroq } from '@/libraries';
 import { OverallStateAnnotation } from '../[id].post';
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { StructuredOutputParser } from 'langchain/output_parsers';
+import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { Logger, getChatGroq } from '@/libraries';
 import { OverallStateAnnotation } from '../[id].post';
 const anonymisePIISystemPrompt: string = `You are a professional PII protect agent. Given a text string, replace all occurrences of Personally Identifiable Information (PII) such as names, email addresses, phone numbers, street addresses, and social security numbers with arbitrary data. The output should be JSON format and format as Output JSON properties. Do not say anything except Output format. Do not say "Here is the output". Output must be valid JSON.

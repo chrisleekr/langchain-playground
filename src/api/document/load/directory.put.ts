@@ -1,19 +1,33 @@
 /**
- * This endpoint is to load the directory using the parent document retriever.
+ * This endpoint loads documents from a directory
+ *
+ * Following the pattern:
+ * - Use RecursiveCharacterTextSplitter from @langchain/textsplitters
+ * - Use vectorStore.asRetriever() for retrieval
+ *
+ * @see https://js.langchain.com/docs/tutorials/rag
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
 import config from 'config';
+import { Document } from '@langchain/core/documents';
 
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
-import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
-import { JSONLoader, JSONLinesLoader } from 'langchain/document_loaders/fs/json';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
-import { TextLoader } from 'langchain/document_loaders/fs/text';
 
-import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getParentDocumentRetriever, getQdrantVectorStore } from '@/libraries';
+import {
+  cleanupQdrantVectorStoreWithSource,
+  getOllamaEmbeddings,
+  getQdrantVectorStore,
+  addDocumentsToVectorStore,
+  getRetriever,
+  DirectoryLoader,
+  JSONLoader,
+  JSONLinesLoader,
+  TextLoader
+} from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
@@ -25,17 +39,21 @@ export default function parentLoadDirectoryPut() {
 
     // Initialize document loader
     logger.info({ directoryPath }, 'Initializing document loader');
-    const loader = new DirectoryLoader(directoryPath, {
-      '.json': path => new JSONLoader(path, '/texts'),
-      '.jsonl': path => new JSONLinesLoader(path, '/html'),
-      '.txt': path => new TextLoader(path),
-      '.csv': path => new CSVLoader(path, 'text'),
-      '.pdf': path => new PDFLoader(path, { splitPages: false })
-    });
+    const loader = new DirectoryLoader(
+      directoryPath,
+      {
+        '.json': (path: string) => new JSONLoader(path, '/texts'),
+        '.jsonl': (path: string) => new JSONLinesLoader(path, '/html'),
+        '.txt': (path: string) => new TextLoader(path),
+        '.csv': (path: string) => new CSVLoader(path, 'text'),
+        '.pdf': (path: string) => new PDFLoader(path, { splitPages: false })
+      },
+      logger
+    );
 
     // Load documents
     const docs = await loader.load();
-    logger.info({ docs }, 'Documents loaded');
+    logger.info({ count: docs.length }, 'Documents loaded');
 
     // Validate we got documents
     if (docs.length === 0) {
@@ -44,8 +62,8 @@ export default function parentLoadDirectoryPut() {
 
     // Enhanced document metadata
     const enhancedDocs = docs.map((doc, index) => {
-      const enhanced = {
-        ...doc,
+      const enhanced = new Document({
+        pageContent: doc.pageContent,
         metadata: {
           ...doc.metadata,
           source: 'directory',
@@ -53,7 +71,7 @@ export default function parentLoadDirectoryPut() {
           lastUpdated: new Date().toISOString(),
           documentType: 'directory'
         }
-      };
+      });
 
       if (index === 0) {
         logger.info({ enhancedDocSample: enhanced }, 'Enhanced document sample');
@@ -64,7 +82,6 @@ export default function parentLoadDirectoryPut() {
 
     // Initialize embeddings and vector store
     const embeddings = getOllamaEmbeddings(logger);
-    // const embeddings = getPineconeEmbeddings(logger);
     logger.info('Embeddings Initialized');
 
     logger.info('Initializing vector store...');
@@ -76,10 +93,12 @@ export default function parentLoadDirectoryPut() {
     logger.info({ deletedCount }, 'Deleted existing documents from collection');
 
     // Add documents
-    logger.info('Adding documents to vector store...');
-    const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
-    const addDocumentsResult = await retriever.addDocuments(enhancedDocs);
+    // Documents are split and added directly to vector store
+    const addDocumentsResult = await addDocumentsToVectorStore(vectorStore, enhancedDocs, logger);
     logger.info({ addDocumentsResult }, 'Documents added');
+
+    // Create retriever
+    const retriever = getRetriever(vectorStore, 4, logger);
 
     // Test retriever functionality
     logger.info('Testing retriever functionality...');

@@ -5,3 +5,4 @@ export * from './vectorStore';
 export * from './docstore';
 export * from './utils';
 export * from './chunker';
+export * from './loaders';

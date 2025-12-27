@@ -1,3 +1,8 @@
+/**
+ * This endpoint loads documents
+ *
+ * @see https://js.langchain.com/docs/tutorials/rag
+ */
 import config from 'config';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
@@ -5,7 +10,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { UnstructuredDirectoryLoader } from '@langchain/community/document_loaders/fs/unstructured';
 import { DocumentInterface } from '@langchain/core/documents';
-import { getOllamaEmbeddings, getParentDocumentRetriever, getQdrantVectorStoreWithFreshCollection } from '@/libraries';
+import { getOllamaEmbeddings, getQdrantVectorStoreWithFreshCollection, addDocumentsToVectorStore, getRetriever } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { sendResponse } from '@/libraries/httpHandlers';
 
@@ -34,12 +39,14 @@ export default function documentLoadGet(collectionName: string) {
       const vectorStore = await getQdrantVectorStoreWithFreshCollection(embeddings, collectionName, logger);
       logger.info({ collectionName: vectorStore.collectionName }, 'Got Vector Store with fresh collection...');
 
-      const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
-      logger.info({ retriever }, 'Got retriever.');
+      // Add documents
+      logger.info({ count: docs.length }, 'Adding documents to the vector store...');
+      const addDocumentsResult = await addDocumentsToVectorStore(vectorStore, docs, logger);
+      logger.info({ addDocumentsResult }, 'Added documents to the vector store.');
 
-      logger.info({ docs }, 'Adding documents to the retriever...');
-      const addDocumentsResult = await retriever.addDocuments(docs);
-      logger.info({ addDocumentsResult }, 'Added documents to the retriever.');
+      // Create retriever
+      const retriever = getRetriever(vectorStore, 4, logger);
+      logger.info('Created retriever.');
 
       const testRelevantDocs = await retriever.invoke('What is the moon made of?');
       logger.info({ testRelevantDocs }, 'Test relevant docs');

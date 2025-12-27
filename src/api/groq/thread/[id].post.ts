@@ -1,16 +1,32 @@
+/**
+ * Groq thread endpoint
+ *
+ * Replaces deprecated ConversationChain and ConversationSummaryBufferMemory
+ * with RunnableSequence and manual chat history management.
+ *
+ * @see https://js.langchain.com/docs/tutorials/chatbot
+ */
 import config from 'config';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
-import { ConversationSummaryBufferMemory } from 'langchain/memory';
-import { ConversationChain } from 'langchain/chains';
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
-import { ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate } from '@langchain/core/prompts';
+import { HumanMessage, AIMessage, trimMessages, type BaseMessage } from '@langchain/core/messages';
+import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
+import { RunnableSequence, RunnablePassthrough, RunnableLambda } from '@langchain/core/runnables';
+import { StringOutputParser } from '@langchain/core/output_parsers';
 
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { getChatGroq } from '@/libraries';
 import { getRedisClient } from '@/libraries/redis';
+
+/**
+ * Maximum number of messages to keep in history.
+ * This prevents unbounded memory usage in long conversations.
+ * @see https://js.langchain.com/docs/tutorials/chatbot#managing-conversation-history
+ */
+const MAX_HISTORY_MESSAGES = 20;
 
 const redisClient = getRedisClient();
 
@@ -34,48 +50,44 @@ export default function threadIdPost() {
 
     const sessionId = `groq-thread-${threadId}`;
 
-    const memory = new ConversationSummaryBufferMemory({
-      llm: getChatGroq(0, logger),
-      maxTokenLimit: 10,
-      chatHistory: new RedisChatMessageHistory({
-        sessionId,
-        client: redisClient
-      })
+    // Initialize chat history with Redis
+    const chatHistory = new RedisChatMessageHistory({
+      sessionId,
+      client: redisClient
     });
 
-    const history = await memory.loadMemoryVariables({});
-    logger.info({ history }, 'Memory history');
-
-    const chatPromptMemory = new ConversationSummaryBufferMemory({
-      llm: getChatGroq(0, logger),
-      chatHistory: new RedisChatMessageHistory({
-        sessionId,
-        client: redisClient
-      }),
-      maxTokenLimit: 10,
-      returnMessages: true
+    // Get previous messages from history and trim to prevent unbounded growth
+    const allMessages = await chatHistory.getMessages();
+    const previousMessages: BaseMessage[] = await trimMessages(allMessages, {
+      maxTokens: MAX_HISTORY_MESSAGES,
+      strategy: 'last',
+      startOn: 'human',
+      tokenCounter: (msgs: BaseMessage[]) => msgs.length
     });
+    logger.info({ totalMessages: allMessages.length, trimmedMessages: previousMessages.length }, 'Previous messages loaded and trimmed');
 
-    const messages = await chatPromptMemory.chatHistory.getMessages();
-    const previous_summary = '';
-    const predictSummary = await chatPromptMemory.predictNewSummary(messages, previous_summary);
-    logger.info({ predictSummary }, 'Predict summary');
-
-    const chatPrompt = ChatPromptTemplate.fromMessages([
-      SystemMessagePromptTemplate.fromTemplate(systemTemplate),
-      new MessagesPlaceholder('history'),
-      HumanMessagePromptTemplate.fromTemplate('{input}')
-    ]);
+    // Create prompt template with message history
+    const prompt = ChatPromptTemplate.fromMessages([['system', systemTemplate], new MessagesPlaceholder('history'), ['human', '{input}']]);
 
     const model = getChatGroq(config.get<number>('groq.temperature'), logger);
-    const chain = new ConversationChain({
-      llm: model,
-      memory: chatPromptMemory,
-      prompt: chatPrompt
-    });
 
-    const callResponse = await chain.invoke({ input: message });
-    console.log({ callResponse }, 'callResponse');
+    // Build the chain using RunnableSequence
+    const chain = RunnableSequence.from([
+      RunnablePassthrough.assign({
+        history: new RunnableLambda({ func: () => previousMessages })
+      }),
+      prompt,
+      model,
+      new StringOutputParser()
+    ]);
+
+    // Invoke the chain
+    const response = await chain.invoke({ input: message });
+    logger.info({ response }, 'Chain response');
+
+    // Save messages to history
+    await chatHistory.addMessage(new HumanMessage(message));
+    await chatHistory.addMessage(new AIMessage(response));
 
     await sendResponse(
       reply,
@@ -84,7 +96,7 @@ export default function threadIdPost() {
         'OK',
         {
           threadId,
-          response: callResponse.response
+          response
         },
         StatusCodes.OK
       )
