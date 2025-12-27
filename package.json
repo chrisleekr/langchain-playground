@@ -81,7 +81,7 @@
     "pdf-parse": "1.1.1",
     "pino": "10.1.0",
     "semantic-chunking": "2.4.4",
-    "slackify-markdown": "4.5.0",
+    "slackify-markdown": "5.0.0",
     "typescript": "5.9.3",
     "uuid": "13.0.0",
     "yaml": "2.8.2",
