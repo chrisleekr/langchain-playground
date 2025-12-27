@@ -11,7 +11,7 @@ import { QdrantVectorStore } from '@langchain/qdrant';
 import {
   getChatOllama,
   getOllamaEmbeddings,
-  getParentDocumentRetriever,
+  getRetriever,
   getQdrantVectorStore,
   removeCodeBlock,
   removeThinkTag,
@@ -213,7 +213,8 @@ async function invokeParentDocumentRetriever(
   collectionName: string,
   logger: Logger
 ): Promise<Array<Document>> {
-  const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
+  const retriever = getRetriever(vectorStore, 4, logger);
+  logger.info({ collectionName }, 'Using retriever for collection');
 
   const matchedDocs = new Map<string, DocumentSource>();
 

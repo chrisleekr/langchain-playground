@@ -1,8 +1,12 @@
+/**
+ * Groq thread GET endpoint
+ *
+ * Replaces deprecated BufferMemory with direct RedisChatMessageHistory usage.
+ */
 import config from 'config';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
-import { BufferMemory } from 'langchain/memory';
 import { RedisChatMessageHistory } from '@langchain/redis';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
@@ -21,6 +25,7 @@ export default function threadIdGet() {
 
     const sessionId = `groq-thread-${threadId}`;
 
+    // Using RedisChatMessageHistory
     const chatHistory = new RedisChatMessageHistory({
       sessionId,
       config: {
@@ -29,16 +34,13 @@ export default function threadIdGet() {
     });
 
     const messages = await chatHistory.getMessages();
-    logger.info({ messages }, 'Messages');
+    logger.info({ messageCount: messages.length }, 'Messages loaded');
 
-    const memory = new BufferMemory({
-      chatHistory
+    // Format messages for response
+    const historyArray = messages.map(msg => {
+      const type = msg._getType();
+      return `${type}: ${msg.content}`;
     });
-
-    const history = await memory.loadMemoryVariables({});
-    logger.info({ history }, 'Memory history');
-
-    const historyArray = history.history !== '' ? history.history.split('\n') : [];
 
     await sendResponse(
       reply,

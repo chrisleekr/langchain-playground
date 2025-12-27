@@ -1,16 +1,20 @@
 import { Document } from '@langchain/core/documents';
-import { BaseStoreInterface } from '@langchain/core/stores';
+import { BaseStore } from '@langchain/core/stores';
 import { Redis } from 'ioredis';
 import { getRedisClient } from '@/libraries';
 
 /**
  * Redis Docstore referred from InMemoryDocstore - https://github.com/langchain-ai/langchainjs/blob/main/libs/langchain-community/src/stores/doc/in_memory.ts#L9
+ *
+ * @see https://docs.langchain.com/oss/javascript/langchain/philosophy
  */
-class RedisDocstore implements BaseStoreInterface<string, Document> {
+class RedisDocstore extends BaseStore<string, Document> {
+  lc_namespace = ['langchain', 'stores', 'redis'];
   _namespace: string;
   _client: Redis;
 
   constructor(namespace: string) {
+    super();
     this._namespace = namespace;
     this._client = getRedisClient();
   }
@@ -83,11 +87,14 @@ class RedisDocstore implements BaseStoreInterface<string, Document> {
     }
   }
 
-  async mget(keys: string[]): Promise<Document[]> {
+  async mget(keys: string[]): Promise<(Document | undefined)[]> {
     return Promise.all(
-      keys.map(key => {
-        const document = this.search(key);
-        return document;
+      keys.map(async key => {
+        try {
+          return await this.search(key);
+        } catch {
+          return undefined;
+        }
       })
     );
   }

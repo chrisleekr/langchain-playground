@@ -1,13 +1,20 @@
 /**
- * This endpoint is to load the confluence pages using the parent document retriever.
+ * This endpoint loads Confluence pages
+ *
+ * Following the pattern:
+ * - Use RecursiveCharacterTextSplitter from @langchain/textsplitters
+ * - Use vectorStore.asRetriever() for retrieval
+ *
+ * @see https://js.langchain.com/docs/tutorials/rag
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 import config from 'config';
 import { Logger } from 'pino';
+import { Document } from '@langchain/core/documents';
 import { ConfluencePagesLoader } from '@langchain/community/document_loaders/web/confluence';
 import { StatusCodes } from 'http-status-codes';
-import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getParentDocumentRetriever, getQdrantVectorStore } from '@/libraries';
+import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getQdrantVectorStore, addDocumentsToVectorStore, getRetriever } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
@@ -50,8 +57,8 @@ export default function parentLoadConfluencePut() {
 
     // Enhanced document metadata
     const enhancedDocs = docs.map((doc, index) => {
-      const enhanced = {
-        ...doc,
+      const enhanced = new Document({
+        pageContent: doc.pageContent,
         metadata: {
           ...doc.metadata,
           source: 'confluence',
@@ -61,7 +68,7 @@ export default function parentLoadConfluencePut() {
           confluencePageId: doc.metadata.confluencePageId,
           documentType: 'confluence-page'
         }
-      };
+      });
 
       if (index === 0) {
         logger.info({ enhancedDocSample: enhanced }, 'Enhanced document sample');
@@ -71,7 +78,6 @@ export default function parentLoadConfluencePut() {
     });
 
     const embeddings = getOllamaEmbeddings(logger);
-    // const embeddings = getPineconeEmbeddings(logger);
     logger.info('Embeddings Initialized');
 
     logger.info('Initializing vector store...');
@@ -83,9 +89,7 @@ export default function parentLoadConfluencePut() {
     logger.info({ deletedCount }, 'Deleted existing documents from collection');
 
     // Add documents
-    logger.info('Adding documents to vector store...');
-    const retriever = await getParentDocumentRetriever(vectorStore, collectionName, logger);
-    const addDocumentsResult = await retriever.addDocuments(enhancedDocs);
+    const addDocumentsResult = await addDocumentsToVectorStore(vectorStore, enhancedDocs, logger);
     logger.info({ addDocumentsResult }, 'Documents added');
 
     // Wait a moment for indexing
@@ -104,6 +108,9 @@ export default function parentLoadConfluencePut() {
       },
       'Collection scroll results'
     );
+
+    // Create retriever
+    const retriever = getRetriever(vectorStore, 4, logger);
 
     // Test retriever functionality
     logger.info('Testing retriever functionality...');

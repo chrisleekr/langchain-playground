@@ -2,9 +2,9 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
-import { formatDocumentsAsString } from 'langchain/util/document';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
+import { formatDocumentsAsString } from '@/middlewares';
 
 import { getChatOllama, getOllamaEmbeddings, getQdrantVectorStore } from '@/libraries';
 import { sendResponse } from '@/libraries/httpHandlers';

@@ -5,7 +5,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import config from 'config';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import crypto from 'crypto';
 import { readdir, readFile, stat } from 'fs/promises';
 import { join, resolve } from 'path';

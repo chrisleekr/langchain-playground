@@ -1,5 +1,5 @@
-import { formatDocumentsAsString } from 'langchain/util/document';
 import config from 'config';
+import { formatDocumentsAsString } from '@/middlewares';
 import { getOllamaEmbeddings, getQdrantVectorStore, Logger } from '@/libraries';
 import { OverallStateAnnotation } from '../[id].post';
 
