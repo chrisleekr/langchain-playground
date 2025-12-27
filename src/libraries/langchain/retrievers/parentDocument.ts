@@ -5,6 +5,8 @@ import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { QdrantVectorStore } from '@langchain/qdrant';
 import { Logger } from '@/libraries';
 
+// Note: Temporary use RecursiveCharacterTextSplitter instead of ParentDocumentRetriever.
+
 /**
  * Document splitting and retrieval utilities
  *
