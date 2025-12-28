@@ -103,11 +103,14 @@ const parseArgs = () => {
     logger.info('Creating investigation agent...');
     const startTime = Date.now();
 
-    // ToolStrategy.fromSchema wraps Zod schema for structured output via tool-calling
     const agent = createAgent({
       model,
       tools: [...nrTools, ...mcpTools],
       systemPrompt: investigationSystemPrompt(config),
+      // ToolStrategy.fromSchema wraps Zod schema for structured output via tool-calling
+      // In https://docs.langchain.com/oss/javascript/langchain/structured-output#response-format, it shows
+      // `responseFormat: toolStrategy(z.object({ ... }))` as the example.
+      // However, it didn't work as expected. Below code is working.
       responseFormat: ToolStrategy.fromSchema(InvestigationResultSchema),
       middleware
     });
