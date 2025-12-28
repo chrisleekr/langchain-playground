@@ -72,6 +72,7 @@
     "chromadb": "3.2.0",
     "config": "4.1.1",
     "dayjs": "1.11.19",
+    "decimal.js": "^10.6.0",
     "dotenv": "16.6.1",
     "fastify": "5.6.2",
     "html-to-text": "9.0.5",

@@ -73,13 +73,13 @@ const getChatGroq = (temperature: number, logger: Logger): ChatGroq => {
   return chatGroq;
 };
 
-const getChatOpenAI = (logger: Logger): ChatOpenAI => {
+const getChatOpenAI = (temperature: number, logger: Logger): ChatOpenAI => {
   if (!chatOpenAI) {
     const baseURL = config.get<string>('openai.baseUrl') || undefined;
     logger.info(
       {
         baseURL: baseURL || 'Not set',
-        temperature: config.get('openai.temperature'),
+        temperature,
         model: config.get('openai.model')
       },
       'Getting OpenAI...'
@@ -87,7 +87,7 @@ const getChatOpenAI = (logger: Logger): ChatOpenAI => {
 
     chatOpenAI = new ChatOpenAI({
       apiKey: config.get('openai.apiKey'),
-      temperature: config.get('openai.temperature'),
+      temperature,
       model: config.get('openai.model'),
       configuration: {
         baseURL
