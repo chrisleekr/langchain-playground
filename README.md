@@ -40,6 +40,21 @@ This project provides both REST API endpoints or Slack bot integration for inter
 - `fastify`: serves as a web server in `src/api`
 - `slack`: serves as a Slack app in `src/slack`
 
+## LangChain.js Agents with tools
+
+In this project, I used LangChain.js to build a workflow to analyze New Relic logs.
+
+Refer to [Agents](https://docs.langchain.com/oss/javascript/langchain/agents) for more details.
+
+The workflow in big picture is as follows:
+
+1. Use prompt [prompts.ts](src/api/agent/newrelic/prompts.ts) to guide the agent to execute custom tools located in [tools](src/api/agent/newrelic/tools).
+2. Once the agent executed mandatory tools, then it will execute the extended investigation tools if needed.
+3. Once the agent executed all tools, then it will generate a summary of the investigation.
+4. The summary will be returned to the user.
+
+<img width="1199" height="892" alt="Image" src="https://github.com/user-attachments/assets/901ffea2-d26d-443a-9c5f-0617a2eef231" />
+
 ## Sentry alert analysis
 
 In this project, I used LangGraph to build a workflow to analyze Sentry alert.

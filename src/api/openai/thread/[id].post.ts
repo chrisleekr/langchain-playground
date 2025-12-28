@@ -56,7 +56,7 @@ export default function threadIdPost() {
     });
 
     // Initialize model (needed for token counting)
-    const model = getChatOpenAI(logger);
+    const model = getChatOpenAI(config.get<number>('openai.temperature'), logger);
 
     // Get previous messages from history and trim to prevent context window overflow
     // Refer: https://docs.langchain.com/oss/javascript/langgraph/add-memory#trim-messages
