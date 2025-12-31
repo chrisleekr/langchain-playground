@@ -5,6 +5,39 @@ import { getChatOpenAI, getChatGroq, getChatOllama, getChatBedrockConverse } fro
 import type { AgentConfig } from './config';
 
 /**
+ * Custom error class for timeout operations.
+ * Use `instanceof TimeoutError` to distinguish timeout errors from other errors.
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await withTimeout(() => slowOperation(), 5000, 'Slow op');
+ * } catch (error) {
+ *   if (error instanceof TimeoutError) {
+ *     console.log('Operation timed out:', error.timeoutMs);
+ *   } else {
+ *     console.log('Operation failed:', error);
+ *   }
+ * }
+ * ```
+ */
+export class TimeoutError extends Error {
+  /** The timeout duration that was exceeded */
+  readonly timeoutMs: number;
+  /** The name of the operation that timed out */
+  readonly operationName: string;
+
+  constructor(operationName: string, timeoutMs: number) {
+    super(`${operationName} timed out after ${timeoutMs}ms`);
+    this.name = 'TimeoutError';
+    this.timeoutMs = timeoutMs;
+    this.operationName = operationName;
+    // Maintains proper prototype chain for instanceof checks
+    Object.setPrototypeOf(this, TimeoutError.prototype);
+  }
+}
+
+/**
  * Extracts an error message from an unknown error type.
  * Safely handles Error objects, strings, and other types.
  *
@@ -58,7 +91,7 @@ export interface TimeoutPromiseResult {
 }
 
 /**
- * Creates a timeout promise that rejects after the specified duration.
+ * Creates a timeout promise that rejects with `TimeoutError` after the specified duration.
  * Used to prevent long-running agent investigations from blocking resources.
  *
  * IMPORTANT: Always call `clear()` after Promise.race() resolves to prevent
@@ -66,7 +99,7 @@ export interface TimeoutPromiseResult {
  *
  * @example
  * ```typescript
- * const timeout = createTimeoutPromise(30000);
+ * const timeout = createTimeoutPromise(30000, 'Investigation');
  * try {
  *   const result = await Promise.race([mainOperation(), timeout.promise]);
  *   return result;
@@ -76,14 +109,15 @@ export interface TimeoutPromiseResult {
  * ```
  *
  * @param timeoutMs - Timeout duration in milliseconds
- * @returns Object with promise and cleanup function
+ * @param operationName - Name of the operation for error messages
+ * @returns Object with promise (rejects with TimeoutError) and cleanup function
  */
-export const createTimeoutPromise = (timeoutMs: number): TimeoutPromiseResult => {
+export const createTimeoutPromise = (timeoutMs: number, operationName = 'Operation'): TimeoutPromiseResult => {
   let timeoutId: ReturnType<typeof setTimeout>;
 
   const promise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => {
-      reject(new Error(`Investigation timed out after ${timeoutMs}ms`));
+      reject(new TimeoutError(operationName, timeoutMs));
     }, timeoutMs);
   });
 
@@ -96,35 +130,42 @@ export const createTimeoutPromise = (timeoutMs: number): TimeoutPromiseResult =>
 
 /**
  * Wraps an async operation with a timeout.
- * If the operation doesn't complete within the timeout, it throws an error.
+ * If the operation doesn't complete within the timeout, throws a `TimeoutError`.
  *
  * Use this to wrap individual tool calls to prevent slow API calls
  * from consuming the entire timeout budget.
  *
+ * Error handling:
+ * - Timeout: Throws `TimeoutError` (use `instanceof TimeoutError` to detect)
+ * - Operation error: Original error propagates unchanged
+ *
  * @example
  * ```typescript
- * const result = await withTimeout(
- *   () => fetchExternalAPI(),
- *   30000,
- *   'External API call'
- * );
+ * try {
+ *   const result = await withTimeout(
+ *     () => fetchExternalAPI(),
+ *     30000,
+ *     'External API call'
+ *   );
+ * } catch (error) {
+ *   if (error instanceof TimeoutError) {
+ *     // Handle timeout specifically
+ *   }
+ *   throw error; // Re-throw operation errors
+ * }
  * ```
  *
  * @param operation - The async operation to execute
  * @param timeoutMs - Timeout duration in milliseconds
  * @param operationName - Name of the operation for error messages
  * @returns The result of the operation
- * @throws {Error} If the operation times out
+ * @throws {TimeoutError} If the operation times out
+ * @throws {Error} If the operation itself throws an error (propagated unchanged)
  */
 export const withTimeout = async <T>(operation: () => Promise<T>, timeoutMs: number, operationName = 'Operation'): Promise<T> => {
-  const timeout = createTimeoutPromise(timeoutMs);
+  const timeout = createTimeoutPromise(timeoutMs, operationName);
   try {
-    return await Promise.race([
-      operation(),
-      timeout.promise.catch(() => {
-        throw new Error(`${operationName} timed out after ${timeoutMs}ms`);
-      })
-    ]);
+    return await Promise.race([operation(), timeout.promise]);
   } finally {
     timeout.clear();
   }

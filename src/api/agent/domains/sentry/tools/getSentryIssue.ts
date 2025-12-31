@@ -4,10 +4,8 @@ import type { Logger } from 'pino';
 
 import { getSentryIssue, normalizeSentryIssue } from '@/libraries/sentry';
 import type { DomainToolOptions } from '@/api/agent/domains/shared/types';
-import { getErrorMessage, withTimeout } from '@/api/agent/core/utils';
-
-/** Default timeout for Sentry API calls (30 seconds) */
-const DEFAULT_SENTRY_TIMEOUT_MS = 30000;
+import { getErrorMessage, withTimeout, DEFAULT_STEP_TIMEOUT_MS } from '@/api/agent/core';
+import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/toolResponse';
 
 /**
  * Schema for the getSentryIssue tool input.
@@ -24,7 +22,7 @@ const getSentryIssueSchema = z.object({
  * @returns A LangChain tool for fetching Sentry issues
  */
 export const createGetSentryIssueTool = (options: DomainToolOptions) => {
-  const { logger: parentLogger, stepTimeoutMs = DEFAULT_SENTRY_TIMEOUT_MS } = options;
+  const { logger: parentLogger, stepTimeoutMs = DEFAULT_STEP_TIMEOUT_MS } = options;
   const logger: Logger = parentLogger.child({ tool: 'get_sentry_issue' });
 
   return tool(
@@ -38,11 +36,11 @@ export const createGetSentryIssueTool = (options: DomainToolOptions) => {
 
         logger.info({ issueId, title: normalizedIssue.title }, 'Sentry issue fetched');
 
-        return JSON.stringify(normalizedIssue, null, 2);
+        return createToolSuccess(normalizedIssue);
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         logger.error({ issueId, error: errorMessage }, 'Failed to fetch Sentry issue');
-        return JSON.stringify({ error: `Failed to fetch Sentry issue: ${errorMessage}` });
+        return createToolError('get_sentry_issue', errorMessage);
       }
     },
     {

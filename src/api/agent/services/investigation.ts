@@ -115,21 +115,34 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   logger.info('Investigation supervisor created, starting investigation...');
 
   // Calculate recursion limit for multi-agent supervisor.
-  // The formula accounts for:
-  // 1. Supervisor overhead: supervisor ↔ agent handoffs (~4 supersteps per agent)
-  // 2. Per-agent iterations: each domain agent may iterate multiple times
-  // 3. Final synthesis: supervisor combines findings
   //
-  // Formula: (agentCount * agentOverhead) + supervisorIterations + buffer
-  // Where:
-  //   - agentOverhead = 4 (handoff in + agent work + handoff out + supervisor process)
-  //   - supervisorIterations = 2 * maxToolCalls (for supervisor's own tool calls)
-  //   - buffer = 5 (safety margin for edge cases)
+  // LangGraph counts "supersteps" (node executions) toward the recursion limit.
+  // The supervisor pattern requires enough budget for:
+  //
+  // 1. Per-agent budget: 2 * maxIterations + 4 supersteps per agent
+  //    - ReAct pattern uses 2 supersteps per iteration (LLM call → tool execution)
+  //    - Plus 4 supersteps for handoff overhead:
+  //      * 1 for supervisor → agent handoff
+  //      * 1 for agent → supervisor return
+  //      * 2 for supervisor processing (routing decision + result handling)
+  //    - With DEFAULT_AGENT_MAX_ITERATIONS=10: 2*10+4 = 24 supersteps per agent
+  //
+  // 2. Supervisor iterations: 2 * min(maxToolCalls, 10) supersteps
+  //    - Supervisor rarely needs many iterations (just routing + synthesis)
+  //    - Capped at 10 because supervisor delegates work, doesn't execute tools directly
+  //    - 2x multiplier follows ReAct pattern (decision + handoff per iteration)
+  //
+  // 3. Buffer of 5 supersteps for edge cases:
+  //    - Agent returning partial results requiring re-delegation
+  //    - Error recovery paths that add extra supersteps
+  //    - Synthesis requiring additional LLM calls
+  //
+  // Example with 3 agents: (3 * 24) + (2 * 10) + 5 = 97 supersteps
   //
   // @see https://langchain-ai.github.io/langgraph/concepts/low_level/#recursion-limit
   const enabledAgentCount = [enableNewRelic, enableSentry, enableResearch && mcpTools.length > 0].filter(Boolean).length;
   const agentOverhead = enabledAgentCount * (2 * DEFAULT_AGENT_MAX_ITERATIONS + 4);
-  const supervisorIterations = 2 * Math.min(config.maxToolCalls, 10); // Supervisor doesn't need many iterations
+  const supervisorIterations = 2 * Math.min(config.maxToolCalls, 10);
   const buffer = 5;
   const recursionLimit = config.recursionLimit ?? agentOverhead + supervisorIterations + buffer;
 
@@ -193,7 +206,20 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   } else {
     // Fallback: parse from raw summary if structuredResponse is not available
     logger.warn('No structuredResponse in result, using raw summary fallback');
-    structuredSummary = { summary: rawSummary.substring(0, 1000) };
+
+    const MAX_FALLBACK_LENGTH = 1000;
+    const truncated = rawSummary.length > MAX_FALLBACK_LENGTH;
+
+    if (truncated) {
+      logger.warn(
+        { originalLength: rawSummary.length, truncatedTo: MAX_FALLBACK_LENGTH },
+        'Raw summary truncated for structured fallback (full content in rawSummary)'
+      );
+    }
+
+    structuredSummary = {
+      summary: truncated ? `${rawSummary.substring(0, MAX_FALLBACK_LENGTH - 3)}...` : rawSummary
+    };
   }
 
   const durationMs = Date.now() - startTime;

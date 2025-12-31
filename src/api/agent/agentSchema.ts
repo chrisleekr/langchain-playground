@@ -9,7 +9,8 @@ export const PostAgentInvestigate = Type.Object({
   query: Type.String({
     minLength: 1,
     maxLength: 10000,
-    description: 'Freeform text describing the issue to investigate'
+    description:
+      'Issue or incident describing what to investigate. For best LLM performance, keep queries concise (ideally under ~2000 characters), as very long inputs may be truncated or lead to degraded results.'
   }),
   /** Optional configuration overrides */
   config: Type.Optional(

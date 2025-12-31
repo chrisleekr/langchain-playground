@@ -13,6 +13,17 @@ export type LLMProvider = z.infer<typeof LLMProviderSchema>;
 export const DEFAULT_AGENT_MAX_ITERATIONS = 10;
 
 /**
+ * Default per-step timeout in milliseconds for external API calls.
+ * Ensures all external calls have timeout protection even when not explicitly configured.
+ *
+ * 30 seconds is chosen as a balance between:
+ * - Allowing slow but valid API responses (e.g., complex NRQL queries)
+ * - Preventing indefinite hangs that consume the entire timeout budget
+ * - Matching typical HTTP client defaults (axios: 0, fetch: none, but 30s is common in enterprise)
+ */
+export const DEFAULT_STEP_TIMEOUT_MS = 30000;
+
+/**
  * Agent configuration schema with validation constraints.
  * All values have sensible defaults for production use.
  */

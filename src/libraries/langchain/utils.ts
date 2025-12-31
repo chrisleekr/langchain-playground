@@ -9,17 +9,37 @@ export const removeThinkTag = (input: { content: string }): { content: string } 
 };
 
 /**
- * Checks if a message has valid (non-empty) content.
- * Handles both string content and structured content arrays.
+ * Checks if a message has valid (non-empty) content for Bedrock.
  *
  * AWS Bedrock's Converse API strictly requires non-empty content in messages.
- * LangGraph's supervisor pattern can create empty messages during handoffs,
- * which causes ValidationException errors.
+ * LangGraph's supervisor pattern can create empty messages during handoffs.
+ *
+ * IMPORTANT: AI messages with tool calls are always valid, even if content is empty.
+ * Tool calls can be in:
+ * - `message.tool_calls` (AIMessage direct property, used by Bedrock)
+ * - `message.additional_kwargs.tool_calls` (OpenAI format)
+ * Filtering these breaks Bedrock's tool_use/tool_result pairing requirement.
  *
  * @param message - The message to check
  * @returns true if the message has valid content
  */
 export const hasValidContent = (message: BaseMessage): boolean => {
+  // AI messages with tool calls are always valid, even with empty content.
+  // Check both locations where tool calls can be stored.
+  // 1. Direct tool_calls property (Bedrock/Anthropic format)
+  if ('tool_calls' in message) {
+    const directToolCalls = (message as unknown as { tool_calls?: unknown[] }).tool_calls;
+    if (directToolCalls && directToolCalls.length > 0) {
+      return true;
+    }
+  }
+
+  // 2. additional_kwargs.tool_calls (OpenAI format)
+  const additionalToolCalls = message.additional_kwargs?.tool_calls as unknown[] | undefined;
+  if (additionalToolCalls && additionalToolCalls.length > 0) {
+    return true;
+  }
+
   const content = message.content;
 
   // String content

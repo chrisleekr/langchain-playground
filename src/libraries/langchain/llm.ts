@@ -8,7 +8,7 @@ import type { AwsCredentialIdentityProvider } from '@aws-sdk/types';
 import type { BaseMessage } from '@langchain/core/messages';
 import type { CallbackManagerForLLMRun } from '@langchain/core/callbacks/manager';
 import type { ChatResult } from '@langchain/core/outputs';
-import { Logger } from '@/libraries';
+import { logger, Logger } from '@/libraries';
 import { filterEmptyMessages } from './utils';
 
 /**
@@ -33,15 +33,18 @@ class ChatBedrockConverseSafe extends ChatBedrockConverse {
    * This prevents ValidationException from Bedrock's Converse API.
    */
   async _generate(messages: BaseMessage[], options: this['ParsedCallOptions'], runManager?: CallbackManagerForLLMRun): Promise<ChatResult> {
-    // Filter out messages with empty content
+    // Filter out messages with empty content (preserves messages with tool calls)
     const filteredMessages = filterEmptyMessages(messages);
 
     // If all messages were filtered out, return an empty response
-    // This shouldn't happen in practice, but handles edge cases
     if (filteredMessages.length === 0) {
+      logger.warn({ originalCount: messages.length }, 'ChatBedrockConverseSafe: All messages filtered out (empty content)');
       return {
         generations: [],
-        llmOutput: {}
+        llmOutput: {
+          warning: 'All messages had empty content and were filtered',
+          originalMessageCount: messages.length
+        }
       };
     }
 

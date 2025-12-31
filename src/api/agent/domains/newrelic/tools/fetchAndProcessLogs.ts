@@ -3,7 +3,8 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import { executeNRQLQuery, normalizeLogs, getTraceIds } from '@/libraries/newrelic';
-import { withTimeout, getErrorMessage } from '@/api/agent/core';
+import { withTimeout, getErrorMessage, DEFAULT_STEP_TIMEOUT_MS } from '@/api/agent/core';
+import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/toolResponse';
 
 import type { DomainToolOptions } from '@/api/agent/domains/shared/types';
 
@@ -11,7 +12,9 @@ import type { DomainToolOptions } from '@/api/agent/domains/shared/types';
  * Composite tool that executes NRQL and processes results in one call.
  * Replaces: execute_nrql_query + normalize_logs + filter_logs_by_type + extract_trace_ids
  */
-export const createFetchAndProcessLogsTool = ({ logger, stepTimeoutMs }: DomainToolOptions) => {
+export const createFetchAndProcessLogsTool = (options: DomainToolOptions) => {
+  const { logger, stepTimeoutMs = DEFAULT_STEP_TIMEOUT_MS } = options;
+
   return tool(
     async ({ nrqlQuery }) => {
       const nodeLogger = logger.child({ tool: 'fetch_and_process_logs' });
@@ -19,9 +22,7 @@ export const createFetchAndProcessLogsTool = ({ logger, stepTimeoutMs }: DomainT
 
       try {
         // Execute NRQL query with timeout protection
-        const rawLogs = stepTimeoutMs
-          ? await withTimeout(() => executeNRQLQuery({ query: nrqlQuery }), stepTimeoutMs, 'executeNRQLQuery')
-          : await executeNRQLQuery({ query: nrqlQuery });
+        const rawLogs = await withTimeout(() => executeNRQLQuery({ query: nrqlQuery }), stepTimeoutMs, 'executeNRQLQuery');
         nodeLogger.debug({ rawCount: rawLogs.length }, 'Raw logs fetched');
 
         const normalizedLogs = normalizeLogs(rawLogs);
@@ -48,7 +49,7 @@ export const createFetchAndProcessLogsTool = ({ logger, stepTimeoutMs }: DomainT
           'Logs processed'
         );
 
-        return JSON.stringify({
+        return createToolSuccess({
           normalizedLogs,
           envoyLogs,
           serviceLogs,
@@ -65,7 +66,7 @@ export const createFetchAndProcessLogsTool = ({ logger, stepTimeoutMs }: DomainT
       } catch (error) {
         const message = getErrorMessage(error);
         nodeLogger.error({ error: message, query: nrqlQuery }, 'Failed to fetch and process logs');
-        return JSON.stringify({ error: message, normalizedLogs: [], envoyLogs: [], serviceLogs: [], urlLogs: [], traceIds: [], summary: null });
+        return createToolError('fetch_and_process_logs', message);
       }
     },
     {

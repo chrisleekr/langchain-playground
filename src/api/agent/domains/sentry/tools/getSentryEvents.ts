@@ -10,10 +10,8 @@ import {
   getSentryIssue
 } from '@/libraries/sentry';
 import type { DomainToolOptions } from '@/api/agent/domains/shared/types';
-import { getErrorMessage, withTimeout } from '@/api/agent/core/utils';
-
-/** Default timeout for Sentry API calls (30 seconds) */
-const DEFAULT_SENTRY_TIMEOUT_MS = 30000;
+import { getErrorMessage, withTimeout, DEFAULT_STEP_TIMEOUT_MS } from '@/api/agent/core';
+import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/toolResponse';
 
 /**
  * Schema for the getSentryEvents tool input.
@@ -31,7 +29,7 @@ const getSentryEventsSchema = z.object({
  * @returns A LangChain tool for fetching Sentry issue events
  */
 export const createGetSentryEventsTool = (options: DomainToolOptions) => {
-  const { logger: parentLogger, stepTimeoutMs = DEFAULT_SENTRY_TIMEOUT_MS } = options;
+  const { logger: parentLogger, stepTimeoutMs = DEFAULT_STEP_TIMEOUT_MS } = options;
   const logger: Logger = parentLogger.child({ tool: 'get_sentry_events' });
 
   return tool(
@@ -44,7 +42,7 @@ export const createGetSentryEventsTool = (options: DomainToolOptions) => {
 
         if (issueEvents.length === 0) {
           logger.info({ issueId }, 'No events found for issue');
-          return JSON.stringify({ message: 'No events found for this issue' });
+          return createToolSuccess({ message: 'No events found for this issue', events: [] });
         }
 
         const latestEvent = issueEvents[0];
@@ -53,7 +51,7 @@ export const createGetSentryEventsTool = (options: DomainToolOptions) => {
         // Handle case where normalization fails
         if (!normalizedEvent) {
           logger.warn({ issueId, eventId: latestEvent.id }, 'Failed to normalize event data');
-          return JSON.stringify({ error: 'Failed to normalize event data' });
+          return createToolError('get_sentry_events', 'Failed to normalize event data');
         }
 
         let result: object = normalizedEvent;
@@ -73,19 +71,15 @@ export const createGetSentryEventsTool = (options: DomainToolOptions) => {
 
         logger.info({ issueId, eventId: latestEvent.id, eventCount: issueEvents.length }, 'Sentry events fetched');
 
-        return JSON.stringify(
-          {
-            eventId: latestEvent.id,
-            totalEvents: issueEvents.length,
-            latestEvent: result
-          },
-          null,
-          2
-        );
+        return createToolSuccess({
+          eventId: latestEvent.id,
+          totalEvents: issueEvents.length,
+          latestEvent: result
+        });
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         logger.error({ issueId, error: errorMessage }, 'Failed to fetch Sentry events');
-        return JSON.stringify({ error: `Failed to fetch Sentry events: ${errorMessage}` });
+        return createToolError('get_sentry_events', errorMessage);
       }
     },
     {

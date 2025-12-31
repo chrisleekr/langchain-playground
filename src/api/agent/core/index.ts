@@ -1,8 +1,16 @@
 // Configuration
-export { AgentConfigSchema, defaultConfig, LLMProviderSchema, DEFAULT_AGENT_MAX_ITERATIONS, type AgentConfig, type LLMProvider } from './config';
+export {
+  AgentConfigSchema,
+  defaultConfig,
+  LLMProviderSchema,
+  DEFAULT_AGENT_MAX_ITERATIONS,
+  DEFAULT_STEP_TIMEOUT_MS,
+  type AgentConfig,
+  type LLMProvider
+} from './config';
 
 // Utilities
-export { getModel, getErrorMessage, createTimeoutPromise, withTimeout, type TimeoutPromiseResult } from './utils';
+export { getModel, getErrorMessage, createTimeoutPromise, withTimeout, TimeoutError, type TimeoutPromiseResult } from './utils';
 
 // Pricing
 export { calculateCost, getModelPricing } from './pricing';
