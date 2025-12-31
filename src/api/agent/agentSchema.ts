@@ -1,12 +1,16 @@
 import { Type } from '@sinclair/typebox';
 
 /**
- * Request schema for POST /agent/newrelic/investigate
- * Validates the issue ID and optional configuration overrides.
+ * Request schema for POST /agent/investigate
+ * Validates freeform text input and optional configuration overrides.
  */
-export const PostAgentNewRelicInvestigate = Type.Object({
-  /** New Relic issue ID to investigate (UUID or NR issue format) */
-  issueId: Type.String({ minLength: 1, pattern: '^[a-zA-Z0-9-]+$' }),
+export const PostAgentInvestigate = Type.Object({
+  /** Freeform text describing what to investigate */
+  query: Type.String({
+    minLength: 1,
+    maxLength: 10000,
+    description: 'Freeform text describing the issue to investigate'
+  }),
   /** Optional configuration overrides */
   config: Type.Optional(
     Type.Object({
