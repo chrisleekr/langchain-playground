@@ -40,20 +40,35 @@ This project provides both REST API endpoints or Slack bot integration for inter
 - `fastify`: serves as a web server in `src/api`
 - `slack`: serves as a Slack app in `src/slack`
 
-## LangChain.js Agents with tools
+## Multi-Agent Investigation System
 
-In this project, I used LangChain.js to build a workflow to analyze New Relic logs.
+In this project, I used LangGraph Supervisor to build a multi-agent investigation system.
 
-Refer to [Agents](https://docs.langchain.com/oss/javascript/langchain/agents) for more details.
+Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi-agent) for more details.
 
-The workflow in big picture is as follows:
+**Supervisor** coordinates three specialized domain agents:
 
-1. Use prompt [prompts.ts](src/api/agent/newrelic/prompts.ts) to guide the agent to execute custom tools located in [tools](src/api/agent/newrelic/tools).
-2. Once the agent executed mandatory tools, then it will execute the extended investigation tools if needed.
-3. Once the agent executed all tools, then it will generate a summary of the investigation.
-4. The summary will be returned to the user.
+| Agent | Purpose | Tools |
+|-------|---------|-------|
+| **New Relic Expert** | Alerts, logs, APM data | NRQL queries, log analysis, trace correlation |
+| **Sentry Expert** | Error tracking, crashes | Issue lookup, event analysis, stack traces |
+| **Research Expert** | External documentation | Brave Search, Context7, Kubernetes (MCP) |
 
-<img width="1199" height="892" alt="Image" src="https://github.com/user-attachments/assets/901ffea2-d26d-443a-9c5f-0617a2eef231" />
+**Workflow**:
+
+1. **Analyze** - Supervisor determines relevant domain(s) from the query
+2. **Delegate** - Routes to appropriate domain agent(s) in parallel or sequence
+3. **Synthesize** - Combines findings into a unified `InvestigationSummary`
+4. **Return** - Structured response with root cause, impact, and recommendations
+
+**Key Features**:
+
+- **Recursion limit protection** - Prevents infinite agent loops
+- **Timeout protection** - Configurable per-request and per-step timeouts
+- **Cost tracking** - Token usage and cost calculation via callbacks
+- **Structured output** - Zod-validated `InvestigationSummary` schema
+
+<img width="971" height="849" alt="Image" src="https://github.com/user-attachments/assets/13003b60-425e-40a6-84a9-3cec3cb1703e" />
 
 ## Sentry alert analysis
 

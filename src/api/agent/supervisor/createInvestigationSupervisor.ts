@@ -1,0 +1,133 @@
+import type { Logger } from 'pino';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { StructuredToolInterface } from '@langchain/core/tools';
+import { MemorySaver } from '@langchain/langgraph';
+import { createSupervisor } from '@langchain/langgraph-supervisor';
+
+import { createNewRelicAgent } from '@/api/agent/domains/newrelic';
+import { createSentryAgent } from '@/api/agent/domains/sentry';
+import { createResearchAgent } from '@/api/agent/domains/research';
+import type { CompiledDomainAgent } from '@/api/agent/domains/shared/types';
+import { DEFAULT_AGENT_MAX_ITERATIONS, InvestigationSummarySchema } from '@/api/agent/core';
+import { supervisorSystemPrompt } from './prompts';
+
+/**
+ * Options for creating the investigation supervisor.
+ */
+export interface InvestigationSupervisorOptions {
+  /** LLM model instance for the supervisor */
+  model: BaseChatModel;
+  /** Logger instance for structured logging */
+  logger: Logger;
+  /** Optional: Enable New Relic agent (default: true) */
+  enableNewRelic?: boolean;
+  /** Optional: Enable Sentry agent (default: true) */
+  enableSentry?: boolean;
+  /** Optional: Enable Research agent with MCP tools (default: true) */
+  enableResearch?: boolean;
+  /** MCP tools for the research agent (required if enableResearch is true) */
+  mcpTools?: StructuredToolInterface[];
+  /** Max iterations per domain agent (default: 10) */
+  maxAgentIterations?: number;
+  /**
+   * Per-step timeout in milliseconds for external API calls.
+   * Prevents slow external API calls from consuming the entire timeout budget.
+   */
+  stepTimeoutMs?: number;
+}
+
+/**
+ * Creates an investigation supervisor that coordinates domain-specific agents.
+ *
+ * The supervisor uses LangGraph's supervisor pattern to:
+ * 1. Receive investigation requests
+ * 2. Delegate to appropriate domain agents (New Relic, Sentry, etc.)
+ * 3. Synthesize findings from multiple agents
+ * 4. Return a unified investigation report
+ *
+ * API Compatibility Note (2025-12):
+ * - Domain agents use deprecated `createReactAgent` from `@langchain/langgraph/prebuilt`
+ * - The newer `createAgent` from `langchain` package returns `AgentGraph` which is
+ *   NOT compatible with `createSupervisor` (requires `CompiledStateGraph`)
+ * - State type mismatch: AgentGraph uses `BaseMessage[]` vs CompiledStateGraph's
+ *   `BinaryOperatorAggregate<BaseMessage[], Messages>`
+ * - Continue using `createReactAgent` until LangGraph ecosystem aligns these APIs
+ *
+ * @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
+ * @see https://github.com/langchain-ai/langgraphjs/tree/main/libs/langgraph-supervisor
+ *
+ * @param options - Configuration options for the supervisor
+ * @returns A compiled LangGraph workflow for investigation
+ */
+export const createInvestigationSupervisor = (options: InvestigationSupervisorOptions) => {
+  const {
+    model,
+    logger,
+    enableNewRelic = true,
+    enableSentry = true,
+    enableResearch = true,
+    mcpTools = [],
+    maxAgentIterations = DEFAULT_AGENT_MAX_ITERATIONS,
+    stepTimeoutMs
+  } = options;
+
+  // Calculate per-agent recursion limit based on ReAct pattern
+  // Each iteration = 2 supersteps (model + tool), plus 1 for final response
+  const agentRecursionLimit = 2 * maxAgentIterations + 1;
+
+  // Create domain-specific agents with bounded loop protection
+  const agents: CompiledDomainAgent[] = [];
+
+  if (enableNewRelic) {
+    logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating New Relic agent');
+    const newRelicAgent = createNewRelicAgent({ model, logger, stepTimeoutMs }).withConfig({
+      recursionLimit: agentRecursionLimit
+    });
+    agents.push(newRelicAgent);
+  }
+
+  if (enableSentry) {
+    logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating Sentry agent');
+    const sentryAgent = createSentryAgent({ model, logger, stepTimeoutMs }).withConfig({
+      recursionLimit: agentRecursionLimit
+    });
+    agents.push(sentryAgent);
+  }
+
+  if (enableResearch && mcpTools.length > 0) {
+    logger.info({ mcpToolCount: mcpTools.length, maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating Research agent with MCP tools');
+    const researchAgent = createResearchAgent({ model, logger, mcpTools, stepTimeoutMs }).withConfig({
+      recursionLimit: agentRecursionLimit
+    });
+    agents.push(researchAgent);
+  } else if (enableResearch && mcpTools.length === 0) {
+    logger.warn('Research agent skipped: no MCP tools provided');
+  }
+
+  if (agents.length === 0) {
+    throw new Error('At least one domain agent must be enabled');
+  }
+
+  logger.info({ agentCount: agents.length, agentRecursionLimit }, 'Creating investigation supervisor');
+
+  // Create the supervisor workflow with explicit configuration
+  // @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
+  const supervisor = createSupervisor({
+    agents,
+    llm: model,
+    prompt: supervisorSystemPrompt,
+    // Include full agent message history for better context synthesis
+    outputMode: 'full_history',
+    // Omit handoff messages for cleaner conversation history
+    addHandoffBackMessages: false,
+    // Structured output format for the final investigation summary
+    // This ensures the supervisor returns a consistent response format
+    // @see https://langchain-ai.github.io/langgraphjs/agents/structured-output/
+    responseFormat: InvestigationSummarySchema
+  });
+
+  // Compile with in-memory checkpointer for state persistence
+  // @see https://langchain-ai.github.io/langgraph/concepts/persistence/
+  const checkpointer = new MemorySaver();
+  return supervisor.compile({ checkpointer });
+};
