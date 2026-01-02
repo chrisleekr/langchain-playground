@@ -90,6 +90,15 @@
     }
   },
   "aws": {
+    "investigate": {
+      "region": "AWS_INVESTIGATE_REGION",
+      "ecsEventLogGroup": "AWS_INVESTIGATE_ECS_EVENT_LOG_GROUP",
+      "credentials": {
+        "profile": "AWS_INVESTIGATE_CREDENTIALS_PROFILE",
+        "accessKeyId": "AWS_INVESTIGATE_CREDENTIALS_ACCESS_KEY_ID",
+        "secretAccessKey": "AWS_INVESTIGATE_CREDENTIALS_SECRET_ACCESS_KEY"
+      }
+    },
     "bedrock": {
       "region": "AWS_BEDROCK_REGION",
       "model": "AWS_BEDROCK_MODEL",

@@ -1,15 +1,20 @@
 import type { LLMToolOptions } from '@/api/agent/domains/shared/types';
 import { createGetInvestigationContextTool } from './getInvestigationContext';
-import { createFetchAndProcessLogsTool } from './fetchAndProcessLogs';
 import { createGenerateLogNRQLQueryTool } from './generateLogNRQLQuery';
 import { createGenerateTraceLogsQueryTool } from './generateTraceLogsQuery';
-import { createAnalyzeLogsTool } from './analyzeLogs';
+import { createFetchAndAnalyzeLogsTool } from './fetchAndAnalyzeLogs';
 
 /**
  * Creates all New Relic investigation tools for the agent.
- * Tools are divided into two categories:
- * 1. Data-fetching tools: Execute API calls without LLM inference
- * 2. LLM-powered tools: Use the model to generate queries or analyze data
+ *
+ * Tool categories:
+ * 1. Context-fetching: Execute API calls without LLM inference
+ * 2. Query generation: Use LLM to generate NRQL queries
+ * 3. Fetch + Analyze: Combined tool that fetches logs and analyzes in one step
+ *
+ * The fetch_and_analyze_logs tool combines the previous fetch_and_process_logs
+ * and analyze_logs tools, keeping raw log data internal to reduce token usage
+ * when passing context to other domain agents.
  *
  * @param options - Tool options with logger, model, and optional step timeout
  * @returns Array of structured tools for New Relic investigation
@@ -18,15 +23,15 @@ export const createAllTools = (options: LLMToolOptions) => {
   const { logger, model, stepTimeoutMs } = options;
 
   return [
-    // Data-fetching tools: Execute API calls without LLM inference,
-    // keeping token costs low for data retrieval operations
+    // Context-fetching: Execute API calls without LLM inference
     createGetInvestigationContextTool({ logger, stepTimeoutMs }),
-    createFetchAndProcessLogsTool({ logger, stepTimeoutMs }),
 
-    // LLM-powered tools: Use the model to generate queries or analyze data,
-    // requiring the model instance for inference
+    // Query generation: Use LLM to generate NRQL queries
     createGenerateLogNRQLQueryTool({ logger, model, stepTimeoutMs }),
     createGenerateTraceLogsQueryTool({ logger, model, stepTimeoutMs }),
-    createAnalyzeLogsTool({ logger, model, stepTimeoutMs })
+
+    // Combined fetch + analyze: Keeps raw logs internal, returns only analysis
+    // This reduces token usage when supervisor passes context to other agents
+    createFetchAndAnalyzeLogsTool({ logger, model, stepTimeoutMs })
   ];
 };

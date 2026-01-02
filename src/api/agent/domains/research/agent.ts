@@ -2,7 +2,7 @@ import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import type { StructuredToolInterface } from '@langchain/core/tools';
 
 import type { DomainAgentOptions } from '@/api/agent/domains/shared/types';
-import { researchSystemPrompt } from './prompts';
+import { getResearchSystemPrompt } from './prompts';
 
 /**
  * Options for creating the Research agent.
@@ -45,6 +45,6 @@ export const createResearchAgent = (options: ResearchAgentOptions) => {
     llm: model,
     tools: mcpTools,
     name: 'research_expert',
-    prompt: researchSystemPrompt
+    prompt: getResearchSystemPrompt()
   });
 };

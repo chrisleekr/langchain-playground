@@ -7,6 +7,13 @@ import {
   NewRelicGraphQLDataActorAccountAiIssuesIssuesIncidentsIncident
 } from './types';
 
+/**
+ * Fetch New Relic incidents by their IDs.
+ *
+ * @param args - Arguments containing incident IDs
+ * @returns Array of incident objects (empty if not found or on error)
+ * @throws Error if the API request fails
+ */
 export const getNewRelicIncidents = async (
   args: GetNewRelicIncidentsArgs
 ): Promise<NewRelicGraphQLDataActorAccountAiIssuesIssuesIncidentsIncident[]> => {
@@ -47,11 +54,27 @@ export const getNewRelicIncidents = async (
     body: JSON.stringify({ query, variables: { accountId: config.get<number>('newrelic.accountId'), incidentIds } })
   });
 
+  if (!response.ok) {
+    throw new Error(`New Relic API request failed: ${response.status} ${response.statusText}`);
+  }
+
   const responseData = (await response.json()) as NewRelicGraphQLData;
 
-  const account = responseData.data.actor.account as NewRelicGraphQLDataActorAccountAiIssues;
+  // Check for GraphQL errors
+  if (responseData.errors && responseData.errors.length > 0) {
+    throw new Error(`New Relic GraphQL error: ${responseData.errors.map(e => e.message).join(', ')}`);
+  }
 
-  const aiIssues = account.aiIssues as NewRelicGraphQLDataActorAccountAiIssuesIssuesIncidents;
+  // Safely navigate the response with null checks
+  const account = responseData.data?.actor?.account as NewRelicGraphQLDataActorAccountAiIssues | undefined;
+  if (!account) {
+    throw new Error('New Relic API returned null account data');
+  }
+
+  const aiIssues = account.aiIssues as NewRelicGraphQLDataActorAccountAiIssuesIssuesIncidents | undefined;
+  if (!aiIssues?.incidents?.incidents) {
+    return []; // No incidents found
+  }
 
   return aiIssues.incidents.incidents;
 };

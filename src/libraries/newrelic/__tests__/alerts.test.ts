@@ -4,13 +4,13 @@ import { NewRelicGraphQLDataActorAccountAlertsNRQLCondition } from '../types';
 
 describe('alerts', () => {
   describe('getNewRelicAlert', () => {
-    let alert: NewRelicGraphQLDataActorAccountAlertsNRQLCondition;
+    let alert: NewRelicGraphQLDataActorAccountAlertsNRQLCondition | null;
 
     beforeEach(async () => {
       alert = await getNewRelicAlert({ alertId: '53076058' });
     });
 
-    it('should return the alert', () => {
+    it('returns the alert', () => {
       expect(alert).toEqual({
         id: expect.any(String),
         name: expect.any(String),

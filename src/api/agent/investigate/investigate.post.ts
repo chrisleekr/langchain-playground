@@ -52,7 +52,9 @@ export default function investigatePost() {
       config,
       logger,
       enableNewRelic: true,
-      enableSentry: true
+      enableSentry: true,
+      enableResearch: true,
+      enableAwsEcs: true
     });
 
     await sendResponse(
@@ -62,10 +64,12 @@ export default function investigatePost() {
         'Investigation complete',
         {
           query: result.query,
+          rawSummary: result.rawSummary,
           structuredSummary: result.structuredSummary,
           messageCount: result.messageCount,
           durationMs: result.durationMs,
-          costSummary: result.costSummary
+          costSummary: result.costSummary,
+          toolExecutions: result.toolExecutions
         },
         StatusCodes.OK
       )

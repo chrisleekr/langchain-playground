@@ -8,8 +8,6 @@
  *   $ npm run dev:script -- src/testAgent.ts "Investigate New Relic issue 9c1a72bc-8932-4154-a910-5d0a1c355350"
  *   $ npm run dev:script -- src/testAgent.ts "Analyze Sentry error ABC" --provider=bedrock --verbose
  */
-import slackifyMarkdown from 'slackify-markdown';
-import YAML from 'yaml';
 import { logger } from '@/libraries/logger';
 import { AgentConfigSchema, type LLMProvider } from '@/api/agent/core';
 import { investigate } from '@/api/agent/services';
@@ -76,7 +74,7 @@ const parseArgs = () => {
     console.log('='.repeat(80));
     console.log('\nQuery:', result.query);
     console.log('\n--- INVESTIGATION SUMMARY ---');
-    console.log(slackifyMarkdown(YAML.stringify(result.structuredSummary)));
+    console.log(result.rawSummary);
     console.log('\n' + '='.repeat(80));
     console.log(`Messages: ${result.messageCount}`);
     console.log(`Duration: ${result.durationMs}ms`);

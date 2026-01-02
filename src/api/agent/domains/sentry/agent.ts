@@ -1,7 +1,7 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 
 import type { DomainAgentOptions } from '@/api/agent/domains/shared/types';
-import { sentrySystemPrompt } from './prompts';
+import { getSentrySystemPrompt } from './prompts';
 import { createAllTools } from './tools';
 
 /**
@@ -34,6 +34,6 @@ export const createSentryAgent = (options: DomainAgentOptions) => {
     llm: model,
     tools,
     name: 'sentry_expert',
-    prompt: sentrySystemPrompt
+    prompt: getSentrySystemPrompt()
   });
 };

@@ -18,7 +18,7 @@ export const OverallStateAnnotation = Annotation.Root({
   issueId: Annotation<string>,
   issues: Annotation<NewRelicGraphQLDataActorAccountAiIssuesIssuesIssuesIssue[]>,
   incidents: Annotation<NewRelicGraphQLDataActorAccountAiIssuesIssuesIncidentsIncident[]>,
-  alertNRQLCondition: Annotation<NewRelicGraphQLDataActorAccountAlertsNRQLCondition>,
+  alertNRQLCondition: Annotation<NewRelicGraphQLDataActorAccountAlertsNRQLCondition | null>,
   alertNRQLQuery: Annotation<string>,
   logs: Annotation<Record<string, unknown>[]>,
   traceIds: Annotation<string[]>,

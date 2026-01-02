@@ -1,7 +1,8 @@
 // Domain agents
-export { createNewRelicAgent, createNewRelicTools } from './newrelic';
+export { createNewRelicAgent } from './newrelic';
 export { createSentryAgent } from './sentry';
 export { createResearchAgent, type ResearchAgentOptions } from './research';
+export { createAwsEcsAgent } from './aws-ecs';
 
 // Shared utilities
 export type { DomainAgentOptions, DomainToolOptions, CompiledDomainAgent } from './shared/types';

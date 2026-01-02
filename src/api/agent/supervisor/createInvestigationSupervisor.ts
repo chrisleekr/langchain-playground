@@ -7,6 +7,7 @@ import { createSupervisor } from '@langchain/langgraph-supervisor';
 import { createNewRelicAgent } from '@/api/agent/domains/newrelic';
 import { createSentryAgent } from '@/api/agent/domains/sentry';
 import { createResearchAgent } from '@/api/agent/domains/research';
+import { createAwsEcsAgent } from '@/api/agent/domains/aws-ecs';
 import type { CompiledDomainAgent } from '@/api/agent/domains/shared/types';
 import { DEFAULT_AGENT_MAX_ITERATIONS, InvestigationSummarySchema } from '@/api/agent/core';
 import { supervisorSystemPrompt } from './prompts';
@@ -25,6 +26,8 @@ export interface InvestigationSupervisorOptions {
   enableSentry?: boolean;
   /** Optional: Enable Research agent with MCP tools (default: true) */
   enableResearch?: boolean;
+  /** Optional: Enable AWS ECS agent (default: true) */
+  enableAwsEcs?: boolean;
   /** MCP tools for the research agent (required if enableResearch is true) */
   mcpTools?: StructuredToolInterface[];
   /** Max iterations per domain agent (default: 10) */
@@ -66,6 +69,7 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     enableNewRelic = true,
     enableSentry = true,
     enableResearch = true,
+    enableAwsEcs = true,
     mcpTools = [],
     maxAgentIterations = DEFAULT_AGENT_MAX_ITERATIONS,
     stepTimeoutMs
@@ -104,6 +108,14 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     logger.warn('Research agent skipped: no MCP tools provided');
   }
 
+  if (enableAwsEcs) {
+    logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating AWS ECS agent');
+    const awsEcsAgent = createAwsEcsAgent({ model, logger, stepTimeoutMs }).withConfig({
+      recursionLimit: agentRecursionLimit
+    });
+    agents.push(awsEcsAgent);
+  }
+
   if (agents.length === 0) {
     throw new Error('At least one domain agent must be enabled');
   }
@@ -116,8 +128,9 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     agents,
     llm: model,
     prompt: supervisorSystemPrompt,
-    // Include full agent message history for better context synthesis
-    outputMode: 'full_history',
+    // Not gonna use `full_history` to include full agent message history for better context synthesis because it's too costly.
+    // Instead, I'll use `last_message` to include only the last message from each agent.
+    outputMode: 'last_message',
     // Omit handoff messages for cleaner conversation history
     addHandoffBackMessages: false,
     // Structured output format for the final investigation summary
