@@ -42,7 +42,7 @@ export const createGenerateLogNRQLQueryTool = ({ logger, model }: LLMToolOptions
       const dateFormatExample = getNRQLDateFormatExample();
       const tzOffset = getTimezoneOffset();
 
-      // Remove quotes from example to prevent LLM from including quotes in output
+      // Generate timestamps without surrounding quotes - the system will add quotes programmatically.
       const dateFormatExampleNoQuotes = dateFormatExample.replace(/'/g, '');
 
       const prompt = PromptTemplate.fromTemplate(`
