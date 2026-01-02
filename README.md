@@ -46,13 +46,14 @@ In this project, I used LangGraph Supervisor to build a multi-agent investigatio
 
 Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi-agent) for more details.
 
-**Supervisor** coordinates three specialized domain agents:
+**Supervisor** coordinates four specialized domain agents:
 
 | Agent | Purpose | Tools |
 |-------|---------|-------|
 | **New Relic Expert** | Alerts, logs, APM data | NRQL queries, log analysis, trace correlation |
 | **Sentry Expert** | Error tracking, crashes | Issue lookup, event analysis, stack traces |
 | **Research Expert** | External documentation | Brave Search, Context7, Kubernetes (MCP) |
+| **AWS ECS Expert** | AWS ECS | ECS task status, container health, CloudWatch Container Insights metrics, service deployment, task placement, historical task event lookup, container exit codes, performance bottleneck analysis |
 
 **Workflow**:
 
@@ -66,9 +67,8 @@ Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi
 - **Recursion limit protection** - Prevents infinite agent loops
 - **Timeout protection** - Configurable per-request and per-step timeouts
 - **Cost tracking** - Token usage and cost calculation via callbacks
-- **Structured output** - Zod-validated `InvestigationSummary` schema
 
-<img width="971" height="849" alt="Image" src="https://github.com/user-attachments/assets/13003b60-425e-40a6-84a9-3cec3cb1703e" />
+<img width="1191" height="886" alt="Image" src="https://github.com/user-attachments/assets/84708064-b7ff-42fc-b5b2-79c0bbc79ca5" />
 
 ## Sentry alert analysis
 

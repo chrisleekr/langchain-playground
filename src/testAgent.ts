@@ -76,7 +76,7 @@ const parseArgs = () => {
     console.log('='.repeat(80));
     console.log('\nQuery:', result.query);
     console.log('\n--- INVESTIGATION SUMMARY ---');
-    console.log(slackifyMarkdown(YAML.stringify(result.structuredSummary)));
+    console.log(slackifyMarkdown(YAML.stringify(result.rawSummary)));
     console.log('\n' + '='.repeat(80));
     console.log(`Messages: ${result.messageCount}`);
     console.log(`Duration: ${result.durationMs}ms`);

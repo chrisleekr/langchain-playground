@@ -14,6 +14,16 @@ export type ExecuteNRQLQueryArgs = {
   query: string;
 };
 
+/**
+ * GraphQL error object returned by New Relic API.
+ */
+export interface NewRelicGraphQLError {
+  message: string;
+  locations?: Array<{ line: number; column: number }>;
+  path?: string[];
+  extensions?: Record<string, unknown>;
+}
+
 export interface NewRelicGraphQLDataActorAccountAiIssuesIssuesIssuesIssue {
   title: string[];
   description: string[];
@@ -83,6 +93,11 @@ export interface NewRelicGraphQLDataActor {
   actor: NewRelicGraphQLDataActorAccount;
 }
 
+/**
+ * Standard GraphQL response from New Relic API.
+ * Data may be null if there are errors.
+ */
 export interface NewRelicGraphQLData {
-  data: NewRelicGraphQLDataActor;
+  data: NewRelicGraphQLDataActor | null;
+  errors?: NewRelicGraphQLError[];
 }

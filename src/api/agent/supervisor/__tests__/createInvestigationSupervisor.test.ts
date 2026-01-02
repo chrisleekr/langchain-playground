@@ -11,6 +11,16 @@ describe('supervisorSystemPrompt', () => {
   it('describes available domain experts', () => {
     expect(supervisorSystemPrompt).toContain('newrelic_expert');
     expect(supervisorSystemPrompt).toContain('sentry_expert');
+    expect(supervisorSystemPrompt).toContain('research_expert');
+    expect(supervisorSystemPrompt).toContain('aws_ecs_expert');
+  });
+
+  it('lists AWS ECS capabilities and routing rules', () => {
+    expect(supervisorSystemPrompt).toContain('ECS task status');
+    expect(supervisorSystemPrompt).toContain('CloudWatch Container Insights');
+    expect(supervisorSystemPrompt).toContain('ecs_task_arn');
+    // Verify ECS routing is enforced
+    expect(supervisorSystemPrompt).toContain('MUST delegate to aws_ecs_expert');
   });
 
   it('lists New Relic capabilities', () => {

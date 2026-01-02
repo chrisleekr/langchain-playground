@@ -4,7 +4,7 @@ import { GraphRecursionError } from '@langchain/langgraph';
 import { randomUUID } from 'node:crypto';
 
 import type { AgentConfig } from '@/api/agent/core/config';
-import type { CostSummary, InvestigationSummary } from '@/api/agent/core/schema';
+import type { CostSummary, InvestigationSummary, ToolExecution } from '@/api/agent/core/schema';
 import { DEFAULT_AGENT_MAX_ITERATIONS, getModel, createTimeoutPromise, InvestigationSummarySchema } from '@/api/agent/core';
 import { createInvestigationSupervisor } from '@/api/agent/supervisor';
 import { CostTrackingCallbackHandler, ObservabilityCallbackHandler } from '@/api/agent/domains/shared/callbacks';
@@ -26,6 +26,8 @@ export interface InvestigateOptions {
   enableSentry?: boolean;
   /** Optional: Enable Research agent with MCP tools (default: true) */
   enableResearch?: boolean;
+  /** Optional: Enable AWS ECS agent (default: true) */
+  enableAwsEcs?: boolean;
 }
 
 /**
@@ -44,6 +46,8 @@ export interface InvestigateResult {
   durationMs: number;
   /** Optional cost summary for the investigation */
   costSummary?: CostSummary;
+  /** Tool executions timeline (unified across all agents) */
+  toolExecutions: ToolExecution[];
 }
 
 /**
@@ -74,7 +78,7 @@ export interface InvestigateResult {
  * @throws {Error} If investigation times out or fails
  */
 export const investigate = async (options: InvestigateOptions): Promise<InvestigateResult> => {
-  const { query, config, logger, enableNewRelic = true, enableSentry = true, enableResearch = true } = options;
+  const { query, config, logger, enableNewRelic = true, enableSentry = true, enableResearch = true, enableAwsEcs = true } = options;
 
   const startTime = Date.now();
 
@@ -104,6 +108,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
     enableNewRelic,
     enableSentry,
     enableResearch,
+    enableAwsEcs,
     mcpTools,
     stepTimeoutMs
   });
@@ -140,7 +145,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   // Example with 3 agents: (3 * 24) + (2 * 10) + 5 = 97 supersteps
   //
   // @see https://langchain-ai.github.io/langgraph/concepts/low_level/#recursion-limit
-  const enabledAgentCount = [enableNewRelic, enableSentry, enableResearch && mcpTools.length > 0].filter(Boolean).length;
+  const enabledAgentCount = [enableNewRelic, enableSentry, enableResearch && mcpTools.length > 0, enableAwsEcs].filter(Boolean).length;
   const agentOverhead = enabledAgentCount * (2 * DEFAULT_AGENT_MAX_ITERATIONS + 4);
   const supervisorIterations = 2 * Math.min(config.maxToolCalls, 10);
   const buffer = 5;
@@ -227,14 +232,19 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   // Get cost summary from the callback handler
   const costSummary = costHandler.getSummary();
 
+  // Get tool executions from the observability handler
+  const toolExecutions = observabilityHandler.getToolExecutions();
+
   logger.info(
     {
       query: query.substring(0, 50),
-      summary: structuredSummary.summary,
+      summary: rawSummary,
+      structuredSummary,
       messageCount: messages.length,
       durationMs,
       totalCost: costSummary.totalCost.toFixed(6),
-      totalTokens: costSummary.totalTokens
+      totalTokens: costSummary.totalTokens,
+      toolExecutionsCount: toolExecutions.length
     },
     'Investigation complete with structured summary'
   );
@@ -245,6 +255,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
     structuredSummary,
     messageCount: messages.length,
     durationMs,
-    costSummary
+    costSummary,
+    toolExecutions
   };
 };

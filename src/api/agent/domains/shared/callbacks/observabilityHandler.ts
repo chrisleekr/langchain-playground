@@ -5,28 +5,28 @@ import type { Serialized } from '@langchain/core/load/serializable';
 import type { Logger } from 'pino';
 
 import type { AgentConfig } from '@/api/agent/core/config';
-
-/** Maximum length for truncated content in logs */
-const MAX_CONTENT_LENGTH = 500;
+import type { ToolExecution } from '@/api/agent/core/schema';
 
 /**
- * Truncates a string to a maximum length with ellipsis.
+ * Optionally truncates a string for summary display.
+ * @param str - The string to potentially truncate
+ * @param maxLength - Maximum length (undefined = no truncation)
  */
-const truncate = (str: string, maxLength: number = MAX_CONTENT_LENGTH): string => {
-  if (str.length <= maxLength) return str;
+const truncate = (str: string, maxLength?: number): string => {
+  if (!maxLength || str.length <= maxLength) return str;
   return str.substring(0, maxLength) + '...[truncated]';
 };
 
 /**
  * Extracts content from a message for logging.
+ * Returns full content without truncation.
  */
 const getMessageContent = (msg: BaseMessage): string => {
   const content = msg.content;
   if (typeof content === 'string') {
-    return truncate(content);
+    return content;
   }
   if (Array.isArray(content)) {
-    // Extract text from content blocks
     const texts = content
       .map(block => {
         if (typeof block === 'object' && block !== null && 'text' in block) {
@@ -38,18 +38,19 @@ const getMessageContent = (msg: BaseMessage): string => {
         return String(block);
       })
       .join(' ');
-    return truncate(texts);
+    return texts;
   }
   return String(content);
 };
 
 /**
- * Tracks tool execution timing and input.
+ * Tracks tool execution with full details for observability.
  */
 interface ToolTiming {
   startTime: number;
   name: string;
   input: string;
+  timestamp: string;
 }
 
 /**
@@ -80,6 +81,8 @@ export class ObservabilityCallbackHandler extends BaseCallbackHandler {
   name = 'ObservabilityCallbackHandler';
 
   private toolTimings: Map<string, ToolTiming> = new Map();
+  private toolExecutions: ToolExecution[] = [];
+  private executionOrder = 0;
 
   constructor(
     private logger: Logger,
@@ -191,17 +194,16 @@ export class ObservabilityCallbackHandler extends BaseCallbackHandler {
     runName?: string
   ): Promise<void> {
     const toolName = runName ?? 'unknown';
-    const truncatedInput = truncate(input);
 
     this.toolTimings.set(runId, {
       startTime: Date.now(),
       name: toolName,
-      input: truncatedInput
+      input,
+      timestamp: new Date().toISOString()
     });
 
-    if (this.config.verboseLogging) {
-      this.logger.info({ tool: toolName, input: truncatedInput }, 'Tool starting');
-    }
+    // Always log tool start with full input
+    this.logger.info({ tool: toolName, input }, 'Tool starting');
   }
 
   /**
@@ -211,25 +213,43 @@ export class ObservabilityCallbackHandler extends BaseCallbackHandler {
   async handleToolEnd(output: unknown, runId: string): Promise<void> {
     const timing = this.toolTimings.get(runId);
     if (timing) {
-      const duration = Date.now() - timing.startTime;
+      const durationMs = Date.now() - timing.startTime;
+      this.executionOrder++;
 
-      // Serialize and truncate output
+      // Serialize output (no truncation for storage)
       let outputStr: string;
       if (typeof output === 'string') {
-        outputStr = truncate(output);
+        outputStr = output;
       } else {
         try {
-          outputStr = truncate(JSON.stringify(output));
+          outputStr = JSON.stringify(output);
         } catch {
           outputStr = '[unable to serialize]';
         }
       }
 
-      if (this.config.verboseLogging) {
-        this.logger.info({ tool: timing.name, duration, input: timing.input, output: outputStr }, 'Tool completed');
-      } else {
-        this.logger.info({ tool: timing.name, duration }, 'Tool completed');
-      }
+      // Store full execution record
+      this.toolExecutions.push({
+        order: this.executionOrder,
+        toolName: timing.name,
+        input: timing.input,
+        output: outputStr,
+        durationMs,
+        success: true,
+        timestamp: timing.timestamp
+      });
+
+      // Log with full content
+      this.logger.info(
+        {
+          order: this.executionOrder,
+          tool: timing.name,
+          durationMs,
+          input: timing.input,
+          output: outputStr
+        },
+        'Tool completed'
+      );
 
       this.toolTimings.delete(runId);
     }
@@ -242,9 +262,41 @@ export class ObservabilityCallbackHandler extends BaseCallbackHandler {
   async handleToolError(err: Error, runId: string): Promise<void> {
     const timing = this.toolTimings.get(runId);
     if (timing) {
-      const duration = Date.now() - timing.startTime;
-      this.logger.error({ tool: timing.name, duration, input: timing.input, error: err.message }, 'Tool failed');
+      const durationMs = Date.now() - timing.startTime;
+      this.executionOrder++;
+
+      // Store failed execution record
+      this.toolExecutions.push({
+        order: this.executionOrder,
+        toolName: timing.name,
+        input: timing.input,
+        output: '',
+        durationMs,
+        success: false,
+        error: err.message,
+        timestamp: timing.timestamp
+      });
+
+      this.logger.error(
+        {
+          order: this.executionOrder,
+          tool: timing.name,
+          durationMs,
+          input: timing.input,
+          error: err.message
+        },
+        'Tool failed'
+      );
+
       this.toolTimings.delete(runId);
     }
+  }
+
+  /**
+   * Get all recorded tool executions.
+   * Call this after the supervisor completes to get the execution trace.
+   */
+  getToolExecutions(): ToolExecution[] {
+    return this.toolExecutions;
   }
 }

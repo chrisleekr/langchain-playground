@@ -2,7 +2,7 @@ import { createReactAgent } from '@langchain/langgraph/prebuilt';
 
 import type { DomainAgentOptions } from '@/api/agent/domains/shared/types';
 import { createAllTools } from './tools';
-import { newRelicSystemPrompt } from './prompts';
+import { getNewRelicSystemPrompt } from './prompts';
 
 /**
  * Creates a New Relic domain agent for investigating alerts, logs, and APM data.
@@ -30,10 +30,11 @@ export const createNewRelicAgent = (options: DomainAgentOptions) => {
   logger.info({ toolCount: tools.length, stepTimeoutMs }, 'Creating New Relic agent with tools');
 
   // Using createReactAgent (deprecated but required for createSupervisor compatibility)
+  // Use dynamic prompt to include current date
   return createReactAgent({
     llm: model,
     tools,
     name: 'newrelic_expert',
-    prompt: newRelicSystemPrompt
+    prompt: getNewRelicSystemPrompt()
   });
 };

@@ -1,9 +1,7 @@
 import type { Logger } from 'pino';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
-import { createGetSentryIssueTool } from './getSentryIssue';
-import { createGetSentryEventsTool } from './getSentryEvents';
-import { createAnalyzeSentryErrorTool } from './analyzeSentryError';
+import { createInvestigateAndAnalyzeSentryIssueTool } from './investigateAndAnalyzeSentryIssue';
 
 /**
  * Options for creating Sentry investigation tools.
@@ -22,9 +20,12 @@ export interface SentryToolFactoryOptions {
 
 /**
  * Creates all Sentry investigation tools for the domain agent.
- * Tools are divided into two categories:
- * 1. Data-fetching tools: Execute API calls without LLM inference
- * 2. LLM-powered tools: Use the model to analyze data
+ *
+ * Tools:
+ * 1. investigate_and_analyze_sentry_issue - Combined data gathering AND analysis in one call
+ *
+ * The combined tool keeps raw Sentry API data internal and returns only the
+ * analysis summary, reducing token usage when supervisor passes context to other agents.
  *
  * @param options - Factory options with logger and model
  * @returns Array of structured tools for Sentry investigation
@@ -33,11 +34,11 @@ export const createAllTools = (options: SentryToolFactoryOptions) => {
   const { logger, model, stepTimeoutMs } = options;
 
   return [
-    // Data-fetching tools: Execute API calls without LLM inference
-    createGetSentryIssueTool({ logger, stepTimeoutMs }),
-    createGetSentryEventsTool({ logger, stepTimeoutMs }),
-
-    // LLM-powered tools: Use the model to analyze error data
-    createAnalyzeSentryErrorTool({ logger, model, stepTimeoutMs })
+    // Combined investigation + analysis tool
+    // Keeps raw Sentry data internal, returns only analysis summary
+    createInvestigateAndAnalyzeSentryIssueTool({ logger, model, stepTimeoutMs })
   ];
 };
+
+// Re-export tool creator for direct use if needed
+export { createInvestigateAndAnalyzeSentryIssueTool } from './investigateAndAnalyzeSentryIssue';
