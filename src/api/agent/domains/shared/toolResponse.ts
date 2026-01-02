@@ -42,15 +42,20 @@ export interface ToolErrorOptions {
  * @param toolName - Name of the tool that failed (for error context)
  * @param message - Error message describing the failure
  * @param options - Additional options for the error response
- * @returns JSON string with success: false and formatted error
+ * @returns JSON string with structure:
+ *   - success: false
+ *   - error: string (formatted as "toolName: message")
+ *   - doNotRetry?: boolean (present only when explicitly set to true)
+ *   - suggestedAction?: string (present only when provided)
+ *   - instruction?: string (present only when doNotRetry is true)
  */
 export const createToolError = (toolName: string, message: string, options: ToolErrorOptions = {}): string => {
-  const { doNotRetry = false, suggestedAction } = options;
+  const { doNotRetry, suggestedAction } = options;
   return JSON.stringify({
     success: false,
     error: `${toolName}: ${message}`,
-    doNotRetry,
+    ...(doNotRetry && { doNotRetry }),
     ...(suggestedAction && { suggestedAction }),
-    instruction: doNotRetry ? 'DO NOT retry this operation. Proceed with available data or try a different approach.' : undefined
+    ...(doNotRetry && { instruction: 'DO NOT retry this operation. Proceed with available data or try a different approach.' })
   });
 };

@@ -240,22 +240,63 @@ All configuration keys MUST use consistent naming and be documented.
 ## Testing
 
 - **Framework**: Jest with ts-jest preset and Node.js environment
-- **Test Files**: `*.test.ts` alongside source or in `__tests__/` directories
-- **Writing Tests**: Write one test case at a time, use descriptive names
+- **Test Files**: `*.test.ts` in `__tests__/` directories adjacent to source code
 - **Test Names**: Omit "should" from test descriptions (e.g., `it("validates input")` not `it("should validate input")`)
-- **Assertions**: Use `expect(VALUE).toXyz(...)` instead of storing in variables
 - **Mocking**: Mock external dependencies appropriately, auto-clear mocks enabled
 - **Coverage**: Enabled with json, lcov, and text-summary reporters
 - **Path Mapping**: Uses same aliases as main code (`@/src/*`, etc.)
 - **Timeout**: 10 seconds default with global setup and teardown
 
+**Test Structure Pattern:**
+
+Use `describe` blocks to group scenarios, `beforeEach` for setup, and a shared `result` variable:
+
+```typescript
+import { beforeEach, describe, expect, it } from '@jest/globals';
+
+import { myFunction } from '../myModule';
+
+describe('myFunction', () => {
+  let result: unknown;
+
+  describe('with valid input', () => {
+    beforeEach(() => {
+      result = myFunction({ data: 'test' });
+    });
+
+    it('returns expected output', () => {
+      expect(result).toStrictEqual({ success: true, data: 'test' });
+    });
+  });
+
+  describe('with edge case', () => {
+    beforeEach(() => {
+      result = myFunction({});
+    });
+
+    it('handles empty input gracefully', () => {
+      expect(result).toStrictEqual({ success: true });
+    });
+  });
+});
+```
+
+**Key Conventions:**
+
+- **Imports**: Import `beforeEach`, `describe`, `expect`, `it` from `@jest/globals` (alphabetically sorted)
+- **Shared Result**: Declare `let result: unknown;` at the top of each `describe` block
+- **Setup in beforeEach**: Perform all setup and function calls in `beforeEach`
+- **Single Assertion**: Each `it` block should contain only assertions, not setup logic
+- **Descriptive Describes**: Use `describe` names that explain the scenario (e.g., "with valid input", "when error occurs")
+- **Prefer toStrictEqual**: Use `toStrictEqual` for object comparisons to ensure exact matching
+
 **Test Commands:**
 
 ```bash
-npm test                    # Run all tests with coverage
-npm test -- --watch        # Watch mode for development
+npm test                              # Run all tests with coverage
+npm test -- --watch                   # Watch mode for development
 npm test -- src/path/to/file.test.ts  # Run specific test file
-npm test -- --coverage     # Explicit coverage report
+npm test -- --coverage                # Explicit coverage report
 ```
 
 ## External Services
