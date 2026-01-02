@@ -8,16 +8,6 @@ import type { AgentConfig } from '@/api/agent/core/config';
 import type { ToolExecution } from '@/api/agent/core/schema';
 
 /**
- * Optionally truncates a string for summary display.
- * @param str - The string to potentially truncate
- * @param maxLength - Maximum length (undefined = no truncation)
- */
-const truncate = (str: string, maxLength?: number): string => {
-  if (!maxLength || str.length <= maxLength) return str;
-  return str.substring(0, maxLength) + '...[truncated]';
-};
-
-/**
  * Extracts content from a message for logging.
  * Returns full content without truncation.
  */
@@ -164,7 +154,7 @@ export class ObservabilityCallbackHandler extends BaseCallbackHandler {
     if (message) {
       outputContent = getMessageContent(message);
     } else if (lastGeneration?.text) {
-      outputContent = truncate(lastGeneration.text);
+      outputContent = lastGeneration.text;
     }
 
     const hasContent = !!outputContent && outputContent.length > 0;
