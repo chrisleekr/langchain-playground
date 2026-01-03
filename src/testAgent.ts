@@ -44,6 +44,8 @@ const parseArgs = () => {
     console.error('  --max-tools=N        Set max tool calls limit');
     console.error('  --newrelic=false     Disable New Relic agent');
     console.error('  --sentry=false       Disable Sentry agent');
+    console.error('  --research=false     Disable Research agent');
+    console.error('  --awsecs=false       Disable AWS ECS agent');
     process.exit(1);
   }
 
@@ -65,7 +67,9 @@ const parseArgs = () => {
       config,
       logger,
       enableNewRelic: options.newrelic !== false,
-      enableSentry: options.sentry !== false
+      enableSentry: options.sentry !== false,
+      enableResearch: options.research !== false,
+      enableAwsEcs: options.awsecs !== false
     });
 
     // Output results
@@ -79,21 +83,29 @@ const parseArgs = () => {
     console.log(`Messages: ${result.messageCount}`);
     console.log(`Duration: ${result.durationMs}ms`);
 
-    // Output cost summary if available
-    if (result.costSummary) {
-      console.log('\n' + '-'.repeat(80));
-      console.log('COST SUMMARY');
-      console.log('-'.repeat(80));
-      console.log(`Provider: ${result.costSummary.provider} | Model: ${result.costSummary.model}`);
-      console.log(
-        `Total Tokens: ${result.costSummary.totalTokens} (Input: ${result.costSummary.totalInputTokens}, Output: ${result.costSummary.totalOutputTokens})`
-      );
-      console.log(`Total Cost: $${result.costSummary.totalCost.toFixed(6)}`);
-      console.log('\nPer-Step Breakdown:');
-      result.costSummary.steps.forEach(step => {
-        console.log(`  ${step.step}: ${step.totalTokens} tokens ($${step.cost.toFixed(6)})`);
-      });
-    }
+    // Output trace summary
+    const { trace } = result;
+    console.log('\n' + '-'.repeat(80));
+    console.log('TRACE SUMMARY');
+    console.log('-'.repeat(80));
+    console.log(`Provider: ${trace.summary.provider} | Model: ${trace.summary.model}`);
+    console.log(`Total Tokens: ${trace.summary.totalTokens}`);
+    console.log(`Total Cost: $${trace.summary.totalCost.toFixed(6)}`);
+    console.log(`LLM Calls: ${trace.summary.llmCallCount} | Tool Executions: ${trace.summary.toolExecutionCount}`);
+    console.log(`Trace Duration: ${trace.summary.totalDurationMs}ms`);
+
+    console.log('\nExecution Timeline:');
+    trace.steps.forEach(step => {
+      if (step.type === 'llm_call') {
+        const toolCalls = step.toolCallsDecided ? ` → [${step.toolCallsDecided.join(', ')}]` : '';
+        console.log(
+          `  [${step.order}] LLM (${step.agent ?? 'unknown'}): ${step.totalTokens} tokens, ${step.durationMs}ms, $${step.cost.toFixed(6)}${toolCalls}`
+        );
+      } else {
+        const status = step.success ? '✓' : `✗ ${step.error}`;
+        console.log(`  [${step.order}] Tool ${step.toolName} (${step.agent ?? 'unknown'}): ${step.durationMs}ms ${status}`);
+      }
+    });
 
     process.exit(0);
   } catch (err) {

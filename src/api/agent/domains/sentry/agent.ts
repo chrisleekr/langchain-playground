@@ -7,16 +7,14 @@ import { createAllTools } from './tools';
 /**
  * Creates a Sentry domain agent for investigating errors and crash reports.
  *
- * Why `createReactAgent` instead of `createAgent`:
- * - `createReactAgent` is marked deprecated in favor of `createAgent` from `langchain`
- * - However, `createAgent.graph` (AgentGraph) is NOT compatible with `createSupervisor`
- *   which requires `CompiledStateGraph` with specific state annotations
- * - The LangGraph ecosystem hasn't yet aligned these APIs for multi-agent patterns
- * - Continue using `createReactAgent` until `@langchain/langgraph-supervisor` is updated
+ * Uses `createReactAgent` from `@langchain/langgraph/prebuilt` for compatibility
+ * with `createSupervisor` from `@langchain/langgraph-supervisor`.
  *
- * Tested: 2025-12 - Migration to `createAgent` fails with state type incompatibility
+ * Note: The newer `createAgent` from `langchain` package returns `AgentGraph`
+ * which is NOT compatible with `createSupervisor` (requires `CompiledStateGraph`).
+ * Continue using `createReactAgent` until the LangGraph ecosystem aligns these APIs.
  *
- * @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
+ * @see https://github.com/langchain-ai/langgraphjs/tree/main/libs/langgraph-supervisor
  *
  * @param options - Agent configuration with model and logger
  * @returns A compiled ReAct agent for Sentry investigations

@@ -11,8 +11,6 @@ import type { DomainToolOptions } from '@/api/agent/domains/shared/types';
 /**
  * UUID regex pattern for validating New Relic issue IDs.
  * New Relic issue IDs are UUIDs, not to be confused with trace IDs (32 hex chars).
- *
- * @see https://docs.newrelic.com/docs/apis/nerdgraph/examples/nerdgraph-issues-api/
  */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

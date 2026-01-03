@@ -16,7 +16,7 @@ import { getCurrentDateTimeWithTimezone, getNRQLDateFormatExample, getTimezoneOf
  * - Error handling guidelines
  * - Cross-domain routing instructions
  *
- * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags
+ * @see https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/use-xml-tags
  */
 export const getNewRelicSystemPrompt = (): string => `You are a Senior Reliability Engineer specializing in New Relic investigations.
 

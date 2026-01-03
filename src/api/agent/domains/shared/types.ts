@@ -6,7 +6,7 @@ import type { createReactAgent } from '@langchain/langgraph/prebuilt';
  * Type alias for a compiled domain agent returned by createReactAgent.
  * Used for type-safe agent arrays in the supervisor.
  *
- * @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
+ * @see https://github.com/langchain-ai/langgraphjs/tree/main/libs/langgraph-supervisor
  */
 export type CompiledDomainAgent = ReturnType<typeof createReactAgent>;
 

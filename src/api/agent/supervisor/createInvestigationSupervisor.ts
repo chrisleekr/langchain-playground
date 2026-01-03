@@ -56,7 +56,7 @@ export interface InvestigationSupervisorOptions {
  *   `BinaryOperatorAggregate<BaseMessage[], Messages>`
  * - Continue using `createReactAgent` until LangGraph ecosystem aligns these APIs
  *
- * @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
+ * @see https://docs.langchain.com/oss/javascript/langgraph/overview
  * @see https://github.com/langchain-ai/langgraphjs/tree/main/libs/langgraph-supervisor
  *
  * @param options - Configuration options for the supervisor
@@ -123,7 +123,6 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
   logger.info({ agentCount: agents.length, agentRecursionLimit }, 'Creating investigation supervisor');
 
   // Create the supervisor workflow with explicit configuration
-  // @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
   const supervisor = createSupervisor({
     agents,
     llm: model,
@@ -135,12 +134,12 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     addHandoffBackMessages: false,
     // Structured output format for the final investigation summary
     // This ensures the supervisor returns a consistent response format
-    // @see https://langchain-ai.github.io/langgraphjs/agents/structured-output/
+    // @see https://docs.langchain.com/oss/javascript/langchain/structured-output
     responseFormat: InvestigationSummarySchema
   });
 
   // Compile with in-memory checkpointer for state persistence
-  // @see https://langchain-ai.github.io/langgraph/concepts/persistence/
+  // @see https://docs.langchain.com/oss/javascript/langgraph/persistence
   const checkpointer = new MemorySaver();
   return supervisor.compile({ checkpointer });
 };

@@ -12,8 +12,7 @@
  * - Error handling guidelines
  * - Structured output format
  *
- * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags
- * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-examples
+ * @see https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/use-xml-tags
  */
 export const supervisorSystemPrompt = `You are an Investigation Supervisor coordinating domain experts to investigate incidents and issues.
 

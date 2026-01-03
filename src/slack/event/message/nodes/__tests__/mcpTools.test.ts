@@ -92,7 +92,11 @@ describe('mcpToolsNode', () => {
       expected: {
         mcpToolsOutput: {
           useMCPTools: true,
-          suggestedTools: ['mcp__kubernetes-readonly__kubectl_get', 'mcp__kubernetes-readonly__kubectl_describe'],
+          suggestedTools: [
+            'mcp__kubernetes-readonly__kubectl_get',
+            'mcp__kubernetes-readonly__kubectl_describe',
+            'mcp__brave-search__brave_web_search'
+          ],
           confidence: 0.8
         }
       }

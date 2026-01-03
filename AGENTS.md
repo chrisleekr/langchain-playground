@@ -239,6 +239,8 @@ All configuration keys MUST use consistent naming and be documented.
 
 ## Testing
 
+IMPORTANT: You need to run the test with network permission enabled.
+
 - **Framework**: Jest with ts-jest preset and Node.js environment
 - **Test Files**: `*.test.ts` in `__tests__/` directories adjacent to source code
 - **Test Names**: Omit "should" from test descriptions (e.g., `it("validates input")` not `it("should validate input")`)
