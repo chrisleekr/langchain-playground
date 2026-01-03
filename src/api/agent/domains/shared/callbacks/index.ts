@@ -1,2 +1,1 @@
-export { CostTrackingCallbackHandler } from './costTrackingHandler';
-export { ObservabilityCallbackHandler } from './observabilityHandler';
+export { ObservabilityHandler } from './observabilityHandler';

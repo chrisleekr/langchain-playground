@@ -29,10 +29,9 @@ interface RequestBody {
  * Features:
  * - Recursion limit protection (prevents infinite loops)
  * - Timeout protection (configurable via config.timeoutMs)
- * - Cost tracking via CostTrackingCallbackHandler
- * - Observability via ObservabilityCallbackHandler
+ * - Tracing via ObservabilityHandler (LLM calls, tool executions, costs)
  *
- * @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
+ * @see https://docs.langchain.com/oss/javascript/langgraph/overview
  *
  * @param query - Issue or incident describing what to investigate
  * @param config - Optional configuration overrides for the agent
@@ -68,8 +67,7 @@ export default function investigatePost() {
           structuredSummary: result.structuredSummary,
           messageCount: result.messageCount,
           durationMs: result.durationMs,
-          costSummary: result.costSummary,
-          toolExecutions: result.toolExecutions
+          trace: result.trace
         },
         StatusCodes.OK
       )

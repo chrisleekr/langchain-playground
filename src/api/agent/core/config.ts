@@ -8,7 +8,7 @@ export type LLMProvider = z.infer<typeof LLMProviderSchema>;
  * Prevents a single agent from consuming the entire recursion budget.
  *
  * Formula for per-agent recursion limit: 2 * DEFAULT_AGENT_MAX_ITERATIONS + 1
- * @see https://langchain-ai.github.io/langgraph/concepts/low_level/#recursion-limit
+ * @see https://docs.langchain.com/oss/javascript/langgraph/graph-api#recursion-limit
  */
 export const DEFAULT_AGENT_MAX_ITERATIONS = 10;
 
@@ -37,7 +37,8 @@ export const AgentConfigSchema = z.object({
   /**
    * Per-step timeout in seconds for individual agent/tool operations.
    * Prevents slow API calls from consuming the entire timeout budget.
-   * @see https://langchain-ai.github.io/langgraph/how-tos/subgraph-timeouts/
+   *
+   * Used with `withTimeout()` utility to wrap external API calls in domain agents.
    */
   stepTimeoutSec: z.number().int().min(10).max(300).default(120),
   /** LLM temperature (0 = deterministic, 2 = creative) */

@@ -14,7 +14,7 @@ import { getCurrentDateTimeWithTimezone } from '@/api/agent/domains/shared/dateU
  * - Tool usage patterns with examples
  * - Error handling guidelines
  *
- * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags
+ * @see https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/use-xml-tags
  */
 export const getResearchSystemPrompt = (): string => `You are a Research Expert with access to external tools for gathering information.
 

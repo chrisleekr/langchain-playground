@@ -63,7 +63,7 @@ const investigateAndAnalyzeSchema = z.object({
  * - Reference data for common codes
  * - Edge case handling guidelines
  *
- * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags
+ * @see https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/use-xml-tags
  */
 const analysisPromptTemplate = ChatPromptTemplate.fromMessages([
   [

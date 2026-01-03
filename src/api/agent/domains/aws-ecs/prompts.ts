@@ -16,7 +16,7 @@ import { getCurrentDateTimeWithTimezone } from '@/api/agent/domains/shared/dateU
  * - Reference data for common codes
  * - Error handling guidelines
  *
- * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags
+ * @see https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/use-xml-tags
  */
 export const getAwsEcsSystemPrompt = (): string => `You are an AWS ECS expert agent specializing in investigating container and task issues.
 

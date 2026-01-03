@@ -17,7 +17,7 @@ interface ModelPricing {
  * Model pricing lookup table.
  * Note: Prices as of December 2025 - update these periodically.
  *
- * @see https://openai.com/pricing
+ * @see https://openai.com/api/pricing
  * @see https://groq.com/pricing
  * @see https://aws.amazon.com/bedrock/pricing/
  */

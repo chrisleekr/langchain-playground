@@ -4,10 +4,10 @@ import { GraphRecursionError } from '@langchain/langgraph';
 import { randomUUID } from 'node:crypto';
 
 import type { AgentConfig } from '@/api/agent/core/config';
-import type { CostSummary, InvestigationSummary, ToolExecution } from '@/api/agent/core/schema';
+import type { InvestigationSummary, InvestigationTrace } from '@/api/agent/core/schema';
 import { DEFAULT_AGENT_MAX_ITERATIONS, getModel, createTimeoutPromise, InvestigationSummarySchema } from '@/api/agent/core';
 import { createInvestigationSupervisor } from '@/api/agent/supervisor';
-import { CostTrackingCallbackHandler, ObservabilityCallbackHandler } from '@/api/agent/domains/shared/callbacks';
+import { ObservabilityHandler } from '@/api/agent/domains/shared/callbacks';
 import { getMCPTools } from '@/libraries/mcp';
 
 /**
@@ -44,10 +44,8 @@ export interface InvestigateResult {
   messageCount: number;
   /** Duration of the investigation in milliseconds */
   durationMs: number;
-  /** Optional cost summary for the investigation */
-  costSummary?: CostSummary;
-  /** Tool executions timeline (unified across all agents) */
-  toolExecutions: ToolExecution[];
+  /** Tracing timeline with LLM calls, tool executions, and cost data */
+  trace: InvestigationTrace;
 }
 
 /**
@@ -63,18 +61,19 @@ export interface InvestigateResult {
  * - Sentry Agent: Specializes in error tracking and crash reports
  *
  * Observability:
- * Uses LangChain callback handlers for monitoring and cost tracking:
- * - `ObservabilityCallbackHandler`: Logs model calls, tool executions, and durations
- * - `CostTrackingCallbackHandler`: Tracks token usage and calculates costs
+ * Uses `ObservabilityHandler` for tracing and cost tracking:
+ * - Tracks LLM calls with duration, tokens, cost, and agent context
+ * - Tracks tool executions with duration, success/failure, and agent context
+ * - Produces a chronological trace timeline for debugging
  *
  * This approach works with the supervisor architecture since callbacks are passed through
  * the invoke config, unlike middleware which requires `createAgent` from the `langchain` package.
  *
- * @see https://langchain-ai.github.io/langgraphjs/agents/multi-agent/
- * @see https://js.langchain.com/docs/concepts/callbacks/
+ * @see https://github.com/langchain-ai/langgraphjs/tree/main/libs/langgraph-supervisor
+ * @see https://docs.langchain.com/oss/javascript/langchain/observability
  *
  * @param options - Investigation options
- * @returns Investigation result with summary, message count, duration, and cost summary
+ * @returns Investigation result with summary, message count, duration, and trace
  * @throws {Error} If investigation times out or fails
  */
 export const investigate = async (options: InvestigateOptions): Promise<InvestigateResult> => {
@@ -113,9 +112,8 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
     stepTimeoutMs
   });
 
-  // Create callback handlers for observability and cost tracking
-  const observabilityHandler = new ObservabilityCallbackHandler(logger, config);
-  const costHandler = new CostTrackingCallbackHandler(logger, config);
+  // Create unified observability handler for tracing and cost tracking
+  const tracer = new ObservabilityHandler(logger, config);
 
   logger.info('Investigation supervisor created, starting investigation...');
 
@@ -144,7 +142,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   //
   // Example with 3 agents: (3 * 24) + (2 * 10) + 5 = 97 supersteps
   //
-  // @see https://langchain-ai.github.io/langgraph/concepts/low_level/#recursion-limit
+  // @see https://docs.langchain.com/oss/javascript/langgraph/graph-api#recursion-limit
   const enabledAgentCount = [enableNewRelic, enableSentry, enableResearch && mcpTools.length > 0, enableAwsEcs].filter(Boolean).length;
   const agentOverhead = enabledAgentCount * (2 * DEFAULT_AGENT_MAX_ITERATIONS + 4);
   const supervisorIterations = 2 * Math.min(config.maxToolCalls, 10);
@@ -167,7 +165,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
       supervisor.invoke(
         { messages: [new HumanMessage(query)] },
         {
-          callbacks: [observabilityHandler, costHandler],
+          callbacks: [tracer],
           recursionLimit,
           // Thread ID for checkpointer state persistence
           configurable: { thread_id: threadId }
@@ -197,7 +195,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
 
   // Get structured summary from responseFormat (set in supervisor configuration)
   // The supervisor automatically extracts structured output after the agent loop
-  // @see https://langchain-ai.github.io/langgraphjs/agents/structured-output/
+  // @see https://docs.langchain.com/oss/javascript/langchain/structured-output
   let structuredSummary: InvestigationSummary;
 
   // When responseFormat is configured, the result includes structuredResponse
@@ -229,24 +227,19 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
 
   const durationMs = Date.now() - startTime;
 
-  // Get cost summary from the callback handler
-  const costSummary = costHandler.getSummary();
-
-  // Get tool executions from the observability handler
-  const toolExecutions = observabilityHandler.getToolExecutions();
+  // Get trace from the observability handler
+  const trace = tracer.getTrace();
 
   logger.info(
     {
       query: query.substring(0, 50),
-      summary: rawSummary,
+      summary: structuredSummary.summary,
       structuredSummary,
       messageCount: messages.length,
       durationMs,
-      totalCost: costSummary.totalCost.toFixed(6),
-      totalTokens: costSummary.totalTokens,
-      toolExecutionsCount: toolExecutions.length
+      trace
     },
-    'Investigation complete with structured summary'
+    'Investigation complete'
   );
 
   return {
@@ -255,7 +248,6 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
     structuredSummary,
     messageCount: messages.length,
     durationMs,
-    costSummary,
-    toolExecutions
+    trace
   };
 };
