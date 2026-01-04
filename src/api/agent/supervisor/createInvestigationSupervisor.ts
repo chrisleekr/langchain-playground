@@ -4,7 +4,14 @@ import type { StructuredToolInterface } from '@langchain/core/tools';
 import { MemorySaver } from '@langchain/langgraph';
 import { createSupervisor } from '@langchain/langgraph-supervisor';
 
-import { createNewRelicAgent, createSentryAgent, createResearchAgent, createAwsEcsAgent, type CompiledDomainAgent } from '@/api/agent/domains';
+import {
+  createNewRelicAgent,
+  createSentryAgent,
+  createResearchAgent,
+  createAwsEcsAgent,
+  createAwsRdsAgent,
+  type CompiledDomainAgent,
+} from '@/api/agent/domains';
 import { DEFAULT_AGENT_MAX_ITERATIONS, InvestigationSummarySchema } from '@/api/agent/core';
 import { supervisorSystemPrompt } from './prompts';
 
@@ -24,6 +31,8 @@ export interface InvestigationSupervisorOptions {
   enableResearch?: boolean;
   /** Optional: Enable AWS ECS agent (default: true) */
   enableAwsEcs?: boolean;
+  /** Optional: Enable AWS RDS agent (default: true) */
+  enableAwsRds?: boolean;
   /** MCP tools for the research agent (required if enableResearch is true) */
   mcpTools?: StructuredToolInterface[];
   /** Max iterations per domain agent (default: 10) */
@@ -66,9 +75,10 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     enableSentry = true,
     enableResearch = true,
     enableAwsEcs = true,
+    enableAwsRds = true,
     mcpTools = [],
     maxAgentIterations = DEFAULT_AGENT_MAX_ITERATIONS,
-    stepTimeoutMs
+    stepTimeoutMs,
   } = options;
 
   // Calculate per-agent recursion limit based on ReAct pattern
@@ -107,9 +117,17 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
   if (enableAwsEcs) {
     logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating AWS ECS agent');
     const awsEcsAgent = createAwsEcsAgent({ model, logger, stepTimeoutMs }).withConfig({
-      recursionLimit: agentRecursionLimit
+      recursionLimit: agentRecursionLimit,
     });
     agents.push(awsEcsAgent);
+  }
+
+  if (enableAwsRds) {
+    logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating AWS RDS agent');
+    const awsRdsAgent = createAwsRdsAgent({ model, logger, stepTimeoutMs }).withConfig({
+      recursionLimit: agentRecursionLimit,
+    });
+    agents.push(awsRdsAgent);
   }
 
   if (agents.length === 0) {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Logger } from 'pino';
 
-import { queryContainerInsightsLogs } from '../cloudwatchLogs';
+import { queryContainerInsightsLogs } from '../ecs';
 import type { ContainerMetricsSummary } from '../types';
 
 const createMockLogger = (): Logger => {

@@ -62,6 +62,7 @@
     "docstore",
     "eventstream",
     "fastify",
+    "Freeable",
     "Groq",
     "Guids",
     "healthcheck",

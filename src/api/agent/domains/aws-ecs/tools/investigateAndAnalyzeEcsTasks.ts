@@ -1,17 +1,13 @@
-/* eslint-disable import/no-named-as-default-member */
 import { z } from 'zod';
 import { tool } from '@langchain/core/tools';
 import type { Logger } from 'pino';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 
 import type { LLMToolOptions } from '@/api/agent/domains/shared/types';
 import { getErrorMessage, withTimeout, DEFAULT_STEP_TIMEOUT_MS } from '@/api/agent/core';
 import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/toolResponse';
-import { getConfiguredTimezone } from '@/api/agent/domains/shared/dateUtils';
+import { formatDate } from '@/api/agent/domains/shared/dateUtils';
 
 import {
   gatherTaskStatus,
@@ -22,17 +18,10 @@ import {
   type TaskInvestigationResult
 } from './investigateEcsTasks';
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
 /**
- * Format a date using the configured timezone for human readability.
+ * Tool name constant to avoid magic strings.
  */
-const formatDate = (date: Date | undefined): string | undefined => {
-  if (!date) return undefined;
-  const tz = getConfiguredTimezone();
-  return dayjs(date).tz(tz).format('YYYY-MM-DD HH:mm:ssZ');
-};
+const TOOL_NAME = 'investigate_and_analyze_ecs_tasks' as const;
 
 /**
  * Schema for parsed task ARN input.
@@ -47,21 +36,37 @@ const parsedTaskArnSchema = z.object({
 
 /**
  * Schema for the combined investigate and analyze tool input.
+ *
+ * Note: Default values are specified in descriptions for LLM visibility.
+ * Zod's .default() ensures the values are applied during parsing.
+ *
+ * @see https://js.langchain.com/docs/concepts/tools
  */
 const investigateAndAnalyzeSchema = z.object({
   taskArns: z.array(parsedTaskArnSchema).min(1).max(100).describe('Array of parsed ECS task ARN data'),
   investigationContext: z.string().optional().describe('Additional context about the investigation (e.g., alert details)'),
-  includeMetrics: z.boolean().optional().default(true).describe('Whether to gather Container Insights metrics'),
-  includeServiceEvents: z.boolean().optional().default(true).describe('Whether to gather service events'),
-  includeHistoricalEvents: z.boolean().optional().default(true).describe('Whether to query historical events for not-found tasks'),
+  includeMetrics: z.boolean().optional().default(true).describe('Whether to gather Container Insights metrics. Defaults to true if not specified.'),
+  includeServiceEvents: z.boolean().optional().default(true).describe('Whether to gather service events. Defaults to true if not specified.'),
+  includeHistoricalEvents: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Whether to query historical events for not-found tasks. Defaults to true if not specified.'),
   metricsStartTime: z.string().optional().describe('Start time for metrics query in ISO 8601 format. Must be provided together with metricsEndTime.'),
   metricsEndTime: z
     .string()
     .optional()
     .describe(
-      'End time for metrics query in ISO 8601 format. Must be provided together with metricsStartTime. If neither is provided, queries last 24 hours.'
+      'End time for metrics query in ISO 8601 format. Must be provided together with metricsStartTime. ' +
+        'If neither is provided, queries last 24 hours.'
     ),
-  historicalLookbackHours: z.number().min(1).max(168).optional().default(24).describe('Hours to look back for historical events')
+  historicalLookbackHours: z
+    .number()
+    .min(1)
+    .max(168)
+    .optional()
+    .default(24)
+    .describe('Hours to look back for historical events. Defaults to 24 if not specified.')
 });
 
 /**
@@ -161,7 +166,7 @@ Provide your analysis:`
  */
 export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions) => {
   const { logger: parentLogger, model, stepTimeoutMs = DEFAULT_STEP_TIMEOUT_MS } = options;
-  const logger: Logger = parentLogger.child({ tool: 'investigate_and_analyze_ecs_tasks' });
+  const logger: Logger = parentLogger.child({ tool: TOOL_NAME });
 
   return tool(
     async ({
@@ -185,17 +190,13 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
 
         // Validate dates are valid
         if (isNaN(parsedStart.getTime())) {
-          return createToolError(
-            'investigate_and_analyze_ecs_tasks',
-            `Invalid metricsStartTime: '${metricsStartTime}' is not a valid ISO 8601 date`,
-            {
-              doNotRetry: true,
-              suggestedAction: 'Provide a valid ISO 8601 date string (e.g., 2025-01-04T00:00:00Z)'
-            }
-          );
+          return createToolError(TOOL_NAME, `Invalid metricsStartTime: '${metricsStartTime}' is not a valid ISO 8601 date`, {
+            doNotRetry: true,
+            suggestedAction: 'Provide a valid ISO 8601 date string (e.g., 2025-01-04T00:00:00Z)'
+          });
         }
         if (isNaN(parsedEnd.getTime())) {
-          return createToolError('investigate_and_analyze_ecs_tasks', `Invalid metricsEndTime: '${metricsEndTime}' is not a valid ISO 8601 date`, {
+          return createToolError(TOOL_NAME, `Invalid metricsEndTime: '${metricsEndTime}' is not a valid ISO 8601 date`, {
             doNotRetry: true,
             suggestedAction: 'Provide a valid ISO 8601 date string (e.g., 2025-01-04T00:00:00Z)'
           });
@@ -203,7 +204,7 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
 
         // Validate start is before end
         if (parsedStart >= parsedEnd) {
-          return createToolError('investigate_and_analyze_ecs_tasks', 'metricsStartTime must be before metricsEndTime', {
+          return createToolError(TOOL_NAME, 'metricsStartTime must be before metricsEndTime', {
             doNotRetry: true,
             suggestedAction: `Received start: ${metricsStartTime}, end: ${metricsEndTime}`
           });
@@ -411,14 +412,14 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         logger.error({ error: errorMessage }, 'Failed to investigate and analyze ECS tasks');
-        return createToolError('investigate_and_analyze_ecs_tasks', errorMessage, {
+        return createToolError(TOOL_NAME, errorMessage, {
           doNotRetry: true,
           suggestedAction: 'Investigation failed. Check AWS credentials and permissions.'
         });
       }
     },
     {
-      name: 'investigate_and_analyze_ecs_tasks',
+      name: TOOL_NAME,
       description:
         'Comprehensive ECS task investigation and analysis in one call. ' +
         'Gathers task status, metrics, service events, and historical data, then analyzes with AI. ' +

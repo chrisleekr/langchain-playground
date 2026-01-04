@@ -39,7 +39,7 @@ export class TimeoutError extends Error {
 
 /**
  * Extracts an error message from an unknown error type.
- * Safely handles Error objects, strings, and other types.
+ * Safely handles Error objects, strings, objects with message property, and other types.
  *
  * @param error - The error to extract a message from
  * @returns A string error message
@@ -50,6 +50,19 @@ export const getErrorMessage = (error: unknown): string => {
   }
   if (typeof error === 'string') {
     return error;
+  }
+  // Handle objects with a message property (e.g., AWS SDK errors that might not be Error instances)
+  if (error !== null && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  // Try to stringify the error for debugging
+  try {
+    const stringified = JSON.stringify(error);
+    if (stringified !== '{}') {
+      return `Unknown error: ${stringified}`;
+    }
+  } catch {
+    // JSON.stringify failed, fall through
   }
   return 'Unknown error occurred';
 };
@@ -169,4 +182,144 @@ export const withTimeout = async <T>(operation: () => Promise<T>, timeoutMs: num
   } finally {
     timeout.clear();
   }
+};
+
+/**
+ * Wraps an async operation with a timeout and AbortController support.
+ *
+ * Unlike `withTimeout`, this version:
+ * 1. Creates an AbortController and passes its signal to the operation
+ * 2. Aborts the operation when timeout occurs (for supported APIs like AWS SDK)
+ *
+ * Use this when the underlying operation supports AbortController
+ * (e.g., fetch, AWS SDK v3 commands).
+ *
+ * @see https://aws.amazon.com/blogs/developer/abortcontroller-in-modular-aws-sdk-for-javascript/
+ *
+ * @example
+ * ```typescript
+ * const result = await withTimeoutAbortable(
+ *   (signal) => queryRdsCloudWatchMetrics({ ...params, abortSignal: signal }, logger),
+ *   30000,
+ *   'AWS API call'
+ * );
+ * ```
+ *
+ * @param operation - The async operation that accepts an AbortSignal
+ * @param timeoutMs - Timeout duration in milliseconds
+ * @param operationName - Name of the operation for error messages
+ * @returns The result of the operation
+ * @throws {TimeoutError} If the operation times out
+ * @throws {Error} If the operation itself throws an error (propagated unchanged)
+ */
+export const withTimeoutAbortable = async <T>(
+  operation: (signal: AbortSignal) => Promise<T>,
+  timeoutMs: number,
+  operationName = 'Operation'
+): Promise<T> => {
+  const controller = new AbortController();
+  const timeout = createTimeoutPromise(timeoutMs, operationName);
+
+  try {
+    return await Promise.race([operation(controller.signal), timeout.promise]);
+  } finally {
+    // Abort any in-flight request and clear the timeout
+    controller.abort();
+    timeout.clear();
+  }
+};
+
+/**
+ * Format bytes to human-readable string.
+ *
+ * @param bytes - Number of bytes (returns undefined if bytes is undefined, negative, NaN, or Infinity)
+ * @returns Formatted string (e.g., "1.50 GB", "256.00 MB", "512.00 KB"), or undefined for invalid input
+ */
+export const formatBytes = (bytes: number | undefined): string | undefined => {
+  if (bytes === undefined) return undefined;
+  if (!Number.isFinite(bytes) || bytes < 0) return undefined;
+
+  const gb = bytes / (1024 * 1024 * 1024);
+  if (gb >= 1) return `${gb.toFixed(2)} GB`;
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(2)} MB`;
+  const kb = bytes / 1024;
+  return `${kb.toFixed(2)} KB`;
+};
+
+/**
+ * Formatted metric pair result for LLM consumption.
+ */
+export interface MetricPairResult {
+  [key: string]: string;
+}
+
+/**
+ * Format result for a metric pair (avg/max or avg/min).
+ *
+ * Returns null if both values are undefined, avoiding objects with undefined properties
+ * that could confuse LLM analysis.
+ *
+ * @param primary - Primary value (usually average)
+ * @param secondary - Secondary value (usually max or min)
+ * @param decimals - Number of decimal places (default: 2)
+ * @param primaryKey - Key for primary value (default: 'avg')
+ * @param secondaryKey - Key for secondary value (default: 'max')
+ * @returns Formatted object or null
+ */
+export const formatMetricPair = (
+  primary: number | undefined,
+  secondary: number | undefined,
+  decimals: number = 2,
+  primaryKey: string = 'avg',
+  secondaryKey: string = 'max'
+): MetricPairResult | null => {
+  if (primary === undefined && secondary === undefined) {
+    return null;
+  }
+  const result: MetricPairResult = {};
+  result[primaryKey] = primary !== undefined ? primary.toFixed(decimals) : 'N/A';
+  result[secondaryKey] = secondary !== undefined ? secondary.toFixed(decimals) : 'N/A';
+  return result;
+};
+
+/**
+ * Format a metric pair with byte formatting.
+ *
+ * @param primary - Primary value in bytes
+ * @param secondary - Secondary value in bytes
+ * @param primaryKey - Key for primary value (default: 'avg')
+ * @param secondaryKey - Key for secondary value (default: 'max')
+ * @returns Formatted object or null
+ */
+export const formatBytesMetricPair = (
+  primary: number | undefined,
+  secondary: number | undefined,
+  primaryKey: string = 'avg',
+  secondaryKey: string = 'max'
+): MetricPairResult | null => {
+  if (primary === undefined && secondary === undefined) {
+    return null;
+  }
+  const result: MetricPairResult = {};
+  result[primaryKey] = formatBytes(primary) ?? 'N/A';
+  result[secondaryKey] = formatBytes(secondary) ?? 'N/A';
+  return result;
+};
+
+/**
+ * Format latency metrics, converting from seconds to milliseconds.
+ *
+ * @param avgSeconds - Average latency in seconds
+ * @param maxSeconds - Maximum latency in seconds
+ * @returns Formatted object or null
+ */
+export const formatLatencyMs = (avgSeconds: number | undefined, maxSeconds: number | undefined): MetricPairResult | null => {
+  if (avgSeconds === undefined && maxSeconds === undefined) {
+    return null;
+  }
+  return {
+    avg: avgSeconds !== undefined ? (avgSeconds * 1000).toFixed(2) : 'N/A',
+    max: maxSeconds !== undefined ? (maxSeconds * 1000).toFixed(2) : 'N/A'
+  };
 };

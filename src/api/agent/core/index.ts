@@ -10,7 +10,18 @@ export {
 } from './config';
 
 // Utilities
-export { getModel, getErrorMessage, createTimeoutPromise, withTimeout } from './utils';
+export {
+  getModel,
+  getErrorMessage,
+  createTimeoutPromise,
+  withTimeout,
+  withTimeoutAbortable,
+  formatBytes,
+  formatMetricPair,
+  formatBytesMetricPair,
+  formatLatencyMs,
+  type MetricPairResult,
+} from './utils';
 
 export { calculateCost } from './pricing';
 

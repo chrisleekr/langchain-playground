@@ -10,6 +10,11 @@ import { getCurrentDateTimeWithTimezone, getNRQLDateFormatExample, getTimezoneOf
 import type { LLMToolOptions } from '@/api/agent/domains/shared/types';
 
 /**
+ * Tool name constant to avoid magic strings.
+ */
+const TOOL_NAME = 'generate_trace_logs_query' as const;
+
+/**
  * Schema for the LLM-generated time range.
  * The WHERE clause is constructed programmatically from the provided trace IDs.
  */
@@ -34,7 +39,7 @@ const timeRangeSchema = z.object({
 export const createGenerateTraceLogsQueryTool = ({ logger, model }: LLMToolOptions) => {
   return tool(
     async ({ traceIds, contextData }) => {
-      const nodeLogger = logger.child({ tool: 'generate_trace_logs_query' });
+      const nodeLogger = logger.child({ tool: TOOL_NAME });
 
       // Get current date/time context for the prompt
       const currentDateTime = getCurrentDateTimeWithTimezone();
@@ -85,7 +90,7 @@ CRITICAL: Use this date format:
       return nrqlQuery;
     },
     {
-      name: 'generate_trace_logs_query',
+      name: TOOL_NAME,
       description: 'Generate NRQL query to fetch logs for specific trace IDs. Use traceIds from fetch_and_process_logs.',
       schema: z.object({
         traceIds: z.array(z.string()).min(1, 'At least one trace ID is required').describe('The traceIds array from fetch_and_process_logs'),
