@@ -24,7 +24,7 @@ const TEST_CONFIG = {
 
 const shouldSkip = !TEST_CONFIG.clusterName || !TEST_CONFIG.taskId;
 
-if (shouldSkip) {
+if (!shouldSkip) {
   describe('queryContainerInsightsLogs', () => {
     let logger: Logger;
 

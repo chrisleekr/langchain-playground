@@ -96,7 +96,7 @@ describe('gatherMetrics', () => {
 
   const shouldSkip = !TEST_CONFIG.clusterName || !TEST_CONFIG.taskId;
 
-  if (shouldSkip) {
+  if (!shouldSkip) {
     describe('integration: real AWS queries', () => {
       describe('when gathering metrics for a real ECS task', () => {
         let result: Map<string, TaskMetricsResult>;
