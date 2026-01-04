@@ -16,6 +16,11 @@ import { getErrorMessage, withTimeout, DEFAULT_STEP_TIMEOUT_MS } from '@/api/age
 import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/toolResponse';
 
 /**
+ * Tool name constant to avoid magic strings.
+ */
+const TOOL_NAME = 'investigate_and_analyze_sentry_issue' as const;
+
+/**
  * Schema for the combined investigate and analyze tool input.
  */
 const investigateAndAnalyzeSchema = z.object({
@@ -61,7 +66,7 @@ Provide your analysis in a structured format.`);
  */
 export const createInvestigateAndAnalyzeSentryIssueTool = (options: LLMToolOptions) => {
   const { logger: parentLogger, model, stepTimeoutMs = DEFAULT_STEP_TIMEOUT_MS } = options;
-  const logger: Logger = parentLogger.child({ tool: 'investigate_and_analyze_sentry_issue' });
+  const logger: Logger = parentLogger.child({ tool: TOOL_NAME });
 
   return tool(
     async ({ issueId, includeSourceCode, context }) => {
@@ -99,7 +104,7 @@ export const createInvestigateAndAnalyzeSentryIssueTool = (options: LLMToolOptio
 
         if (!normalizedEvent) {
           logger.warn({ issueId, eventId: latestEvent.id }, 'Failed to normalize event data');
-          return createToolError('investigate_and_analyze_sentry_issue', 'Failed to normalize event data');
+          return createToolError(TOOL_NAME, 'Failed to normalize event data');
         }
 
         // Step 3: Extend with source code if requested
@@ -153,14 +158,14 @@ export const createInvestigateAndAnalyzeSentryIssueTool = (options: LLMToolOptio
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         logger.error({ issueId, error: errorMessage }, 'Failed to investigate and analyze Sentry issue');
-        return createToolError('investigate_and_analyze_sentry_issue', errorMessage, {
+        return createToolError(TOOL_NAME, errorMessage, {
           doNotRetry: true,
           suggestedAction: 'Investigation failed. Check Sentry API credentials and issue ID.'
         });
       }
     },
     {
-      name: 'investigate_and_analyze_sentry_issue',
+      name: TOOL_NAME,
       description:
         'Comprehensive Sentry issue investigation and analysis in one call. ' +
         'Fetches issue details, events with stack traces (and source code), then analyzes with AI. ' +

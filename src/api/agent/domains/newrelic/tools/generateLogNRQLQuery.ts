@@ -10,6 +10,11 @@ import { getCurrentDateTimeWithTimezone, getNRQLDateFormatExample, getTimezoneOf
 import type { LLMToolOptions } from '@/api/agent/domains/shared/types';
 
 /**
+ * Tool name constant to avoid magic strings.
+ */
+const TOOL_NAME = 'generate_log_nrql_query' as const;
+
+/**
  * Schema for the LLM-generated query components.
  * The SELECT clause is constructed programmatically to ensure SELECT * is always used.
  */
@@ -35,7 +40,7 @@ const queryComponentsSchema = z.object({
 export const createGenerateLogNRQLQueryTool = ({ logger, model }: LLMToolOptions) => {
   return tool(
     async ({ contextData }) => {
-      const nodeLogger = logger.child({ tool: 'generate_log_nrql_query' });
+      const nodeLogger = logger.child({ tool: TOOL_NAME });
 
       // Get current date/time context for the prompt
       const currentDateTime = getCurrentDateTimeWithTimezone();
@@ -89,7 +94,7 @@ DO NOT include quotes around the since/until values - quotes will be added autom
       return nrqlQuery;
     },
     {
-      name: 'generate_log_nrql_query',
+      name: TOOL_NAME,
       description: 'Generate a NRQL query to fetch logs based on investigation context (issues, incidents, alerts)',
       schema: z.object({
         contextData: z.string().describe('The contextYaml from get_investigation_context')

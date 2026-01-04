@@ -80,6 +80,29 @@ Container CPU/memory limits and scaling issues are common root causes of service
 </trigger>
 </triggers>
 </agent>
+
+<agent name="aws_rds_expert">
+<specialization>AWS RDS Aurora PostgreSQL database investigations</specialization>
+<use_cases>
+- Database performance analysis (CPU, Memory, Connections, IOPS, Latency)
+- CloudWatch metrics for RDS instances and Aurora clusters
+- Performance Insights Top SQL analysis and slow query identification
+- Aurora cluster health, replica lag, and replication issues
+- Database connection issues, pooling, and deadlock analysis
+- Query optimization recommendations
+</use_cases>
+<triggers>
+<trigger type="reactive">
+When database-related errors, slow queries, connection issues, or RDS identifiers are mentioned.
+DB identifier formats: cluster-name (e.g., "my-app-cluster") or instance-name (e.g., "my-app-instance-1")
+</trigger>
+<trigger type="proactive">
+For performance issues that could be database-related (slow API responses, timeouts, high latency),
+consider delegating to this agent to check database health and identify slow queries.
+Database bottlenecks are a common root cause of application performance issues.
+</trigger>
+</triggers>
+</agent>
 </agents>
 
 <examples>
@@ -124,6 +147,18 @@ Container CPU/memory limits and scaling issues are common root causes of service
 <thinking>This requires correlation across domains: Sentry for error details, research_expert for Kubernetes status.</thinking>
 <action>Delegate to sentry_expert first, then research_expert for Kubernetes investigation</action>
 </example>
+
+<example name="rds_performance">
+<input>Database performance degradation, high CPU on Aurora PostgreSQL cluster my-app-cluster</input>
+<thinking>This is a database performance issue. The aws_rds_expert can analyze CloudWatch metrics and Performance Insights to identify problematic queries and resource constraints.</thinking>
+<action>Delegate to aws_rds_expert</action>
+</example>
+
+<example name="slow_api_database">
+<input>API responses are slow (5+ seconds), suspect database queries</input>
+<thinking>Slow API responses could be caused by database issues. I should check database health with aws_rds_expert to identify slow queries or resource constraints.</thinking>
+<action>Delegate to aws_rds_expert for database analysis</action>
+</example>
 </examples>
 
 <workflow>
@@ -158,6 +193,7 @@ Your final response MUST include these fields:
 - summary: Brief overview of what was found
 - newRelicSummary: Comprehensive investigation summary describing findings from newrelic_expert (if any)
 - ecsSummary: Comprehensive investigation summary describing findings from aws_ecs_expert (if any)
+- rdsSummary: Comprehensive investigation summary describing findings from aws_rds_expert (if any)
 - sentrySummary: Comprehensive investigation summary describing findings from sentry_expert (if any)
 - researchSummary: Comprehensive investigation summary describing findings from research_expert (if any)
 - timeline: Key events and timestamps of the investigation

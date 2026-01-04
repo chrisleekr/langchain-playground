@@ -9,6 +9,11 @@ import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/t
 import type { DomainToolOptions } from '@/api/agent/domains/shared/types';
 
 /**
+ * Tool name constant to avoid magic strings.
+ */
+const TOOL_NAME = 'get_investigation_context' as const;
+
+/**
  * UUID regex pattern for validating New Relic issue IDs.
  * New Relic issue IDs are UUIDs, not to be confused with trace IDs (32 hex chars).
  */
@@ -23,7 +28,7 @@ export const createGetInvestigationContextTool = (options: DomainToolOptions) =>
 
   return tool(
     async ({ issueIds }) => {
-      const nodeLogger = logger.child({ tool: 'get_investigation_context' });
+      const nodeLogger = logger.child({ tool: TOOL_NAME });
       nodeLogger.info({ issueIds, stepTimeoutMs }, 'Fetching complete investigation context');
 
       try {
@@ -66,11 +71,11 @@ export const createGetInvestigationContextTool = (options: DomainToolOptions) =>
       } catch (error) {
         const message = getErrorMessage(error);
         nodeLogger.error({ error: message }, 'Failed to fetch investigation context');
-        return createToolError('get_investigation_context', message);
+        return createToolError(TOOL_NAME, message);
       }
     },
     {
-      name: 'get_investigation_context',
+      name: TOOL_NAME,
       description:
         'Fetch complete investigation context: issues, their incidents, and alert conditions. Use this as the first step to understand the alert. Requires issue IDs in UUID format (not trace IDs).',
       schema: z.object({

@@ -46,6 +46,7 @@ const parseArgs = () => {
     console.error('  --sentry=false       Disable Sentry agent');
     console.error('  --research=false     Disable Research agent');
     console.error('  --awsecs=false       Disable AWS ECS agent');
+    console.error('  --awsrds=false       Disable AWS RDS agent');
     process.exit(1);
   }
 
@@ -69,7 +70,8 @@ const parseArgs = () => {
       enableNewRelic: options.newrelic !== false,
       enableSentry: options.sentry !== false,
       enableResearch: options.research !== false,
-      enableAwsEcs: options.awsecs !== false
+      enableAwsEcs: options.awsecs !== false,
+      enableAwsRds: options.awsrds !== false
     });
 
     // Output results
@@ -77,11 +79,52 @@ const parseArgs = () => {
     console.log('INVESTIGATION RESULTS');
     console.log('='.repeat(80));
     console.log('\nQuery:', result.query);
-    console.log('\n--- INVESTIGATION SUMMARY ---');
-    console.log(result.rawSummary);
-    console.log('\n' + '='.repeat(80));
     console.log(`Messages: ${result.messageCount}`);
     console.log(`Duration: ${result.durationMs}ms`);
+
+    // Print structured summary (contains all the detailed agent outputs)
+    const { structuredSummary } = result;
+    console.log('\n--- SUMMARY ---');
+    console.log(structuredSummary.summary ?? '(no summary)');
+
+    if (structuredSummary.rootCause) {
+      console.log('\n--- ROOT CAUSE ---');
+      console.log(structuredSummary.rootCause);
+    }
+
+    if (structuredSummary.rdsSummary) {
+      console.log('\n--- RDS ANALYSIS ---');
+      console.log(structuredSummary.rdsSummary);
+    }
+
+    if (structuredSummary.ecsSummary) {
+      console.log('\n--- ECS ANALYSIS ---');
+      console.log(structuredSummary.ecsSummary);
+    }
+
+    if (structuredSummary.newRelicSummary) {
+      console.log('\n--- NEW RELIC ANALYSIS ---');
+      console.log(structuredSummary.newRelicSummary);
+    }
+
+    if (structuredSummary.sentrySummary) {
+      console.log('\n--- SENTRY ANALYSIS ---');
+      console.log(structuredSummary.sentrySummary);
+    }
+
+    if (structuredSummary.researchSummary) {
+      console.log('\n--- RESEARCH ---');
+      console.log(structuredSummary.researchSummary);
+    }
+
+    if (structuredSummary.recommendations && structuredSummary.recommendations.length > 0) {
+      console.log('\n--- RECOMMENDATIONS ---');
+      structuredSummary.recommendations.forEach((rec, i) => {
+        console.log(`${i + 1}. ${rec}`);
+      });
+    }
+
+    console.log('\n' + '='.repeat(80));
 
     // Output trace summary
     const { trace } = result;

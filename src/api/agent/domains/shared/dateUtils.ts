@@ -51,3 +51,32 @@ export const getTimezoneOffset = (): string => {
   const tz = getConfiguredTimezone();
   return dayjs().tz(tz).format('Z');
 };
+
+/**
+ * Format a date using the configured timezone for human readability.
+ *
+ * @param date - Date to format (returns undefined if date is undefined)
+ * @returns Formatted date string with timezone offset, or undefined
+ */
+export const formatDate = (date: Date | undefined): string | undefined => {
+  if (!date) return undefined;
+  const tz = getConfiguredTimezone();
+  return dayjs(date).tz(tz).format('YYYY-MM-DD HH:mm:ssZ');
+};
+
+/**
+ * Format a time range as a human-readable string.
+ *
+ * Returns null if either start or end is undefined, avoiding strings like
+ * "undefined - 2025-01-04..." which look odd in LLM output.
+ *
+ * @param start - Start date
+ * @param end - End date
+ * @returns Formatted time range string, or null if either date is missing
+ */
+export const formatTimeRange = (start: Date | undefined, end: Date | undefined): string | null => {
+  const startStr = formatDate(start);
+  const endStr = formatDate(end);
+  if (!startStr || !endStr) return null;
+  return `${startStr} - ${endStr}`;
+};

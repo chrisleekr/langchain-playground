@@ -2,6 +2,7 @@ import config from 'config';
 import type { App } from '@slack/bolt';
 import type { FastifyInstance } from 'fastify';
 import { logger } from '@/libraries/logger';
+import { clearAllAwsClientCaches } from '@/libraries/aws';
 import { startServerWithFastify } from './serverWithFastify';
 import { startServerWithSlack } from './serverWithSlack';
 
@@ -23,6 +24,11 @@ import { startServerWithSlack } from './serverWithSlack';
   actualStartServer().then(({ app }: { app: FastifyInstance | App }) => {
     const gracefulShutdown = async () => {
       try {
+        // Clean up AWS SDK clients to properly close HTTP connections
+        // @see https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/creating-and-calling-service-objects.html
+        logger.info('Cleaning up AWS clients...');
+        clearAllAwsClientCaches();
+
         if (serverMode === 'fastify') {
           await (app as FastifyInstance).close();
         } else if (serverMode === 'slack') {

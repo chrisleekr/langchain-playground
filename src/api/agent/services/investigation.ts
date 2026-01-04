@@ -1,4 +1,5 @@
 import type { Logger } from 'pino';
+import type { BaseMessage } from '@langchain/core/messages';
 import { HumanMessage } from '@langchain/core/messages';
 import { GraphRecursionError } from '@langchain/langgraph';
 import { randomUUID } from 'node:crypto';
@@ -9,6 +10,61 @@ import { DEFAULT_AGENT_MAX_ITERATIONS, getModel, createTimeoutPromise, Investiga
 import { createInvestigationSupervisor } from '@/api/agent/supervisor';
 import { ObservabilityHandler } from '@/api/agent/domains/shared/callbacks';
 import { getMCPTools } from '@/libraries/mcp';
+
+/**
+ * Agent name to summary field mapping.
+ * Used to extract raw agent outputs from conversation history.
+ */
+const AGENT_NAME_TO_FIELD: Record<string, keyof AgentOutputs> = {
+  aws_rds_expert: 'rdsSummary',
+  aws_ecs_expert: 'ecsSummary',
+  newrelic_expert: 'newRelicSummary',
+  sentry_expert: 'sentrySummary',
+  research_expert: 'researchSummary'
+};
+
+/**
+ * Raw outputs extracted from agent messages.
+ */
+interface AgentOutputs {
+  rdsSummary?: string;
+  ecsSummary?: string;
+  newRelicSummary?: string;
+  sentrySummary?: string;
+  researchSummary?: string;
+}
+
+/**
+ * Extracts raw agent outputs from conversation history.
+ *
+ * The supervisor stores agent responses in the message history. By extracting
+ * these directly, we preserve the full detailed output instead of using the
+ * supervisor's re-summarized version.
+ *
+ * @param messages - Conversation history from supervisor
+ * @param logger - Logger instance for debugging
+ * @returns Raw outputs from each agent
+ */
+const extractAgentOutputs = (messages: BaseMessage[], logger: Logger): AgentOutputs => {
+  const outputs: AgentOutputs = {};
+
+  for (const message of messages) {
+    // Agent messages have a 'name' field identifying the source
+    const name = (message as { name?: string }).name;
+    if (!name) continue;
+
+    const field = AGENT_NAME_TO_FIELD[name];
+    if (!field) continue;
+
+    const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
+
+    // Store the agent's raw output (last message from each agent wins)
+    outputs[field] = content;
+    logger.debug({ agent: name, contentLength: content.length }, 'Extracted agent output');
+  }
+
+  return outputs;
+};
 
 /**
  * Options for running an investigation.
@@ -28,6 +84,8 @@ export interface InvestigateOptions {
   enableResearch?: boolean;
   /** Optional: Enable AWS ECS agent (default: true) */
   enableAwsEcs?: boolean;
+  /** Optional: Enable AWS RDS agent (default: true) */
+  enableAwsRds?: boolean;
 }
 
 /**
@@ -77,7 +135,16 @@ export interface InvestigateResult {
  * @throws {Error} If investigation times out or fails
  */
 export const investigate = async (options: InvestigateOptions): Promise<InvestigateResult> => {
-  const { query, config, logger, enableNewRelic = true, enableSentry = true, enableResearch = true, enableAwsEcs = true } = options;
+  const {
+    query,
+    config,
+    logger,
+    enableNewRelic = true,
+    enableSentry = true,
+    enableResearch = true,
+    enableAwsEcs = true,
+    enableAwsRds = true
+  } = options;
 
   const startTime = Date.now();
 
@@ -108,6 +175,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
     enableSentry,
     enableResearch,
     enableAwsEcs,
+    enableAwsRds,
     mcpTools,
     stepTimeoutMs
   });
@@ -143,7 +211,7 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   // Example with 3 agents: (3 * 24) + (2 * 10) + 5 = 97 supersteps
   //
   // @see https://docs.langchain.com/oss/javascript/langgraph/graph-api#recursion-limit
-  const enabledAgentCount = [enableNewRelic, enableSentry, enableResearch && mcpTools.length > 0, enableAwsEcs].filter(Boolean).length;
+  const enabledAgentCount = [enableNewRelic, enableSentry, enableResearch && mcpTools.length > 0, enableAwsEcs, enableAwsRds].filter(Boolean).length;
   const agentOverhead = enabledAgentCount * (2 * DEFAULT_AGENT_MAX_ITERATIONS + 4);
   const supervisorIterations = 2 * Math.min(config.maxToolCalls, 10);
   const buffer = 5;
@@ -193,6 +261,18 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
   const lastMessage = messages[messages.length - 1];
   const rawSummary = typeof lastMessage?.content === 'string' ? lastMessage.content : JSON.stringify(lastMessage?.content ?? 'No content available');
 
+  // Extract raw agent outputs from conversation history.
+  // This preserves the full detailed output from each agent instead of using
+  // the supervisor's re-summarized version (which loses detail).
+  const agentOutputs = extractAgentOutputs(messages, logger);
+  logger.info(
+    {
+      extractedAgents: Object.keys(agentOutputs).length,
+      agents: Object.keys(agentOutputs)
+    },
+    'Agent outputs extracted from message history'
+  );
+
   // Get structured summary from responseFormat (set in supervisor configuration)
   // The supervisor automatically extracts structured output after the agent loop
   // @see https://docs.langchain.com/oss/javascript/langchain/structured-output
@@ -204,8 +284,20 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
 
   if (resultWithStructured.structuredResponse) {
     // Validate the structured response against the schema
-    structuredSummary = InvestigationSummarySchema.parse(resultWithStructured.structuredResponse);
+    const supervisorSummary = InvestigationSummarySchema.parse(resultWithStructured.structuredResponse);
     logger.info('Structured summary extracted via responseFormat');
+
+    // Merge: Use supervisor's non-agent fields + raw agent outputs (full detail)
+    // This bypasses the supervisor's re-summarization of agent outputs
+    structuredSummary = {
+      ...supervisorSummary,
+      // Override agent summaries with raw outputs (preserves full detail)
+      rdsSummary: agentOutputs.rdsSummary ?? supervisorSummary.rdsSummary,
+      ecsSummary: agentOutputs.ecsSummary ?? supervisorSummary.ecsSummary,
+      newRelicSummary: agentOutputs.newRelicSummary ?? supervisorSummary.newRelicSummary,
+      sentrySummary: agentOutputs.sentrySummary ?? supervisorSummary.sentrySummary,
+      researchSummary: agentOutputs.researchSummary ?? supervisorSummary.researchSummary
+    };
   } else {
     // Fallback: parse from raw summary if structuredResponse is not available
     logger.warn('No structuredResponse in result, using raw summary fallback');
@@ -221,7 +313,9 @@ export const investigate = async (options: InvestigateOptions): Promise<Investig
     }
 
     structuredSummary = {
-      summary: truncated ? `${rawSummary.substring(0, MAX_FALLBACK_LENGTH - 3)}...` : rawSummary
+      summary: truncated ? `${rawSummary.substring(0, MAX_FALLBACK_LENGTH - 3)}...` : rawSummary,
+      // Include raw agent outputs even in fallback mode
+      ...agentOutputs
     };
   }
 

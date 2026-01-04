@@ -11,6 +11,7 @@ export const InvestigationSummarySchema = z.object({
   summary: z.string().describe('Brief overview of what was found'),
   newRelicSummary: z.string().optional().describe('Comprehensive investigation summary from newrelic_expert (if any)'),
   ecsSummary: z.string().optional().describe('Comprehensive investigation summary from aws_ecs_expert (if any)'),
+  rdsSummary: z.string().optional().describe('Comprehensive investigation summary from aws_rds_expert (if any)'),
   sentrySummary: z.string().optional().describe('Comprehensive investigation summary from sentry_expert (if any)'),
   researchSummary: z.string().optional().describe('Comprehensive investigation summary from research_expert (if any)'),
   timeline: z.array(z.string()).optional().describe('Key events and timestamps of the investigation (if any)'),

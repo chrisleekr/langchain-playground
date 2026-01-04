@@ -14,6 +14,11 @@ import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/t
 import type { LLMToolOptions } from '@/api/agent/domains/shared/types';
 
 /**
+ * Tool name constant to avoid magic strings.
+ */
+const TOOL_NAME = 'fetch_and_analyze_logs' as const;
+
+/**
  * Analysis prompt template for log investigation.
  * Uses YAML format for logs as it's more token-efficient than JSON.
  */
@@ -77,7 +82,7 @@ export const createFetchAndAnalyzeLogsTool = (options: LLMToolOptions) => {
 
   return tool(
     async ({ nrqlQuery, contextData }) => {
-      const nodeLogger = logger.child({ tool: 'fetch_and_analyze_logs' });
+      const nodeLogger = logger.child({ tool: TOOL_NAME });
       nodeLogger.info({ query: nrqlQuery, stepTimeoutMs }, 'Fetching and analyzing logs');
 
       try {
@@ -153,11 +158,11 @@ export const createFetchAndAnalyzeLogsTool = (options: LLMToolOptions) => {
       } catch (error) {
         const message = getErrorMessage(error);
         nodeLogger.error({ error: message, query: nrqlQuery }, 'Failed to fetch and analyze logs');
-        return createToolError('fetch_and_analyze_logs', message);
+        return createToolError(TOOL_NAME, message);
       }
     },
     {
-      name: 'fetch_and_analyze_logs',
+      name: TOOL_NAME,
       description:
         'Execute a NRQL query, fetch logs, and analyze them in one step. Returns analysis summary, trace IDs, and parsed ECS task ARNs (ready for aws_ecs_expert). Use contextYaml from get_investigation_context.',
       schema: z.object({
