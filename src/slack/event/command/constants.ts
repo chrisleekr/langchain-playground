@@ -20,15 +20,3 @@ export const OverallStateAnnotation = Annotation.Root({
   threadReplies: Annotation<FormattedMessageElement[]>,
   rca: Annotation<string>
 });
-
-export const intentToNodeMap: Record<string, IntentToNodeMap> = {
-  'generate-rca': {
-    node: 'generate-rca',
-    description: 'Generate RCA for the incident'
-  }
-};
-
-export interface IntentToNodeMap {
-  node: string;
-  description: string;
-}

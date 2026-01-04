@@ -4,11 +4,7 @@ import type { StructuredToolInterface } from '@langchain/core/tools';
 import { MemorySaver } from '@langchain/langgraph';
 import { createSupervisor } from '@langchain/langgraph-supervisor';
 
-import { createNewRelicAgent } from '@/api/agent/domains/newrelic';
-import { createSentryAgent } from '@/api/agent/domains/sentry';
-import { createResearchAgent } from '@/api/agent/domains/research';
-import { createAwsEcsAgent } from '@/api/agent/domains/aws-ecs';
-import type { CompiledDomainAgent } from '@/api/agent/domains/shared/types';
+import { createNewRelicAgent, createSentryAgent, createResearchAgent, createAwsEcsAgent, type CompiledDomainAgent } from '@/api/agent/domains';
 import { DEFAULT_AGENT_MAX_ITERATIONS, InvestigationSummarySchema } from '@/api/agent/core';
 import { supervisorSystemPrompt } from './prompts';
 

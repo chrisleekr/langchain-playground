@@ -6,6 +6,14 @@ import type { ContainerMetrics } from './types';
 
 /**
  * Options for querying Container Insights metrics.
+ *
+ * @see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-enhanced-observability-metrics-ECS.html
+ *
+ * Container Insights task-level metrics require three dimensions:
+ * - ClusterName + ServiceName + TaskId (for service tasks)
+ * - ClusterName + TaskDefinitionFamily + TaskId (fallback)
+ *
+ * Either serviceName or taskDefinitionFamily must be provided.
  */
 export interface ContainerMetricsOptions {
   /** AWS region */
@@ -14,6 +22,10 @@ export interface ContainerMetricsOptions {
   clusterName: string;
   /** ECS task ID (not full ARN) */
   taskId: string;
+  /** ECS service name (required for service tasks) */
+  serviceName?: string;
+  /** Task definition family name (fallback if serviceName unavailable) */
+  taskDefinitionFamily?: string;
   /** Center time for the query window */
   centerTime: Date;
   /** Time window in minutes (default: 5, meaning +/- 5 minutes = 10 min total) */
@@ -84,10 +96,30 @@ const average = (arr: number[]): number => {
  * @returns Container metrics with utilization percentages
  */
 export const getContainerInsightsMetrics = async (options: ContainerMetricsOptions, logger: Logger): Promise<ContainerMetrics> => {
-  const { region, clusterName, taskId, centerTime, windowMinutes = 5 } = options;
+  const { region, clusterName, taskId, serviceName, taskDefinitionFamily, centerTime, windowMinutes = 5 } = options;
 
   const nodeLogger = logger.child({ function: 'getContainerInsightsMetrics' });
-  nodeLogger.debug({ region, clusterName, taskId, windowMinutes }, 'Getting Container Insights metrics');
+
+  // Build dimensions - AWS Container Insights requires 3 dimensions for task-level metrics:
+  // Either: ClusterName + ServiceName + TaskId
+  // Or: ClusterName + TaskDefinitionFamily + TaskId
+  // @see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-enhanced-observability-metrics-ECS.html
+  const dimensions: Array<{ Name: string; Value: string }> = [{ Name: 'ClusterName', Value: clusterName }];
+
+  if (serviceName) {
+    dimensions.push({ Name: 'ServiceName', Value: serviceName });
+  } else if (taskDefinitionFamily) {
+    dimensions.push({ Name: 'TaskDefinitionFamily', Value: taskDefinitionFamily });
+  } else {
+    nodeLogger.warn({ taskId, clusterName }, 'Neither serviceName nor taskDefinitionFamily provided - metrics query may return no data');
+  }
+
+  dimensions.push({ Name: 'TaskId', Value: taskId });
+
+  nodeLogger.debug(
+    { region, clusterName, taskId, serviceName, taskDefinitionFamily, windowMinutes, dimensionCount: dimensions.length },
+    'Getting Container Insights metrics'
+  );
 
   const startTime = new Date(centerTime.getTime() - windowMinutes * 60 * 1000);
   const endTime = new Date(centerTime.getTime() + windowMinutes * 60 * 1000);
@@ -102,10 +134,7 @@ export const getContainerInsightsMetrics = async (options: ContainerMetricsOptio
         Metric: {
           Namespace: 'ECS/ContainerInsights',
           MetricName: 'CpuUtilized',
-          Dimensions: [
-            { Name: 'ClusterName', Value: clusterName },
-            { Name: 'TaskId', Value: taskId }
-          ]
+          Dimensions: dimensions
         },
         Period: 60,
         Stat: 'Average'
@@ -118,10 +147,7 @@ export const getContainerInsightsMetrics = async (options: ContainerMetricsOptio
         Metric: {
           Namespace: 'ECS/ContainerInsights',
           MetricName: 'CpuReserved',
-          Dimensions: [
-            { Name: 'ClusterName', Value: clusterName },
-            { Name: 'TaskId', Value: taskId }
-          ]
+          Dimensions: dimensions
         },
         Period: 60,
         Stat: 'Average'
@@ -134,10 +160,7 @@ export const getContainerInsightsMetrics = async (options: ContainerMetricsOptio
         Metric: {
           Namespace: 'ECS/ContainerInsights',
           MetricName: 'MemoryUtilized',
-          Dimensions: [
-            { Name: 'ClusterName', Value: clusterName },
-            { Name: 'TaskId', Value: taskId }
-          ]
+          Dimensions: dimensions
         },
         Period: 60,
         Stat: 'Average'
@@ -150,10 +173,7 @@ export const getContainerInsightsMetrics = async (options: ContainerMetricsOptio
         Metric: {
           Namespace: 'ECS/ContainerInsights',
           MetricName: 'MemoryReserved',
-          Dimensions: [
-            { Name: 'ClusterName', Value: clusterName },
-            { Name: 'TaskId', Value: taskId }
-          ]
+          Dimensions: dimensions
         },
         Period: 60,
         Stat: 'Average'

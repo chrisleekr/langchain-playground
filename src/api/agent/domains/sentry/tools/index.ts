@@ -39,6 +39,3 @@ export const createAllTools = (options: SentryToolFactoryOptions) => {
     createInvestigateAndAnalyzeSentryIssueTool({ logger, model, stepTimeoutMs })
   ];
 };
-
-// Re-export tool creator for direct use if needed
-export { createInvestigateAndAnalyzeSentryIssueTool } from './investigateAndAnalyzeSentryIssue';

@@ -1,6 +1,6 @@
 import type { Logger } from 'pino';
 
-import { getContainerInsightsMetrics, type ContainerMetrics, type ParsedTaskArn } from '@/libraries/aws';
+import { queryContainerInsightsLogs, type ContainerMetricsSummary, type ParsedTaskArn, type EcsTaskInfo } from '@/libraries/aws';
 import { withTimeout, getErrorMessage } from '@/api/agent/core';
 
 /**
@@ -8,25 +8,48 @@ import { withTimeout, getErrorMessage } from '@/api/agent/core';
  */
 export interface TaskMetricsResult {
   taskId: string;
-  metrics: ContainerMetrics | null;
+  metrics: ContainerMetricsSummary | null;
   error: string | null;
 }
 
 /**
- * Gather Container Insights metrics for all tasks.
- * Uses current time as center with configurable window.
+ * Time range options for metrics gathering.
+ * If not provided, defaults to a window around current time.
+ */
+export interface MetricsTimeRange {
+  /** Start time for the query */
+  startTime: Date;
+  /** End time for the query */
+  endTime: Date;
+}
+
+/** Default lookback period in hours when no explicit time range is provided */
+const DEFAULT_LOOKBACK_HOURS = 24;
+
+/**
+ * Gather Container Insights metrics for all tasks using CloudWatch Logs Insights.
+ *
+ * Uses server-side aggregation to compute avg/max/min metrics efficiently.
+ * This queries the `/aws/ecs/containerinsights/{cluster}/performance` log group,
+ * which works with standard Container Insights mode (not just enhanced observability).
+ *
+ * Time range behavior:
+ * 1. Explicit timeRange: Use startTime/endTime directly (e.g., from New Relic alert context)
+ * 2. No timeRange (default): Queries last 24 hours
  *
  * @param taskArns - Array of parsed task ARNs
+ * @param _taskInfoMap - Map of taskId to EcsTaskInfo (unused, reserved for future use)
  * @param logger - Logger instance
  * @param timeoutMs - Timeout per API call
- * @param windowMinutes - Time window in minutes (default: 5)
+ * @param timeRange - Optional explicit time range
  * @returns Map of taskId to metrics result
  */
 export const gatherMetrics = async (
   taskArns: ParsedTaskArn[],
+  _taskInfoMap: Map<string, EcsTaskInfo>,
   logger: Logger,
   timeoutMs: number,
-  windowMinutes: number = 5
+  timeRange?: MetricsTimeRange
 ): Promise<Map<string, TaskMetricsResult>> => {
   const nodeLogger = logger.child({ function: 'gatherMetrics' });
 
@@ -36,10 +59,23 @@ export const gatherMetrics = async (
     return results;
   }
 
-  nodeLogger.info({ taskCount: taskArns.length, windowMinutes }, 'Gathering Container Insights metrics');
+  // Determine time range:
+  // - Explicit timeRange: use provided range
+  // - No timeRange: use last 24 hours
+  const hasExplicitTimeRange = !!timeRange;
+  const endTime = timeRange?.endTime ?? new Date();
+  const startTime = timeRange?.startTime ?? new Date(endTime.getTime() - DEFAULT_LOOKBACK_HOURS * 60 * 60 * 1000);
 
-  // Use current time as center (CloudWatch gracefully returns no data for future times)
-  const centerTime = new Date();
+  nodeLogger.info(
+    {
+      taskCount: taskArns.length,
+      hasExplicitTimeRange,
+      lookbackHours: hasExplicitTimeRange ? undefined : DEFAULT_LOOKBACK_HOURS,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString()
+    },
+    'Gathering Container Insights metrics (server-side aggregation)'
+  );
 
   // Process metrics in parallel
   const promises = taskArns.map(async parsed => {
@@ -48,18 +84,18 @@ export const gatherMetrics = async (
     try {
       const metrics = await withTimeout(
         () =>
-          getContainerInsightsMetrics(
+          queryContainerInsightsLogs(
             {
               region,
               clusterName,
               taskId,
-              centerTime,
-              windowMinutes
+              startTime,
+              endTime
             },
             nodeLogger
           ),
         timeoutMs,
-        `getContainerInsightsMetrics:${taskId}`
+        `queryContainerInsightsLogs:${taskId}`
       );
 
       return {
@@ -69,7 +105,7 @@ export const gatherMetrics = async (
       };
     } catch (error) {
       const errorMessage = getErrorMessage(error);
-      nodeLogger.warn({ taskId, error: errorMessage }, 'Failed to get metrics');
+      nodeLogger.warn({ taskId, error: errorMessage }, 'Failed to get metrics from logs');
 
       return {
         taskId,

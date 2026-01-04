@@ -81,5 +81,4 @@ export const InvestigationTraceSchema = z.object({
 export type LLMCallStep = z.infer<typeof LLMCallStepSchema>;
 export type ToolExecutionStep = z.infer<typeof ToolExecutionStepSchema>;
 export type TraceStep = z.infer<typeof TraceStepSchema>;
-export type TraceSummary = z.infer<typeof TraceSummarySchema>;
 export type InvestigationTrace = z.infer<typeof InvestigationTraceSchema>;

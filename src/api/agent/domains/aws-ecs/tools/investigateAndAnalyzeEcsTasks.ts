@@ -13,11 +13,14 @@ import { getErrorMessage, withTimeout, DEFAULT_STEP_TIMEOUT_MS } from '@/api/age
 import { createToolSuccess, createToolError } from '@/api/agent/domains/shared/toolResponse';
 import { getConfiguredTimezone } from '@/api/agent/domains/shared/dateUtils';
 
-import { gatherTaskStatus } from './investigateEcsTasks/gatherTaskStatus';
-import { gatherServiceEvents, extractUniqueServices } from './investigateEcsTasks/gatherServiceEvents';
-import { gatherMetrics } from './investigateEcsTasks/gatherMetrics';
-import { gatherHistoricalEvents } from './investigateEcsTasks/gatherHistoricalEvents';
-import type { TaskInvestigationResult } from './investigateEcsTasks/types';
+import {
+  gatherTaskStatus,
+  gatherServiceEvents,
+  extractUniqueServices,
+  gatherMetrics,
+  gatherHistoricalEvents,
+  type TaskInvestigationResult
+} from './investigateEcsTasks';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -51,7 +54,13 @@ const investigateAndAnalyzeSchema = z.object({
   includeMetrics: z.boolean().optional().default(true).describe('Whether to gather Container Insights metrics'),
   includeServiceEvents: z.boolean().optional().default(true).describe('Whether to gather service events'),
   includeHistoricalEvents: z.boolean().optional().default(true).describe('Whether to query historical events for not-found tasks'),
-  metricsWindowMinutes: z.number().min(1).max(60).optional().default(5).describe('Time window for metrics in minutes'),
+  metricsStartTime: z.string().optional().describe('Start time for metrics query in ISO 8601 format. Must be provided together with metricsEndTime.'),
+  metricsEndTime: z
+    .string()
+    .optional()
+    .describe(
+      'End time for metrics query in ISO 8601 format. Must be provided together with metricsStartTime. If neither is provided, queries last 24 hours.'
+    ),
   historicalLookbackHours: z.number().min(1).max(168).optional().default(24).describe('Hours to look back for historical events')
 });
 
@@ -161,17 +170,61 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
       includeMetrics,
       includeServiceEvents,
       includeHistoricalEvents,
-      metricsWindowMinutes,
+      metricsStartTime,
+      metricsEndTime,
       historicalLookbackHours
     }) => {
       const startTime = Date.now();
+
+      // Validate and parse explicit time range if provided
+      let metricsTimeRange: { startTime: Date; endTime: Date } | undefined;
+
+      if (metricsStartTime && metricsEndTime) {
+        const parsedStart = new Date(metricsStartTime);
+        const parsedEnd = new Date(metricsEndTime);
+
+        // Validate dates are valid
+        if (isNaN(parsedStart.getTime())) {
+          return createToolError(
+            'investigate_and_analyze_ecs_tasks',
+            `Invalid metricsStartTime: '${metricsStartTime}' is not a valid ISO 8601 date`,
+            {
+              doNotRetry: true,
+              suggestedAction: 'Provide a valid ISO 8601 date string (e.g., 2025-01-04T00:00:00Z)'
+            }
+          );
+        }
+        if (isNaN(parsedEnd.getTime())) {
+          return createToolError('investigate_and_analyze_ecs_tasks', `Invalid metricsEndTime: '${metricsEndTime}' is not a valid ISO 8601 date`, {
+            doNotRetry: true,
+            suggestedAction: 'Provide a valid ISO 8601 date string (e.g., 2025-01-04T00:00:00Z)'
+          });
+        }
+
+        // Validate start is before end
+        if (parsedStart >= parsedEnd) {
+          return createToolError('investigate_and_analyze_ecs_tasks', 'metricsStartTime must be before metricsEndTime', {
+            doNotRetry: true,
+            suggestedAction: `Received start: ${metricsStartTime}, end: ${metricsEndTime}`
+          });
+        }
+
+        metricsTimeRange = { startTime: parsedStart, endTime: parsedEnd };
+      } else if (metricsStartTime && !metricsEndTime) {
+        logger.warn({ metricsStartTime }, 'metricsStartTime provided without metricsEndTime - falling back to default 24h time range');
+      } else if (metricsEndTime && !metricsStartTime) {
+        logger.warn({ metricsEndTime }, 'metricsEndTime provided without metricsStartTime - falling back to default 24h time range');
+      }
+
       logger.info(
         {
           taskCount: taskArns.length,
           includeMetrics,
           includeServiceEvents,
           includeHistoricalEvents,
-          metricsWindowMinutes,
+          metricsTimeRange: metricsTimeRange
+            ? { startTime: metricsTimeRange.startTime.toISOString(), endTime: metricsTimeRange.endTime.toISOString() }
+            : 'default (last 50 within 24h)',
           historicalLookbackHours
         },
         'Starting ECS task investigation and analysis'
@@ -206,9 +259,9 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
           });
         }
 
-        // Step 2: Gather Container Insights metrics (parallel)
+        // Step 2: Gather Container Insights metrics from logs (parallel)
         if (includeMetrics) {
-          const metricsMap = await gatherMetrics(taskArns, logger, stepTimeoutMs, metricsWindowMinutes);
+          const metricsMap = await gatherMetrics(taskArns, foundTasks, logger, stepTimeoutMs, metricsTimeRange);
 
           for (const result of taskResults) {
             const metricsResult = metricsMap.get(result.parsed.taskId);
@@ -296,11 +349,14 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
             : null,
           metrics: t.metrics
             ? {
+                dataPointCount: t.metrics.dataPointCount,
+                timeRange: `${formatDate(t.metrics.firstTimestamp)} - ${formatDate(t.metrics.lastTimestamp)}`,
                 avgCpuUtilizationPercent: t.metrics.avgCpuUtilizationPercent,
                 maxCpuUtilizationPercent: t.metrics.maxCpuUtilizationPercent,
+                minCpuUtilizationPercent: t.metrics.minCpuUtilizationPercent,
                 avgMemoryUtilizationPercent: t.metrics.avgMemoryUtilizationPercent,
                 maxMemoryUtilizationPercent: t.metrics.maxMemoryUtilizationPercent,
-                dataPointCount: t.metrics.timestamps.length
+                minMemoryUtilizationPercent: t.metrics.minMemoryUtilizationPercent
               }
             : null,
           historicalEvents:

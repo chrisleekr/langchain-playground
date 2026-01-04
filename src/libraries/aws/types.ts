@@ -98,7 +98,43 @@ export interface EcsServiceEvent {
 }
 
 /**
+ * Container Insights metrics summary for an ECS task.
+ *
+ * Aggregated metrics computed server-side by CloudWatch Logs Insights.
+ * Optimized for LLM consumption - contains only summary values, no raw data arrays.
+ */
+export interface ContainerMetricsSummary {
+  /** Task ID */
+  taskId: string;
+  /** Cluster name */
+  clusterName: string;
+  /** Region */
+  region: string;
+  /** Number of data points aggregated */
+  dataPointCount: number;
+  /** Timestamp of the first data point */
+  firstTimestamp: Date;
+  /** Timestamp of the last data point */
+  lastTimestamp: Date;
+  /** Average CPU utilization percentage over the period */
+  avgCpuUtilizationPercent: number;
+  /** Maximum CPU utilization percentage over the period */
+  maxCpuUtilizationPercent: number;
+  /** Minimum CPU utilization percentage over the period */
+  minCpuUtilizationPercent: number;
+  /** Average Memory utilization percentage over the period */
+  avgMemoryUtilizationPercent: number;
+  /** Maximum Memory utilization percentage over the period */
+  maxMemoryUtilizationPercent: number;
+  /** Minimum Memory utilization percentage over the period */
+  minMemoryUtilizationPercent: number;
+}
+
+/**
  * Container Insights metrics for an ECS task.
+ *
+ * @deprecated Use ContainerMetricsSummary for new code. This interface is kept
+ * for backward compatibility with CloudWatch Metrics API queries.
  */
 export interface ContainerMetrics {
   /** Task ID */

@@ -42,6 +42,3 @@ export const createAllTools = (options: AwsEcsToolFactoryOptions) => {
     createInvestigateAndAnalyzeEcsTasksTool({ logger, model, stepTimeoutMs })
   ];
 };
-
-// Re-export tool creator for direct use if needed
-export { createInvestigateAndAnalyzeEcsTasksTool } from './investigateAndAnalyzeEcsTasks';
