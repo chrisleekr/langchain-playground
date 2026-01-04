@@ -131,43 +131,6 @@ export interface ContainerMetricsSummary {
 }
 
 /**
- * Container Insights metrics for an ECS task.
- *
- * @deprecated Use ContainerMetricsSummary for new code. This interface is kept
- * for backward compatibility with CloudWatch Metrics API queries.
- */
-export interface ContainerMetrics {
-  /** Task ID */
-  taskId: string;
-  /** Cluster name */
-  clusterName: string;
-  /** Region */
-  region: string;
-  /** CPU units utilized (array of data points) */
-  cpuUtilized: number[];
-  /** CPU units reserved (array of data points) */
-  cpuReserved: number[];
-  /** Memory utilized in MB (array of data points) */
-  memoryUtilized: number[];
-  /** Memory reserved in MB (array of data points) */
-  memoryReserved: number[];
-  /** Timestamps for each data point */
-  timestamps: Date[];
-  /** Calculated CPU utilization percentage for each data point */
-  cpuUtilizationPercent: number[];
-  /** Calculated Memory utilization percentage for each data point */
-  memoryUtilizationPercent: number[];
-  /** Average CPU utilization over the period */
-  avgCpuUtilizationPercent: number;
-  /** Average Memory utilization over the period */
-  avgMemoryUtilizationPercent: number;
-  /** Max CPU utilization over the period */
-  maxCpuUtilizationPercent: number;
-  /** Max Memory utilization over the period */
-  maxMemoryUtilizationPercent: number;
-}
-
-/**
  * Historical task event from CloudWatch Logs.
  */
 export interface HistoricalTaskEvent {
