@@ -2,7 +2,7 @@ import type { Logger } from 'pino';
 import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, type ResultField } from '@aws-sdk/client-cloudwatch-logs';
 
 import { getInvestigateCredentials, getEcsEventLogGroup } from './credentials';
-import type { HistoricalTaskEvent } from './types';
+import type { HistoricalTaskEvent, ContainerMetricsSummary } from './types';
 
 /**
  * Options for querying historical task events.
@@ -16,6 +16,28 @@ export interface HistoricalTaskQueryOptions {
   clusterName: string;
   /** Log group name (optional, defaults to config value) */
   logGroupName?: string;
+  /** Start time for the query */
+  startTime: Date;
+  /** End time for the query */
+  endTime: Date;
+}
+
+/**
+ * Options for querying Container Insights performance logs.
+ *
+ * Uses server-side aggregation to compute avg/max/min metrics efficiently.
+ * This queries the `/aws/ecs/containerinsights/{cluster}/performance` log group
+ * which contains task-level metrics even in standard Container Insights mode.
+ *
+ * @see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-view-metrics.html
+ */
+export interface ContainerInsightsLogsOptions {
+  /** AWS region */
+  region: string;
+  /** ECS cluster name */
+  clusterName: string;
+  /** ECS task ID (not full ARN) */
+  taskId: string;
   /** Start time for the query */
   startTime: Date;
   /** End time for the query */
@@ -199,6 +221,178 @@ export const queryHistoricalTaskEvents = async (options: HistoricalTaskQueryOpti
     }
 
     nodeLogger.error({ error, taskId }, 'Failed to query historical task events');
+    throw error;
+  }
+};
+
+/**
+ * Aggregated metrics result from CloudWatch Logs Insights stats query.
+ *
+ * Utilization percentages are calculated per data point BEFORE aggregation,
+ * ensuring accurate max/min values (not max utilized / max reserved which could
+ * come from different timestamps).
+ */
+interface AggregatedMetricsResult {
+  avgCpuUtilizationPercent: number;
+  maxCpuUtilizationPercent: number;
+  minCpuUtilizationPercent: number;
+  avgMemoryUtilizationPercent: number;
+  maxMemoryUtilizationPercent: number;
+  minMemoryUtilizationPercent: number;
+  dataPointCount: number;
+  firstTimestamp: Date;
+  lastTimestamp: Date;
+}
+
+/**
+ * Parse aggregated metrics result from CloudWatch Logs Insights stats query.
+ *
+ * Expects utilization percentages that were calculated per-point in the query.
+ */
+const parseAggregatedResult = (row: ResultField[]): AggregatedMetricsResult | null => {
+  const getValue = (field: string): string | undefined => {
+    return row.find(f => f.field === field)?.value;
+  };
+
+  const dataPointCount = getValue('dataPointCount');
+  if (!dataPointCount || parseInt(dataPointCount, 10) === 0) {
+    return null;
+  }
+
+  const firstTimestampStr = getValue('firstTimestamp');
+  const lastTimestampStr = getValue('lastTimestamp');
+
+  // Round to 2 decimal places for cleaner output
+  const round2 = (val: number): number => Math.round(val * 100) / 100;
+
+  return {
+    avgCpuUtilizationPercent: round2(parseFloat(getValue('avgCpuUtilizationPercent') ?? '0')),
+    maxCpuUtilizationPercent: round2(parseFloat(getValue('maxCpuUtilizationPercent') ?? '0')),
+    minCpuUtilizationPercent: round2(parseFloat(getValue('minCpuUtilizationPercent') ?? '0')),
+    avgMemoryUtilizationPercent: round2(parseFloat(getValue('avgMemoryUtilizationPercent') ?? '0')),
+    maxMemoryUtilizationPercent: round2(parseFloat(getValue('maxMemoryUtilizationPercent') ?? '0')),
+    minMemoryUtilizationPercent: round2(parseFloat(getValue('minMemoryUtilizationPercent') ?? '0')),
+    dataPointCount: parseInt(dataPointCount, 10),
+    firstTimestamp: firstTimestampStr ? new Date(firstTimestampStr) : new Date(),
+    lastTimestamp: lastTimestampStr ? new Date(lastTimestampStr) : new Date()
+  };
+};
+
+/**
+ * Query Container Insights performance logs for ECS task metrics.
+ *
+ * Uses CloudWatch Logs Insights server-side aggregation to compute metrics
+ * efficiently - returns only summary values, not raw data points.
+ *
+ * This works with standard Container Insights mode (not just enhanced observability).
+ * Queries the `/aws/ecs/containerinsights/{cluster}/performance` log group.
+ *
+ * @param options - Query options including time range
+ * @param logger - Logger instance
+ * @returns Container metrics summary, or null if no data
+ */
+export const queryContainerInsightsLogs = async (options: ContainerInsightsLogsOptions, logger: Logger): Promise<ContainerMetricsSummary | null> => {
+  const { region, clusterName, taskId, startTime, endTime } = options;
+
+  const nodeLogger = logger.child({ function: 'queryContainerInsightsLogs' });
+  const logGroup = `/aws/ecs/containerinsights/${clusterName}/performance`;
+
+  nodeLogger.debug(
+    { region, clusterName, taskId, logGroup, startTime: startTime.toISOString(), endTime: endTime.toISOString() },
+    'Querying Container Insights performance logs with server-side aggregation'
+  );
+
+  const client = getCloudWatchLogsClient(region);
+
+  // CloudWatch Logs Insights query with server-side aggregation
+  // IMPORTANT: Calculate utilization percentage PER DATA POINT before aggregating.
+  // This ensures max/min utilization values are accurate (not max utilized / max reserved
+  // which could come from different timestamps).
+  const queryString = `
+    fields CpuReserved, CpuUtilized, MemoryReserved, MemoryUtilized
+    | filter ispresent(TaskId) and TaskId like /${taskId}/ and Type = "Task"
+    | stats
+        avg(CpuUtilized / CpuReserved * 100) as avgCpuUtilizationPercent,
+        max(CpuUtilized / CpuReserved * 100) as maxCpuUtilizationPercent,
+        min(CpuUtilized / CpuReserved * 100) as minCpuUtilizationPercent,
+        avg(MemoryUtilized / MemoryReserved * 100) as avgMemoryUtilizationPercent,
+        max(MemoryUtilized / MemoryReserved * 100) as maxMemoryUtilizationPercent,
+        min(MemoryUtilized / MemoryReserved * 100) as minMemoryUtilizationPercent,
+        count(*) as dataPointCount,
+        min(@timestamp) as firstTimestamp,
+        max(@timestamp) as lastTimestamp
+  `;
+
+  try {
+    const startCommand = new StartQueryCommand({
+      logGroupName: logGroup,
+      startTime: Math.floor(startTime.getTime() / 1000),
+      endTime: Math.floor(endTime.getTime() / 1000),
+      queryString
+    });
+
+    const startResponse = await client.send(startCommand);
+    const queryId = startResponse.queryId;
+
+    if (!queryId) {
+      throw new Error('Failed to start query - no query ID returned');
+    }
+
+    nodeLogger.debug({ queryId }, 'Container Insights aggregation query started');
+
+    const results = await waitForQueryResults(client, queryId);
+
+    if (results.length === 0) {
+      nodeLogger.info({ taskId, logGroup }, 'No Container Insights data found');
+      return null;
+    }
+
+    // Parse the single aggregated result row
+    const aggregated = parseAggregatedResult(results[0] ?? []);
+
+    if (!aggregated) {
+      nodeLogger.info({ taskId, logGroup }, 'No valid aggregated data');
+      return null;
+    }
+
+    // Utilization percentages already calculated per-point in the query
+    const metrics: ContainerMetricsSummary = {
+      taskId,
+      clusterName,
+      region,
+      dataPointCount: aggregated.dataPointCount,
+      firstTimestamp: aggregated.firstTimestamp,
+      lastTimestamp: aggregated.lastTimestamp,
+      avgCpuUtilizationPercent: aggregated.avgCpuUtilizationPercent,
+      maxCpuUtilizationPercent: aggregated.maxCpuUtilizationPercent,
+      minCpuUtilizationPercent: aggregated.minCpuUtilizationPercent,
+      avgMemoryUtilizationPercent: aggregated.avgMemoryUtilizationPercent,
+      maxMemoryUtilizationPercent: aggregated.maxMemoryUtilizationPercent,
+      minMemoryUtilizationPercent: aggregated.minMemoryUtilizationPercent
+    };
+
+    nodeLogger.info(
+      {
+        taskId,
+        dataPointCount: metrics.dataPointCount,
+        timeRange: `${metrics.firstTimestamp.toISOString()} - ${metrics.lastTimestamp.toISOString()}`,
+        avgCpu: metrics.avgCpuUtilizationPercent,
+        maxCpu: metrics.maxCpuUtilizationPercent,
+        avgMemory: metrics.avgMemoryUtilizationPercent,
+        maxMemory: metrics.maxMemoryUtilizationPercent
+      },
+      'Container Insights metrics retrieved (server-side aggregation)'
+    );
+
+    return metrics;
+  } catch (error) {
+    // Log group may not exist if Container Insights is not enabled
+    if (error instanceof Error && error.name === 'ResourceNotFoundException') {
+      nodeLogger.warn({ logGroup }, 'Container Insights log group not found - Container Insights may not be enabled');
+      return null;
+    }
+
+    nodeLogger.error({ error, taskId }, 'Failed to query Container Insights logs');
     throw error;
   }
 };

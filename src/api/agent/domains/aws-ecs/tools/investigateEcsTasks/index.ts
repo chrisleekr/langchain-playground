@@ -1,5 +1,5 @@
 // Re-export types for use by the combined investigate-and-analyze tool
-export type { TaskInvestigationResult, ServiceInvestigationResult, InvestigationResult } from './types';
+export type { TaskInvestigationResult, ServiceInvestigationResult } from './types';
 
 // Re-export gather functions for composition in higher-level tools
 export { gatherTaskStatus } from './gatherTaskStatus';

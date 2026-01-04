@@ -1,1 +1,2 @@
-
+# Validate branch name
+npx branch-name-lint .branch-name-list.json

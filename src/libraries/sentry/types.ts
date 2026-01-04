@@ -107,13 +107,6 @@ export interface SentryIssueEventEntryFrame {
   vars: string | null;
 }
 
-export interface SentryIssueEventEntryStacktrace {
-  frames: SentryIssueEventEntryFrame[];
-  framesOmitted: number | null;
-  registers: string | null;
-  hasSystemFrames: boolean;
-}
-
 export interface SentryIssueEventEntryDataExceptionValue {
   type: string;
   value: string;
@@ -271,11 +264,6 @@ export interface SentryIssueEventNormalized {
 }
 
 // https://docs.sentry.io/api/events/debug-issues-related-to-source-maps-for-a-given-event/
-export interface GetSentryEventSourceMapDebugArgs {
-  issueId: string;
-  eventId: string;
-}
-
 export interface SentryIssueEventSourceMapDebugError {
   type: string;
   message: string;

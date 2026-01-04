@@ -98,37 +98,36 @@ export interface EcsServiceEvent {
 }
 
 /**
- * Container Insights metrics for an ECS task.
+ * Container Insights metrics summary for an ECS task.
+ *
+ * Aggregated metrics computed server-side by CloudWatch Logs Insights.
+ * Optimized for LLM consumption - contains only summary values, no raw data arrays.
  */
-export interface ContainerMetrics {
+export interface ContainerMetricsSummary {
   /** Task ID */
   taskId: string;
   /** Cluster name */
   clusterName: string;
   /** Region */
   region: string;
-  /** CPU units utilized (array of data points) */
-  cpuUtilized: number[];
-  /** CPU units reserved (array of data points) */
-  cpuReserved: number[];
-  /** Memory utilized in MB (array of data points) */
-  memoryUtilized: number[];
-  /** Memory reserved in MB (array of data points) */
-  memoryReserved: number[];
-  /** Timestamps for each data point */
-  timestamps: Date[];
-  /** Calculated CPU utilization percentage for each data point */
-  cpuUtilizationPercent: number[];
-  /** Calculated Memory utilization percentage for each data point */
-  memoryUtilizationPercent: number[];
-  /** Average CPU utilization over the period */
+  /** Number of data points aggregated */
+  dataPointCount: number;
+  /** Timestamp of the first data point */
+  firstTimestamp: Date;
+  /** Timestamp of the last data point */
+  lastTimestamp: Date;
+  /** Average CPU utilization percentage over the period */
   avgCpuUtilizationPercent: number;
-  /** Average Memory utilization over the period */
-  avgMemoryUtilizationPercent: number;
-  /** Max CPU utilization over the period */
+  /** Maximum CPU utilization percentage over the period */
   maxCpuUtilizationPercent: number;
-  /** Max Memory utilization over the period */
+  /** Minimum CPU utilization percentage over the period */
+  minCpuUtilizationPercent: number;
+  /** Average Memory utilization percentage over the period */
+  avgMemoryUtilizationPercent: number;
+  /** Maximum Memory utilization percentage over the period */
   maxMemoryUtilizationPercent: number;
+  /** Minimum Memory utilization percentage over the period */
+  minMemoryUtilizationPercent: number;
 }
 
 /**
