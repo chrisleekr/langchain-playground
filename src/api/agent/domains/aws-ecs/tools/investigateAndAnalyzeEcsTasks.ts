@@ -387,12 +387,15 @@ export const createInvestigateAndAnalyzeEcsTasksTool = (options: LLMToolOptions)
         // Step 6: Analyze with LLM (raw data stays internal)
         const chain = analysisPromptTemplate.pipe(model).pipe(new StringOutputParser());
 
+        // Encoding strategy: Compact JSON for all ECS data
+        // Reason: taskDetails and serviceEvents have nested objects (status, metrics, containers),
+        // making TOON less efficient than compact JSON for these structures
         const analysis = await withTimeout(
           () =>
             chain.invoke({
-              summary: JSON.stringify(summary, null, 2),
-              taskDetails: JSON.stringify(formattedTasks, null, 2),
-              serviceEvents: formattedServices.length > 0 ? JSON.stringify(formattedServices, null, 2) : 'No service events available',
+              summary: JSON.stringify(summary),
+              taskDetails: JSON.stringify(formattedTasks),
+              serviceEvents: formattedServices.length > 0 ? JSON.stringify(formattedServices) : 'No service events available',
               investigationContext: investigationContext ?? 'No additional context provided'
             }),
           stepTimeoutMs * 2, // Give more time for LLM analysis
