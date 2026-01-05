@@ -7,7 +7,6 @@
  * Run: npx ts-node src/benchmarkToon.ts
  */
 import { encode as toonEncode } from '@toon-format/toon';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { encode as gptEncode } from 'gpt-tokenizer';
 
 interface BenchmarkResult {
