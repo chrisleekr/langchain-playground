@@ -7,6 +7,7 @@
  * Run: npx ts-node src/benchmarkToon.ts
  */
 import { encode as toonEncode } from '@toon-format/toon';
+// eslint-disable-next-line import/no-extraneous-dependencies as it's testing tool.
 import { encode as gptEncode } from 'gpt-tokenizer';
 
 interface BenchmarkResult {
@@ -142,10 +143,8 @@ const runBenchmarks = () => {
   console.log('\n=== Summary ===\n');
 
   // Calculate averages
-  const avgSavingsVsPretty =
-    results.reduce((sum, r) => sum + parseFloat(r.savingsVsPretty), 0) / results.length;
-  const avgSavingsVsCompact =
-    results.reduce((sum, r) => sum + parseFloat(r.savingsVsCompact), 0) / results.length;
+  const avgSavingsVsPretty = results.reduce((sum, r) => sum + parseFloat(r.savingsVsPretty), 0) / results.length;
+  const avgSavingsVsCompact = results.reduce((sum, r) => sum + parseFloat(r.savingsVsCompact), 0) / results.length;
 
   console.log(`Average savings vs JSON (pretty): ${avgSavingsVsPretty.toFixed(1)}%`);
   console.log(`Average savings vs JSON (compact): ${avgSavingsVsCompact.toFixed(1)}%`);
