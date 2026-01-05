@@ -6,7 +6,17 @@ const prettierPlugin = require('eslint-plugin-prettier');
 
 module.exports = [
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'build/**', 'CHANGELOG.md', 'jest.config.*', 'jest.setup.*', 'release.config.*']
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'build/**',
+      'CHANGELOG.md',
+      'jest.config.*',
+      'jest.setup.*',
+      'release.config.*',
+      '__mocks__/**'
+    ]
   },
   // Special config for jest.config.ts without type checking
   {

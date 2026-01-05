@@ -120,14 +120,17 @@ export const createInvestigateAndAnalyzeSentryIssueTool = (options: LLMToolOptio
         logger.info({ issueId, eventId: latestEvent.id, eventCount: issueEvents.length }, 'Sentry events fetched');
 
         // Step 4: Analyze with LLM (raw data stays internal)
+        // Encoding strategy: Compact JSON for Sentry data
+        // Reason: Issue and event objects are deeply nested (stacktraces, contexts, tags),
+        // making TOON less efficient than compact JSON for these structures
         const contextSection = context ? `## Additional Context\n${context}` : '';
         const chain = analysisPromptTemplate.pipe(model).pipe(new StringOutputParser());
 
         const analysis = await withTimeout(
           () =>
             chain.invoke({
-              issueData: JSON.stringify(normalizedIssue, null, 2),
-              eventData: JSON.stringify(normalizedEvent, null, 2),
+              issueData: JSON.stringify(normalizedIssue),
+              eventData: JSON.stringify(normalizedEvent),
               contextSection
             }),
           stepTimeoutMs * 2, // Give more time for LLM analysis

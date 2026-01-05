@@ -13,17 +13,21 @@ const config: Config = {
       {
         tsconfig: 'tsconfig.test.json'
       }
-    ]
+    ],
+    // Transform ESM packages (.mjs files) using babel-jest
+    '^.+\\.mjs$': 'babel-jest'
   },
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
   bail: true,
   preset: 'ts-jest',
   testEnvironment: 'node',
   testPathIgnorePatterns: ['<rootDir>/src/config/', '<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],
+  // Transform ESM packages that Jest can't handle natively
+  transformIgnorePatterns: ['node_modules/(?!(@toon-format/toon)/)'],
   modulePaths: [compilerOptions.baseUrl],
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
   roots: ['<rootDir>'],
-  moduleFileExtensions: ['ts', 'js'],
+  moduleFileExtensions: ['ts', 'js', 'mjs'],
   moduleDirectories: ['node_modules', '<rootDir>'],
   reporters: [
     [

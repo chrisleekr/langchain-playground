@@ -388,12 +388,17 @@ export const createInvestigateAndAnalyzeRdsInstancesTool = (options: LLMToolOpti
         );
         logger.debug({ summary, formattedInstances, formattedTopSQL, investigationContext }, 'LLM analysis input details');
 
+        // Encoding strategy based on data structure:
+        // @see https://github.com/toon-format/toon/blob/main/docs/reference/efficiency-formalization.md
+        // - instanceDetails: Compact JSON (nested metrics objects)
+        // - topSQLQueries: Compact JSON (nested topQueries arrays - TOON less efficient for arrays of arrays)
+        // - summary: Compact JSON (single object, not an array)
         const analysis = await withTimeout(
           () =>
             chain.invoke({
-              summary: JSON.stringify(summary, null, 2),
-              instanceDetails: JSON.stringify(formattedInstances, null, 2),
-              topSQLQueries: formattedTopSQL.length > 0 ? JSON.stringify(formattedTopSQL, null, 2) : 'No Top SQL data available',
+              summary: JSON.stringify(summary),
+              instanceDetails: JSON.stringify(formattedInstances),
+              topSQLQueries: formattedTopSQL.length > 0 ? JSON.stringify(formattedTopSQL) : 'No Top SQL data available',
               investigationContext: investigationContext ?? 'No additional context provided'
             }),
           stepTimeoutMs * 2, // Give more time for LLM analysis
