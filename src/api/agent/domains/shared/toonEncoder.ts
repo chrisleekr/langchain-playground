@@ -47,7 +47,7 @@ export interface ToonEncodeOptions {
  *   { rank: 1, sqlId: 'ABC123', avgDbLoad: 5.2, sqlText: 'SELECT...' },
  *   { rank: 2, sqlId: 'DEF456', avgDbLoad: 3.1, sqlText: 'INSERT...' }
  * ];
- * const encoded = toonEncodeForLLM(queries); // ~15% token savings
+ * const encoded = toonEncodeForLLM(queries);
  *
  * // BAD: Nested objects - use JSON.stringify() instead
  * const instances = [
