@@ -36,6 +36,6 @@ export const createAllTools = (options: AwsRdsToolFactoryOptions) => {
   return [
     // Combined investigation + analysis tool
     // Keeps raw AWS data internal, returns only analysis summary
-    createInvestigateAndAnalyzeRdsInstancesTool({ logger, model, stepTimeoutMs }),
+    createInvestigateAndAnalyzeRdsInstancesTool({ logger, model, stepTimeoutMs })
   ];
 };

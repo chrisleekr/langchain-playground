@@ -20,7 +20,7 @@ export {
   formatMetricPair,
   formatBytesMetricPair,
   formatLatencyMs,
-  type MetricPairResult,
+  type MetricPairResult
 } from './utils';
 
 export { calculateCost } from './pricing';

@@ -34,11 +34,7 @@ export const createMockLogger = (): Logger => {
  * @param isClusterWriter - Whether this instance is the cluster writer (default: true)
  * @returns A complete RdsInstanceInfo object
  */
-export const createRdsInstanceInfo = (
-  instanceIdentifier: string,
-  region = 'ap-southeast-2',
-  isClusterWriter = true
-): RdsInstanceInfo => ({
+export const createRdsInstanceInfo = (instanceIdentifier: string, region = 'ap-southeast-2', isClusterWriter = true): RdsInstanceInfo => ({
   instanceIdentifier,
   instanceArn: `arn:aws:rds:${region}:123456789012:db:${instanceIdentifier}`,
   dbiResourceId: `db-${instanceIdentifier.toUpperCase().replace(/-/g, '').substring(0, 26)}`,

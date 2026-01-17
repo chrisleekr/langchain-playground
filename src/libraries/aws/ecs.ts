@@ -415,10 +415,7 @@ const parseHistoricalTaskResultRow = (row: Array<{ field?: string; value?: strin
  * @param logger - Logger instance
  * @returns Array of historical task events
  */
-export const queryHistoricalTaskEvents = async (
-  options: HistoricalTaskQueryOptions,
-  logger: Logger
-): Promise<HistoricalTaskEvent[]> => {
+export const queryHistoricalTaskEvents = async (options: HistoricalTaskQueryOptions, logger: Logger): Promise<HistoricalTaskEvent[]> => {
   const { region, taskId, clusterName, startTime, endTime, logGroupName } = options;
 
   const nodeLogger = logger.child({ function: 'queryHistoricalTaskEvents' });
@@ -529,10 +526,7 @@ const parseAggregatedMetricsResult = (row: Array<{ field?: string; value?: strin
  * @param logger - Logger instance
  * @returns Container metrics summary, or null if no data
  */
-export const queryContainerInsightsLogs = async (
-  options: ContainerInsightsLogsOptions,
-  logger: Logger
-): Promise<ContainerMetricsSummary | null> => {
+export const queryContainerInsightsLogs = async (options: ContainerInsightsLogsOptions, logger: Logger): Promise<ContainerMetricsSummary | null> => {
   const { region, clusterName, taskId, startTime, endTime } = options;
 
   const nodeLogger = logger.child({ function: 'queryContainerInsightsLogs' });

@@ -10,7 +10,7 @@ import {
   createResearchAgent,
   createAwsEcsAgent,
   createAwsRdsAgent,
-  type CompiledDomainAgent,
+  type CompiledDomainAgent
 } from '@/api/agent/domains';
 import { DEFAULT_AGENT_MAX_ITERATIONS, InvestigationSummarySchema } from '@/api/agent/core';
 import { supervisorSystemPrompt } from './prompts';
@@ -78,7 +78,7 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     enableAwsRds = true,
     mcpTools = [],
     maxAgentIterations = DEFAULT_AGENT_MAX_ITERATIONS,
-    stepTimeoutMs,
+    stepTimeoutMs
   } = options;
 
   // Calculate per-agent recursion limit based on ReAct pattern
@@ -117,7 +117,7 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
   if (enableAwsEcs) {
     logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating AWS ECS agent');
     const awsEcsAgent = createAwsEcsAgent({ model, logger, stepTimeoutMs }).withConfig({
-      recursionLimit: agentRecursionLimit,
+      recursionLimit: agentRecursionLimit
     });
     agents.push(awsEcsAgent);
   }
@@ -125,7 +125,7 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
   if (enableAwsRds) {
     logger.info({ maxIterations: maxAgentIterations, stepTimeoutMs }, 'Creating AWS RDS agent');
     const awsRdsAgent = createAwsRdsAgent({ model, logger, stepTimeoutMs }).withConfig({
-      recursionLimit: agentRecursionLimit,
+      recursionLimit: agentRecursionLimit
     });
     agents.push(awsRdsAgent);
   }

@@ -14,7 +14,7 @@ describe('AwsClientCache', () => {
   beforeEach(() => {
     clientFactory = jest.fn((region: string) => ({
       destroy: jest.fn(),
-      region,
+      region
     }));
     cache = new AwsClientCache(clientFactory);
   });
