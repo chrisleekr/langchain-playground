@@ -1,9 +1,4 @@
-import {
-  CloudWatchLogsClient,
-  StartQueryCommand,
-  GetQueryResultsCommand,
-  type ResultField,
-} from '@aws-sdk/client-cloudwatch-logs';
+import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, type ResultField } from '@aws-sdk/client-cloudwatch-logs';
 
 import { AwsClientCache, buildAwsClientConfig } from './clientManager';
 
@@ -14,9 +9,7 @@ import { AwsClientCache, buildAwsClientConfig } from './clientManager';
  *
  * @see https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/node-reusing-connections.html
  */
-const cloudWatchLogsClientCache = new AwsClientCache<CloudWatchLogsClient>(
-  region => new CloudWatchLogsClient(buildAwsClientConfig(region))
-);
+const cloudWatchLogsClientCache = new AwsClientCache<CloudWatchLogsClient>(region => new CloudWatchLogsClient(buildAwsClientConfig(region)));
 
 /**
  * Get or create a cached CloudWatch Logs client for a region.
@@ -24,8 +17,7 @@ const cloudWatchLogsClientCache = new AwsClientCache<CloudWatchLogsClient>(
  * @param region - AWS region
  * @returns Configured CloudWatch Logs client
  */
-export const getCloudWatchLogsClient = (region: string): CloudWatchLogsClient =>
-  cloudWatchLogsClientCache.getClient(region);
+export const getCloudWatchLogsClient = (region: string): CloudWatchLogsClient => cloudWatchLogsClientCache.getClient(region);
 
 /**
  * Clear all cached CloudWatch Logs clients.

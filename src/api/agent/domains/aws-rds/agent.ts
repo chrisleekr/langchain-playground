@@ -39,6 +39,6 @@ export const createAwsRdsAgent = (options: DomainAgentOptions) => {
     llm: model,
     tools,
     name: 'aws_rds_expert',
-    prompt: getAwsRdsSystemPrompt(),
+    prompt: getAwsRdsSystemPrompt()
   });
 };
