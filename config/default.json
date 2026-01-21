@@ -121,6 +121,16 @@
   },
   "github": {
     "personalAccessToken": "",
-    "owner": ""
+    "owner": "",
+    "repositories": {
+      "enabled": false,
+      "dataPath": "./data/repos",
+      "updateIntervalCron": "0 * * * *",
+      "repos": []
+    }
+  },
+  "chunkhound": {
+    "url": "http://localhost:8090/mcp",
+    "enabled": false
   }
 }

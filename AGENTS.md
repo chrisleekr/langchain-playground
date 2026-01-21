@@ -22,7 +22,7 @@ This document provides essential guidelines for AI models interacting with this 
 2. **Document Processing**: RAG (Retrieval-Augmented Generation) with parent document retriever
 3. **Slack Bot**: Intelligent routing with intent classification and LangGraph workflows
 4. **New Relic Integration**: Log analysis and investigation workflows
-5. **MCP Tools**: Brave Search, Kubernetes readonly, Context7 integration
+5. **MCP Tools**: Brave Search, Kubernetes readonly, Context7, ChunkHound (code research)
 
 ## Project Structure
 
@@ -30,6 +30,10 @@ This document provides essential guidelines for AI models interacting with this 
 langchain-playground/
 ├── src/
 │   ├── api/                   # REST API endpoints
+│   │   ├── agent/             # Multi-agent investigation system
+│   │   │   ├── domains/       # Domain agents (NewRelic, Sentry, AWS, Code Research)
+│   │   │   ├── supervisor/    # Investigation supervisor
+│   │   │   └── services/      # Investigation orchestration
 │   │   ├── document/          # Document loading and querying (RAG)
 │   │   ├── groq/              # Groq LLM provider endpoints
 │   │   ├── health/            # Health check endpoints
@@ -37,6 +41,7 @@ langchain-playground/
 │   │   ├── ollama/            # Ollama local LLM endpoints
 │   │   └── openai/            # OpenAI provider endpoints
 │   ├── libraries/             # Core utilities and services
+│   │   ├── github/            # GitHub API and repository management
 │   │   ├── langchain/         # LangChain utilities (LLM, embeddings, vector store)
 │   │   ├── mcp/               # Model Context Protocol client
 │   │   ├── newrelic/          # New Relic API integration
@@ -76,7 +81,8 @@ langchain-playground/
 - **Redis**: localhost:6379 (caching and sessions)
 - **Qdrant**: [http://localhost:6333](http://localhost:6333) (vector database)
 - **Unstructured API**: [http://localhost:8082](http://localhost:8082) (document processing)
-- **Services**: `docker-compose up -d` (starts Redis, Qdrant, Unstructured API)
+- **ChunkHound**: [http://localhost:8090](http://localhost:8090) (code research MCP server)
+- **Services**: `docker-compose up -d` (starts Redis, Qdrant, Unstructured API, ChunkHound)
 
 ## Code Style
 
@@ -174,6 +180,27 @@ REDIS_URL=redis://localhost:6379
 QDRANT_URL=http://localhost:6333
 ```
 
+**ChunkHound Setup (Optional - Code Research):**
+
+To enable the Code Research agent with ChunkHound:
+
+```bash
+# Enable ChunkHound MCP server
+CHUNKHOUND_ENABLED=true
+CHUNKHOUND_URL=http://localhost:8090/mcp
+
+# Optional: Auto-clone repositories for indexing
+GITHUB_REPOSITORIES_ENABLED=true
+GITHUB_REPOSITORIES_REPOS='[{"owner":"langchain-ai","repo":"langchainjs","branch":"main"}]'
+```
+
+Note: ChunkHound requires Ollama with embedding and LLM models:
+
+```bash
+ollama pull mxbai-embed-large:latest
+ollama pull llama3.1:8b
+```
+
 **Adding New Configuration:**
 
 When adding new configuration options, update all relevant places:
@@ -187,6 +214,12 @@ When adding new configuration options, update all relevant places:
 All configuration keys MUST use consistent naming and be documented.
 
 ## API Endpoints
+
+**Multi-Agent Investigation:**
+
+- `POST /agent/investigate` - Unified investigation endpoint using multi-agent supervisor
+  - Automatically routes to appropriate domain agents (NewRelic, Sentry, AWS ECS/RDS, Code Research)
+  - Supports configurable LLM provider, model, and timeout options
 
 **Document Management (RAG):**
 
@@ -314,6 +347,7 @@ npm test -- --coverage                # Explicit coverage report
 - **Ollama**: Local LLM inference (desktop installation recommended)
 - **New Relic**: Log analysis and monitoring
 - **Confluence**: Document source integration
+- **ChunkHound**: Code research MCP server (requires Ollama for embeddings/LLM)
 
 ## Security
 

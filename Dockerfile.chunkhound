@@ -1,0 +1,60 @@
+# ChunkHound Docker image for MCP server with HTTP transport
+# ChunkHound requires Python >=3.10,<3.14 (see pyproject.toml)
+# Using 3.13-slim as the latest compatible version
+#
+# Indexing behavior:
+# - First startup: Creates initial index (may take time for large repos)
+# - Subsequent startups: Uses existing index, file watcher updates incrementally
+# - Periodic clones: File watcher detects changes and re-indexes affected files
+#
+# @see https://chunkhound.github.io/configuration/
+
+FROM python:3.13-slim
+
+RUN apt-get update && \
+  apt-get install -y curl git && \
+  rm -rf /var/lib/apt/lists/*
+
+# Install uv package manager
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install chunkhound
+RUN uv tool install chunkhound
+
+# Copy entrypoint script
+COPY <<'EOF' /entrypoint.sh
+#!/bin/bash
+set -e
+
+DB_PATH="${CHUNKHOUND_DATABASE__PATH:-/root/.chunkhound}"
+WORKSPACE_PATH="/workspace"
+
+# Check if index exists (look for .db files in the database path)
+if [ ! -d "$DB_PATH" ] || [ -z "$(ls -A $DB_PATH 2>/dev/null)" ]; then
+    echo "No existing index found. Creating initial index..."
+    echo "This may take several minutes for large repositories."
+
+    # Run initial indexing
+    # Note: MCP server's file watcher will handle subsequent updates
+    uv run chunkhound index "$WORKSPACE_PATH" --verbose
+
+    echo "Initial indexing complete."
+else
+    echo "Existing index found at $DB_PATH. Skipping initial indexing."
+    echo "File watcher will handle incremental updates."
+fi
+
+# Start MCP server with file watching enabled (default behavior)
+echo "Starting ChunkHound MCP server..."
+exec uv run chunkhound mcp --http --host 0.0.0.0 --port 8000 "$WORKSPACE_PATH"
+EOF
+
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /workspace
+
+EXPOSE 8000
+
+# Use entrypoint script for conditional indexing
+ENTRYPOINT ["/entrypoint.sh"]

@@ -33,6 +33,29 @@ services:
     volumes:
       - redis_data:/data
 
+  chunkhound:
+    container_name: chunkhound
+    build:
+      context: .
+      dockerfile: Dockerfile.chunkhound
+    networks:
+      - internal
+    extra_hosts:
+      - 'host.docker.internal:host-gateway' # Access host Ollama
+    environment:
+      - CHUNKHOUND_EMBEDDING__PROVIDER=${CHUNKHOUND_EMBEDDING_PROVIDER:-openai}
+      - CHUNKHOUND_EMBEDDING__MODEL=${CHUNKHOUND_EMBEDDING_MODEL:-mxbai-embed-large:latest}
+      - CHUNKHOUND_EMBEDDING__BASE_URL=${CHUNKHOUND_EMBEDDING_BASE_URL:-http://host.docker.internal:11434/v1}
+      - CHUNKHOUND_LLM__PROVIDER=${CHUNKHOUND_LLM_PROVIDER:-openai}
+      - CHUNKHOUND_LLM__MODEL=${CHUNKHOUND_LLM_MODEL:-llama3.1:8b}
+      - CHUNKHOUND_LLM__BASE_URL=${CHUNKHOUND_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+    restart: unless-stopped
+    ports:
+      - '8090:8000'
+    volumes:
+      - ./data/repos:/workspace # Cloned repos mounted here
+      - chunkhound_data:/root/.chunkhound # Database persistence
+
   # Use desktop ollama. docker was too slow.
   # ollama:
   #   container_name: ollama
@@ -119,3 +142,4 @@ volumes:
   redis_data:
   chroma_data:
   qdrant_data:
+  chunkhound_data:

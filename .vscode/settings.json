@@ -19,7 +19,7 @@
   "typescript.preferences.importModuleSpecifier": "relative",
   "js/ts.implicitProjectConfig.checkJs": true,
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -52,6 +52,7 @@
     "chrisleekr",
     "chromadb",
     "Chunker",
+    "chunkhound",
     "commitlint",
     "containerinsights",
     "cummulative",
