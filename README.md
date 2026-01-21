@@ -34,6 +34,7 @@ This project provides both REST API endpoints or Slack bot integration for inter
 - [qdrant](https://qdrant.tech/): Qdrant serves as a vector database.
 - [chroma](https://www.trychroma.com/): Chroma serves as an embedding database. Not used anymore.
 - [redis](https://redis.io/): Redis is an open-source in-memory data structure store.
+- [chunkhound](https://chunkhound.github.io/): ChunkHound provides semantic code search and architecture analysis via MCP.
 
 ## Server mode
 
@@ -46,7 +47,7 @@ In this project, I used LangGraph Supervisor to build a multi-agent investigatio
 
 Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi-agent) for more details.
 
-**Supervisor** coordinates four specialized domain agents:
+**Supervisor** coordinates five specialized domain agents:
 
 | Agent | Purpose | Tools |
 |-------|---------|-------|
@@ -54,6 +55,7 @@ Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi
 | **Sentry Expert** | Error tracking, crashes | Issue lookup, event analysis, stack traces |
 | **Research Expert** | External documentation | Brave Search, Context7, Kubernetes (MCP) |
 | **AWS ECS Expert** | AWS ECS | ECS task status, container health, CloudWatch Container Insights metrics, service deployment, task placement, historical task event lookup, container exit codes, performance bottleneck analysis |
+| **Code Research Expert** | Codebase analysis | ChunkHound semantic search, regex patterns, architecture analysis |
 
 **Workflow**:
 
@@ -156,9 +158,50 @@ In this project, I used [slack/bolt](https://www.npmjs.com/package/@slack/bolt) 
 docker-compose up -d --build
 ```
 
+### Prerequisites for ChunkHound (Code Research)
+
+If using the Code Research agent, ensure Ollama has the required models:
+
+```bash
+# Required for ChunkHound embeddings and LLM
+ollama pull mxbai-embed-large:latest
+ollama pull llama3.1:8b
+```
+
+Then enable ChunkHound in your `.env`:
+
+```bash
+CHUNKHOUND_ENABLED=true
+GITHUB_REPOSITORIES_ENABLED=true
+```
+
 ## Endpoints
 
-TBD
+### Multi-Agent Investigation
+
+- `POST /agent/investigate` - Unified investigation using domain agents
+
+### Document Management (RAG)
+
+- `DELETE /document/reset` - Reset document store
+- `PUT /document/load/directory` - Load documents from directory
+- `PUT /document/load/confluence` - Load from Confluence
+- `POST /document/query` - Query documents with RAG
+
+### LLM Provider Threads
+
+- `POST /{provider}/thread` - Create conversation thread (openai, groq, ollama)
+- `GET|POST /{provider}/thread/:id` - Get/continue specific thread
+
+### LangGraph Workflows
+
+- `POST /langgraph/thread` - Create LangGraph workflow thread
+- `POST /langgraph/newrelic/investigate` - New Relic log analysis
+- `POST /langgraph/sentry/investigate` - Sentry issue investigation
+
+### Health
+
+- `GET /health` - Health check
 
 ## Todo
 

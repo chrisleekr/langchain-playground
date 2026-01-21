@@ -17,6 +17,7 @@ import { langgraphRouter } from '@/api/langgraph';
 import { agentRouter } from '@/api/agent';
 import { logger } from '@/libraries/logger';
 import { documentRouter } from '@/api/document';
+import { initializeRepositoryManager, shutdownRepositoryManager } from '@/libraries/github';
 
 const startServerWithFastify = async (options?: { skipListen?: boolean }): Promise<{ app: FastifyInstance }> => {
   try {
@@ -62,7 +63,18 @@ const startServerWithFastify = async (options?: { skipListen?: boolean }): Promi
     // Register error handler
     app.setErrorHandler(errorHandler());
 
+    // Register shutdown hook for repository manager cleanup
+    app.addHook('onClose', async () => {
+      shutdownRepositoryManager(logger);
+    });
+
     if (!options?.skipListen) {
+      // Initialize repository manager for ChunkHound (clones repos, starts scheduler)
+      // Run async without blocking server startup
+      initializeRepositoryManager(logger).catch(err => {
+        logger.error({ err }, 'Failed to initialize repository manager');
+      });
+
       const address = await app.listen({
         port: config.get('port'),
         host: config.get('host')

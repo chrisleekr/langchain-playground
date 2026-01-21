@@ -10,6 +10,8 @@ import {
   createResearchAgent,
   createAwsEcsAgent,
   createAwsRdsAgent,
+  createCodeResearchAgent,
+  filterChunkhoundTools,
   type CompiledDomainAgent
 } from '@/api/agent/domains';
 import { DEFAULT_AGENT_MAX_ITERATIONS, InvestigationSummarySchema } from '@/api/agent/core';
@@ -33,6 +35,12 @@ export interface InvestigationSupervisorOptions {
   enableAwsEcs?: boolean;
   /** Optional: Enable AWS RDS agent (default: true) */
   enableAwsRds?: boolean;
+  /**
+   * Optional: Enable Code Research agent with ChunkHound MCP tools (default: true)
+   * Requires ChunkHound MCP server to be running and chunkhound.enabled=true in config
+   * @see https://chunkhound.github.io/
+   */
+  enableCodeResearch?: boolean;
   /** MCP tools for the research agent (required if enableResearch is true) */
   mcpTools?: StructuredToolInterface[];
   /** Max iterations per domain agent (default: 10) */
@@ -76,6 +84,7 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
     enableResearch = true,
     enableAwsEcs = true,
     enableAwsRds = true,
+    enableCodeResearch = true,
     mcpTools = [],
     maxAgentIterations = DEFAULT_AGENT_MAX_ITERATIONS,
     stepTimeoutMs
@@ -128,6 +137,30 @@ export const createInvestigationSupervisor = (options: InvestigationSupervisorOp
       recursionLimit: agentRecursionLimit
     });
     agents.push(awsRdsAgent);
+  }
+
+  // Code Research agent uses ChunkHound MCP tools (filtered from all MCP tools)
+  if (enableCodeResearch && mcpTools.length > 0) {
+    const chunkhoundTools = filterChunkhoundTools(mcpTools);
+    if (chunkhoundTools.length > 0) {
+      logger.info(
+        { chunkhoundToolCount: chunkhoundTools.length, maxIterations: maxAgentIterations, stepTimeoutMs },
+        'Creating Code Research agent with ChunkHound tools'
+      );
+      const codeResearchAgent = createCodeResearchAgent({
+        model,
+        logger,
+        chunkhoundTools,
+        stepTimeoutMs
+      }).withConfig({
+        recursionLimit: agentRecursionLimit
+      });
+      agents.push(codeResearchAgent);
+    } else {
+      logger.info('Code Research agent skipped: no ChunkHound tools found in MCP tools');
+    }
+  } else if (enableCodeResearch && mcpTools.length === 0) {
+    logger.info('Code Research agent skipped: no MCP tools provided');
   }
 
   if (agents.length === 0) {

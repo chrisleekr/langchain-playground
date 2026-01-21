@@ -148,6 +148,25 @@
   },
   "github": {
     "personalAccessToken": "GITHUB_PERSONAL_ACCESS_TOKEN",
-    "owner": "GITHUB_OWNER"
+    "owner": "GITHUB_OWNER",
+    "repositories": {
+      "enabled": {
+        "__name": "GITHUB_REPOSITORIES_ENABLED",
+        "__format": "boolean"
+      },
+      "dataPath": "GITHUB_REPOSITORIES_DATA_PATH",
+      "updateIntervalCron": "GITHUB_REPOSITORIES_UPDATE_INTERVAL_CRON",
+      "repos": {
+        "__name": "GITHUB_REPOSITORIES_REPOS",
+        "__format": "json"
+      }
+    }
+  },
+  "chunkhound": {
+    "url": "CHUNKHOUND_URL",
+    "enabled": {
+      "__name": "CHUNKHOUND_ENABLED",
+      "__format": "boolean"
+    }
   }
 }

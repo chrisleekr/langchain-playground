@@ -11,6 +11,7 @@ module.exports = [
       'coverage/**',
       'node_modules/**',
       'build/**',
+      'data/repos/**',
       'CHANGELOG.md',
       'jest.config.*',
       'jest.setup.*',
