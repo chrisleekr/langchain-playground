@@ -10,10 +10,17 @@ const config: Config = {
   globalTeardown: '<rootDir>/test/globalTeardown.ts',
   testTimeout: 10000,
   transform: {
+    // Use @swc/jest for faster TypeScript transformation
     '^.+\\.ts$': [
-      'ts-jest',
+      '@swc/jest',
       {
-        tsconfig: 'tsconfig.test.json'
+        jsc: {
+          parser: {
+            syntax: 'typescript',
+            decorators: true
+          },
+          target: 'es2022'
+        }
       }
     ],
     // Transform ESM packages (.mjs files) using babel-jest
@@ -21,7 +28,6 @@ const config: Config = {
   },
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
   bail: true,
-  preset: 'ts-jest',
   testEnvironment: 'node',
   testPathIgnorePatterns: ['<rootDir>/src/config/', '<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/', '<rootDir>/data/'],
   // Prevent Jest from finding mocks/modules in the data directory (cloned external repos)
