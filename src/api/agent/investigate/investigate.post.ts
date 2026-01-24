@@ -1,8 +1,7 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { AgentConfigSchema, defaultConfig } from '@/api/agent/core';
 import { investigate } from '@/api/agent/services';
@@ -40,37 +39,52 @@ interface RequestBody {
  */
 export default function investigatePost() {
   return async (request: FastifyRequest<{ Body: RequestBody }>, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const { query, config: configOverrides } = request.body;
 
-    const config = AgentConfigSchema.parse({ ...defaultConfig, ...configOverrides });
+    try {
+      const config = AgentConfigSchema.parse({ ...defaultConfig, ...configOverrides });
 
-    // Use the shared investigation service
-    const result = await investigate({
-      query,
-      config,
-      logger,
-      enableNewRelic: true,
-      enableSentry: true,
-      enableResearch: true,
-      enableAwsEcs: true
-    });
+      // Use the shared investigation service
+      const result = await investigate({
+        query,
+        config,
+        logger,
+        enableNewRelic: true,
+        enableSentry: true,
+        enableResearch: true,
+        enableAwsEcs: true
+      });
 
-    await sendResponse(
-      reply,
-      new ServiceResponse(
-        ResponseStatus.Success,
-        'Investigation complete',
+      await sendResponse(
+        reply,
+        new ServiceResponse(
+          ResponseStatus.Success,
+          'Investigation complete',
+          {
+            query: result.query,
+            rawSummary: result.rawSummary,
+            structuredSummary: result.structuredSummary,
+            messageCount: result.messageCount,
+            durationMs: result.durationMs,
+            trace: result.trace
+          },
+          StatusCodes.OK
+        )
+      );
+    } catch (error) {
+      logger.error(
         {
-          query: result.query,
-          rawSummary: result.rawSummary,
-          structuredSummary: result.structuredSummary,
-          messageCount: result.messageCount,
-          durationMs: result.durationMs,
-          trace: result.trace
+          error: {
+            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          },
+          query
         },
-        StatusCodes.OK
-      )
-    );
+        'Error during investigation'
+      );
+      await sendResponse(reply, new ServiceResponse(ResponseStatus.Failed, 'Internal server error', null, StatusCodes.INTERNAL_SERVER_ERROR));
+    }
   };
 }

@@ -108,7 +108,7 @@ describe('intentClassifierNode', () => {
         120000
       );
 
-      it('should return the correct intent classifier output', () => {
+      it('returns the correct intent classifier output', () => {
         expect(result.intentClassifierOutput.intentsToExecute).toEqual(expected.intentClassifierOutput.intentsToExecute);
       });
     });

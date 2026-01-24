@@ -1,13 +1,12 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import config from 'config';
-import { getPineconeEmbeddings, getQdrantVectorStoreWithFreshCollection, sendResponse } from '@/libraries';
+import { getPineconeEmbeddings, getQdrantVectorStoreWithFreshCollection, getRequestLogger, sendResponse } from '@/libraries';
 import { ServiceResponse, ResponseStatus } from '@/models/serviceResponse';
 
 export default function resetDelete() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const collectionName = config.get<string>('document.collectionName');
 
     const embeddings = getPineconeEmbeddings(logger);

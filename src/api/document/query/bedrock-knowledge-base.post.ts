@@ -1,5 +1,4 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import { Document } from '@langchain/core/documents';
 import { PromptTemplate } from '@langchain/core/prompts';
@@ -7,8 +6,16 @@ import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { RunnableSequence } from '@langchain/core/runnables';
 import z from 'zod';
 import { AmazonKnowledgeBaseRetriever } from '@langchain/aws';
-import { getChatBedrockConverse, removeThinkTag, LLM, truncateStructuredContent, removeCodeBlock } from '@/libraries';
-import { sendResponse } from '@/libraries/httpHandlers';
+import {
+  getChatBedrockConverse,
+  getRequestLogger,
+  Logger,
+  removeThinkTag,
+  LLM,
+  truncateStructuredContent,
+  removeCodeBlock,
+  sendResponse
+} from '@/libraries';
 import { ServiceResponse, ResponseStatus } from '@/models/serviceResponse';
 import { getAmazonKnowledgeBaseRetriever } from '@/libraries/langchain/retrievers';
 import { fetchDocumentChunksBySource } from '@/libraries/aws';
@@ -28,7 +35,7 @@ export default function bedrockKnowledgeBaseQueryPost() {
     reply: FastifyReply
   ): Promise<void> => {
     const startTime = Date.now();
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
 
     try {
       const { query: userQuery } = request.body;
@@ -39,7 +46,7 @@ export default function bedrockKnowledgeBaseQueryPost() {
         return;
       }
 
-      const model = getChatBedrockConverse({ temperature: 0, maxTokens: 1000 }, logger);
+      const model = getChatBedrockConverse(logger);
       const retriever = await getAmazonKnowledgeBaseRetriever({ topK: 3 }, logger);
 
       // Generates query variations with query and weight using LLM. Weight is used to indicate the relevance of the query variation. Higher weight = more relevant.

@@ -60,7 +60,18 @@ let chatBedrockConverse: ChatBedrockConverseSafe;
 
 type LLM = ChatOllama | Ollama | ChatGroq | ChatOpenAI | ChatBedrockConverseSafe;
 
-const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
+/**
+ * Gets a singleton ChatOllama instance.
+ *
+ * **Singleton Pattern**: This function returns a cached instance. The temperature
+ * is read from config on first call and cannot be changed afterwards. Configure
+ * temperature via `ollama.temperature` in your config file.
+ *
+ * @param logger - Logger instance for debugging
+ * @returns A cached ChatOllama instance
+ */
+const getChatOllama = (logger: Logger): ChatOllama => {
+  const temperature = config.get<number>('ollama.temperature');
   logger.info(
     {
       baseUrl: config.get('ollama.baseUrl'),
@@ -74,13 +85,24 @@ const getChatOllama = (temperature: number, logger: Logger): ChatOllama => {
       baseUrl: config.get('ollama.baseUrl'),
       model: config.get('ollama.model'),
       temperature,
-      keepAlive: 300
+      keepAlive: config.get<number>('ollama.keepAlive')
     });
   }
   return chatOllama;
 };
 
-const getLLMOllama = (temperature: number, logger: Logger): Ollama => {
+/**
+ * Gets a singleton Ollama LLM instance.
+ *
+ * **Singleton Pattern**: This function returns a cached instance. The temperature
+ * is read from config on first call and cannot be changed afterwards. Configure
+ * temperature via `ollama.temperature` in your config file.
+ *
+ * @param logger - Logger instance for debugging
+ * @returns A cached Ollama instance
+ */
+const getLLMOllama = (logger: Logger): Ollama => {
+  const temperature = config.get<number>('ollama.temperature');
   logger.info(
     {
       baseUrl: config.get('ollama.baseUrl'),
@@ -94,13 +116,24 @@ const getLLMOllama = (temperature: number, logger: Logger): Ollama => {
       baseUrl: config.get('ollama.baseUrl'),
       model: config.get('ollama.model'),
       temperature,
-      keepAlive: 300
+      keepAlive: config.get<number>('ollama.keepAlive')
     });
   }
   return llmOllama;
 };
 
-const getChatGroq = (temperature: number, logger: Logger): ChatGroq => {
+/**
+ * Gets a singleton ChatGroq instance.
+ *
+ * **Singleton Pattern**: This function returns a cached instance. The temperature
+ * is read from config on first call and cannot be changed afterwards. Configure
+ * temperature via `groq.temperature` in your config file.
+ *
+ * @param logger - Logger instance for debugging
+ * @returns A cached ChatGroq instance
+ */
+const getChatGroq = (logger: Logger): ChatGroq => {
+  const temperature = config.get<number>('groq.temperature');
   logger.info(
     {
       model: config.get('groq.model'),
@@ -118,7 +151,18 @@ const getChatGroq = (temperature: number, logger: Logger): ChatGroq => {
   return chatGroq;
 };
 
-const getChatOpenAI = (temperature: number, logger: Logger): ChatOpenAI => {
+/**
+ * Gets a singleton ChatOpenAI instance.
+ *
+ * **Singleton Pattern**: This function returns a cached instance. The temperature
+ * is read from config on first call and cannot be changed afterwards. Configure
+ * temperature via `openai.temperature` in your config file.
+ *
+ * @param logger - Logger instance for debugging
+ * @returns A cached ChatOpenAI instance
+ */
+const getChatOpenAI = (logger: Logger): ChatOpenAI => {
+  const temperature = config.get<number>('openai.temperature');
   if (!chatOpenAI) {
     const baseURL = config.get<string>('openai.baseUrl') || undefined;
     logger.info(
@@ -142,23 +186,24 @@ const getChatOpenAI = (temperature: number, logger: Logger): ChatOpenAI => {
   return chatOpenAI;
 };
 
-interface GetChatBedrockConverseParams {
-  temperature: number;
-  maxTokens: number;
-}
-
 /**
- * Gets a ChatBedrockConverse instance with empty message filtering.
+ * Gets a singleton ChatBedrockConverse instance with empty message filtering.
  *
  * Uses ChatBedrockConverseSafe wrapper to filter out empty messages
  * before sending to Bedrock's Converse API. This is required for
  * LangGraph supervisor compatibility.
  *
- * @param params - Temperature and maxTokens configuration
+ * **Singleton Pattern**: This function returns a cached instance. The temperature
+ * is read from config on first call and cannot be changed afterwards. Configure
+ * temperature via `aws.bedrock.temperature` in your config file.
+ *
  * @param logger - Logger instance
  * @returns A ChatBedrockConverseSafe instance (extends ChatBedrockConverse)
  */
-const getChatBedrockConverse = ({ temperature, maxTokens }: GetChatBedrockConverseParams, logger: Logger): ChatBedrockConverseSafe => {
+const getChatBedrockConverse = (logger: Logger): ChatBedrockConverseSafe => {
+  const temperature = config.get<number>('aws.bedrock.temperature');
+  const maxTokens = config.get<number>('aws.bedrock.maxTokens');
+
   if (!chatBedrockConverse) {
     logger.info(
       { temperature, maxTokens, profile: config.get('aws.bedrock.credentials.profile') },
@@ -191,4 +236,5 @@ const getChatBedrockConverse = ({ temperature, maxTokens }: GetChatBedrockConver
   return chatBedrockConverse;
 };
 
-export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI, getChatBedrockConverse, GetChatBedrockConverseParams, LLM };
+export { getChatOllama, getLLMOllama, getChatGroq, getChatOpenAI, getChatBedrockConverse };
+export type { LLM };

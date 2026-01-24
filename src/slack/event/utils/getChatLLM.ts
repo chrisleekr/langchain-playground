@@ -1,7 +1,13 @@
 import { Logger } from 'pino';
 import { getChatOllama } from '@/libraries';
 
-export const getChatLLM = (temperature: number, logger: Logger) => {
-  return getChatOllama(temperature, logger);
-  // return getChatGroq(temperature, logger);
+/**
+ * Gets the chat LLM for Slack event handling.
+ *
+ * Temperature is configured via config file (ollama.temperature).
+ * Switch the return statement to use a different provider.
+ */
+export const getChatLLM = (logger: Logger) => {
+  return getChatOllama(logger);
+  // return getChatGroq(logger);
 };

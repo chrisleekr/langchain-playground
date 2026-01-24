@@ -69,23 +69,27 @@ export const getErrorMessage = (error: unknown): string => {
 
 /**
  * Get the appropriate chat model based on the agent configuration.
- * Uses the provider specified in config and applies temperature and token limits.
+ * Uses the provider specified in config.
  *
- * @param config - The agent configuration containing provider and model settings
+ * **Note**: Temperature and maxTokens are read from the global config for each
+ * provider (e.g., `openai.temperature`, `groq.temperature`). The AgentConfig's
+ * temperature/maxTokens fields are ignored because the LLM instances are singletons.
+ *
+ * @param config - The agent configuration containing provider selection
  * @param logger - Logger instance for debugging
- * @returns A configured BaseChatModel instance
+ * @returns A configured BaseChatModel instance (singleton)
  * @throws {Error} If the provider is not supported
  */
 export const getModel = (config: AgentConfig, logger: Logger): BaseChatModel => {
   switch (config.provider) {
     case 'openai':
-      return getChatOpenAI(config.temperature, logger);
+      return getChatOpenAI(logger);
     case 'groq':
-      return getChatGroq(config.temperature, logger);
+      return getChatGroq(logger);
     case 'ollama':
-      return getChatOllama(config.temperature, logger);
+      return getChatOllama(logger);
     case 'bedrock':
-      return getChatBedrockConverse({ temperature: config.temperature, maxTokens: config.maxTokens }, logger);
+      return getChatBedrockConverse(logger);
     default: {
       const exhaustiveCheck: never = config.provider;
       throw new Error(`Unsupported provider: ${exhaustiveCheck}`);

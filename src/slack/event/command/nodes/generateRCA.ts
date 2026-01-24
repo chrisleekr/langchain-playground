@@ -10,7 +10,7 @@ import { getChatLLM } from '../../utils';
 export const generateRCA = async (allReplies: FormattedMessageElement[]): Promise<string> => {
   // Convert replies to timeline format for analysis
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const timeline = allReplies
     .map(reply => {
@@ -51,7 +51,7 @@ The timeline consists of the following format:
 
 export const executeImageAnalysis = async (mimeType: string, base64: string): Promise<string> => {
   // Analyze the image
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const message = new HumanMessage({
     content: [

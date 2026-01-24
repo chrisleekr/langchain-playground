@@ -8,7 +8,6 @@
  * @see https://js.langchain.com/docs/tutorials/rag
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
 import config from 'config';
@@ -23,17 +22,18 @@ import {
   getQdrantVectorStore,
   addDocumentsToVectorStore,
   getRetriever,
+  getRequestLogger,
   DirectoryLoader,
   JSONLoader,
   JSONLinesLoader,
-  TextLoader
+  TextLoader,
+  sendResponse
 } from '@/libraries';
-import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 export default function parentLoadDirectoryPut() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const collectionName = config.get<string>('document.collectionName');
     const directoryPath = __dirname + '/../../../../../data/langgraph';
 

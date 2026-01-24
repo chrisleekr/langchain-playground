@@ -10,7 +10,7 @@ describe('incidents', () => {
       incidents = await getNewRelicIncidents({ incidentIds: ['e955a20d-f78e-4932-8bbe-449d5aaaae7e'] });
     });
 
-    it('should return the incidents', () => {
+    it('returns the incidents', () => {
       expect(incidents).toEqual([
         {
           title: expect.any(String),

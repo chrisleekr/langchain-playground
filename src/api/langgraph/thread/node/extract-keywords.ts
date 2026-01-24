@@ -40,7 +40,7 @@ export const extractKeywordsNode =
       })
     );
 
-    const model = getChatGroq(0, logger);
+    const model = getChatGroq(logger);
 
     const chain = RunnableSequence.from([PromptTemplate.fromTemplate(extractKeywordsSystemPrompt), model, parser]);
 

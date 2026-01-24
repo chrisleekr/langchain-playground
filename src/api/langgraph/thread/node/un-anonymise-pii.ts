@@ -35,8 +35,8 @@ export const unAnonymisePIINode =
     );
 
     // TODO: Uncomment this when we have a fast model for Ollama
-    // const model = getChatOllama(0, logger);
-    const model = getChatGroq(0, logger);
+    // const model = getChatOllama(logger);
+    const model = getChatGroq(logger);
 
     const chain = RunnableSequence.from([PromptTemplate.fromTemplate(unAnonymisePIISystemPrompt), model, parser]);
 

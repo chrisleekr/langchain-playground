@@ -1,13 +1,19 @@
 /**
- * OpenAI thread endpoint
+ * OpenAI thread conversation endpoint
  *
  * Replaces deprecated ConversationChain and ConversationSummaryBufferMemory
  * with RunnableSequence and manual chat history management.
  *
+ * @architecture This handler is intentionally separate from other provider handlers
+ * (Groq, Ollama) to maintain separation of concerns. While the structure is similar,
+ * keeping them separate allows:
+ * - Independent configuration (system templates, temperatures, models)
+ * - Provider-specific feature additions without affecting others
+ * - Clear isolation for testing and debugging
+ *
  * @see https://js.langchain.com/docs/tutorials/chatbot
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import config from 'config';
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
@@ -15,24 +21,20 @@ import { HumanMessage, AIMessage, trimMessages, type BaseMessage } from '@langch
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { RunnableSequence, RunnablePassthrough, RunnableLambda } from '@langchain/core/runnables';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getChatOpenAI, getRedisClient, getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { getRedisClient } from '@/libraries/redis';
-import { getChatOpenAI } from '@/libraries/langchain/llm';
 
 /**
  * Maximum tokens to keep in conversation history.
  * This prevents context window overflow in long conversations.
  * Uses the LLM model for accurate token counting.
+ * Configured via `thread.maxHistoryTokens` in config.
  * @see https://docs.langchain.com/oss/javascript/langgraph/add-memory#trim-messages
  */
-const MAX_HISTORY_TOKENS = 4000;
 
 const redisClient = getRedisClient();
 
-const systemTemplate =
-  <string>config.get('openai.documentSystemTemplate') ??
-  `The AI will engage in a friendly conversation with a human, offering specific details from its context. If it lacks knowledge on a topic, it will simply respond with "I don't know." The AI will provide clear and direct answers, avoiding unnecessary information and refraining from asking questions back. It will respond to the last question asked without introducing new topics, providing additional details or asking questions in return.`;
+const systemTemplate = config.get<string>('openai.documentSystemTemplate');
 
 export default function threadIdPost() {
   return async (
@@ -42,66 +44,81 @@ export default function threadIdPost() {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const { id: threadId } = request.params;
     const { message } = request.body;
 
-    const sessionId = `openai-thread-${threadId}`;
-    logger.info({ sessionId, systemTemplate }, 'Session ID and system template');
+    try {
+      const sessionId = `openai-thread-${threadId}`;
+      logger.info({ sessionId, systemTemplate }, 'Session ID and system template');
 
-    // Initialize chat history with Redis
-    const chatHistory = new RedisChatMessageHistory({
-      sessionId,
-      client: redisClient
-    });
+      // Initialize chat history with Redis
+      const chatHistory = new RedisChatMessageHistory({
+        sessionId,
+        client: redisClient
+      });
 
-    // Initialize model (needed for token counting)
-    const model = getChatOpenAI(config.get<number>('openai.temperature'), logger);
+      // Initialize model (needed for token counting)
+      const model = getChatOpenAI(logger);
 
-    // Get previous messages from history and trim to prevent context window overflow
-    // Refer: https://docs.langchain.com/oss/javascript/langgraph/add-memory#trim-messages
-    const allMessages = await chatHistory.getMessages();
-    const previousMessages: BaseMessage[] = await trimMessages(allMessages, {
-      maxTokens: MAX_HISTORY_TOKENS,
-      strategy: 'last',
-      tokenCounter: model,
-      includeSystem: true,
-      startOn: 'human'
-    });
-    logger.info({ totalMessages: allMessages.length, trimmedMessages: previousMessages.length }, 'Previous messages loaded and trimmed');
+      // Get previous messages from history and trim to prevent context window overflow
+      // Refer: https://docs.langchain.com/oss/javascript/langgraph/add-memory#trim-messages
+      const allMessages = await chatHistory.getMessages();
+      const previousMessages: BaseMessage[] = await trimMessages(allMessages, {
+        maxTokens: config.get<number>('thread.maxHistoryTokens'),
+        strategy: 'last',
+        tokenCounter: model,
+        includeSystem: true,
+        startOn: 'human'
+      });
+      logger.info({ totalMessages: allMessages.length, trimmedMessages: previousMessages.length }, 'Previous messages loaded and trimmed');
 
-    // Create prompt template with message history
-    const prompt = ChatPromptTemplate.fromMessages([['system', systemTemplate], new MessagesPlaceholder('history'), ['human', '{input}']]);
+      // Create prompt template with message history
+      const prompt = ChatPromptTemplate.fromMessages([['system', systemTemplate], new MessagesPlaceholder('history'), ['human', '{input}']]);
 
-    // Build the chain using RunnableSequence
-    const chain = RunnableSequence.from([
-      RunnablePassthrough.assign({
-        history: new RunnableLambda({ func: () => previousMessages })
-      }),
-      prompt,
-      model,
-      new StringOutputParser()
-    ]);
+      // Build the chain using RunnableSequence
+      const chain = RunnableSequence.from([
+        RunnablePassthrough.assign({
+          history: new RunnableLambda({ func: () => previousMessages })
+        }),
+        prompt,
+        model,
+        new StringOutputParser()
+      ]);
 
-    // Invoke the chain
-    const response = await chain.invoke({ input: message });
-    logger.info({ response }, 'Chain response');
+      // Invoke the chain
+      const response = await chain.invoke({ input: message });
+      logger.info({ response }, 'Chain response');
 
-    // Save messages to history
-    await chatHistory.addMessage(new HumanMessage(message));
-    await chatHistory.addMessage(new AIMessage(response));
+      // Save messages to history
+      await chatHistory.addMessage(new HumanMessage(message));
+      await chatHistory.addMessage(new AIMessage(response));
 
-    await sendResponse(
-      reply,
-      new ServiceResponse(
-        ResponseStatus.Success,
-        'OK',
+      await sendResponse(
+        reply,
+        new ServiceResponse(
+          ResponseStatus.Success,
+          'OK',
+          {
+            threadId,
+            response
+          },
+          StatusCodes.OK
+        )
+      );
+    } catch (error) {
+      logger.error(
         {
-          threadId,
-          response
+          error: {
+            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          },
+          threadId
         },
-        StatusCodes.OK
-      )
-    );
+        'Error processing thread message'
+      );
+      await sendResponse(reply, new ServiceResponse(ResponseStatus.Failed, 'Internal server error', null, StatusCodes.INTERNAL_SERVER_ERROR));
+    }
   };
 }

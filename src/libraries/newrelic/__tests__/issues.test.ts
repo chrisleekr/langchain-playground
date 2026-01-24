@@ -10,7 +10,7 @@ describe('issues', () => {
       issues = await getNewRelicIssues({ issueIds: ['954503dc-14a5-4f47-93e3-e6564f29f74f'] });
     });
 
-    it('should return the issues', () => {
+    it('returns the issues', () => {
       expect(issues).toEqual([
         {
           title: expect.any(Array),

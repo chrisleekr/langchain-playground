@@ -1,10 +1,8 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 
-import { getChatOllama } from '@/libraries/langchain/llm';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getChatOllama, getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import {
   NewRelicGraphQLDataActorAccountAiIssuesIssuesIssuesIssue,
@@ -40,11 +38,11 @@ export default function newRelicInvestigatePost() {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
 
     const { issueId } = request.body;
 
-    const model = getChatOllama(0, logger);
+    const model = getChatOllama(logger);
 
     const graph = new StateGraph(OverallStateAnnotation)
       .addNode('get-newrelic-logs', getNewRelicLogsNode(model, logger))

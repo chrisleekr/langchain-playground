@@ -5,18 +5,23 @@
  */
 import config from 'config';
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
 import { UnstructuredDirectoryLoader } from '@langchain/community/document_loaders/fs/unstructured';
 import { DocumentInterface } from '@langchain/core/documents';
-import { getOllamaEmbeddings, getQdrantVectorStoreWithFreshCollection, addDocumentsToVectorStore, getRetriever } from '@/libraries';
+import {
+  getOllamaEmbeddings,
+  getQdrantVectorStoreWithFreshCollection,
+  addDocumentsToVectorStore,
+  getRetriever,
+  getRequestLogger,
+  sendResponse
+} from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { sendResponse } from '@/libraries/httpHandlers';
 
 export default function documentLoadGet(collectionName: string) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const directoryPath = __dirname + '/../../../../data';
 
     try {

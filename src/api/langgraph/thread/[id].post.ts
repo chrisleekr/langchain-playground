@@ -1,9 +1,8 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 
 import { StatusCodes } from 'http-status-codes';
 import { StateGraph, Annotation, START, END } from '@langchain/langgraph';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { anonymisePIINode, AnonymisePIIOutput } from './node/anonymise-pii';
 import { extractKeywordsNode, ExtractKeywordsOutput } from './node/extract-keywords';
@@ -31,7 +30,7 @@ export default function threadIdPost() {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const { id: threadId } = request.params;
     const { message } = request.body;
 

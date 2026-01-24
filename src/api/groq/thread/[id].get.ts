@@ -5,10 +5,9 @@
  */
 import config from 'config';
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import { RedisChatMessageHistory } from '@langchain/redis';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 export default function threadIdGet() {
@@ -18,7 +17,7 @@ export default function threadIdGet() {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const { id: threadId } = request.params;
 
     logger.info({ threadId }, 'Getting thread.');
