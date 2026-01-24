@@ -53,12 +53,14 @@ const extractAgentOutputs = (messages: BaseMessage[], logger: Logger): AgentOutp
     const name = (message as { name?: string }).name;
     if (!name) continue;
 
+    if (!Object.hasOwn(AGENT_NAME_TO_FIELD, name)) continue;
+    // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn above
     const field = AGENT_NAME_TO_FIELD[name];
-    if (!field) continue;
 
     const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
 
     // Store the agent's raw output (last message from each agent wins)
+    // eslint-disable-next-line security/detect-object-injection -- Field validated from constant lookup
     outputs[field] = content;
     logger.debug({ agent: name, contentLength: content.length }, 'Extracted agent output');
   }

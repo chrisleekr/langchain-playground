@@ -22,7 +22,10 @@ const normalizeObject = (removeKeyPaths: string[], obj: Record<string, unknown>)
 
     // Navigate to the parent of the key to be removed
     for (let i = 0; i < keys.length - 1; i++) {
-      const nextValue = current[keys[i]];
+      // eslint-disable-next-line security/detect-object-injection -- i is loop-bounded
+      const key = keys[i];
+      // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
+      const nextValue = Object.hasOwn(current, key) ? current[key] : undefined;
       if (isObject(nextValue)) {
         current = nextValue;
       } else {
@@ -33,7 +36,8 @@ const normalizeObject = (removeKeyPaths: string[], obj: Record<string, unknown>)
 
     // Remove the final key if it exists
     const finalKey = keys[keys.length - 1];
-    if (finalKey in current) {
+    if (Object.hasOwn(current, finalKey)) {
+      // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
       delete current[finalKey];
     }
   });

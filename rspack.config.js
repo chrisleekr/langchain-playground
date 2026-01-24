@@ -104,8 +104,16 @@ module.exports = {
     hot: false
   },
 
+  // Reference: https://rspack.dev/config/cache
   experiments: {
-    outputModule: false
+    outputModule: false,
+    cache: {
+      type: 'persistent',
+      storage: {
+        type: 'filesystem',
+        directory: 'node_modules/.cache/rspack'
+      }
+    }
   },
 
   stats: {

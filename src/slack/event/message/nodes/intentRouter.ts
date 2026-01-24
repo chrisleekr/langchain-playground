@@ -10,7 +10,9 @@ export const intentRouterNode = async (state: typeof OverallStateAnnotation.Stat
   logger.info({ currentIndex, intentsToExecute, executedIntents }, 'intentRouterNode request');
 
   if (currentIndex >= 0 && currentIndex < intentsToExecute.length) {
-    executedIntents.push(intentsToExecute[currentIndex]);
+    // eslint-disable-next-line security/detect-object-injection -- Index bounds-checked above
+    const currentIntent = intentsToExecute[currentIndex];
+    executedIntents.push(currentIntent);
     state.executedIntents = executedIntents;
   }
 

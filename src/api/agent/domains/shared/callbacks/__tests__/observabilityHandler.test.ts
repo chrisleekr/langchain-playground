@@ -20,7 +20,8 @@ jest.mock('config', () => ({
       'groq.model': 'llama-3',
       'ollama.model': 'llama2'
     };
-    return configMap[path] ?? 'test-model';
+    // eslint-disable-next-line security/detect-object-injection -- Test mock with known paths
+    return Object.hasOwn(configMap, path) ? configMap[path] : 'test-model';
   }
 }));
 

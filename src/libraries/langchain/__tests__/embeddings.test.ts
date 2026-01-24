@@ -3,7 +3,8 @@ import { logger } from '../../logger';
 import { getOllamaEmbeddings, getPineconeEmbeddings } from '../embeddings';
 
 const cosineSimilarity = (vec1: number[], vec2: number[]): number => {
-  const dotProduct = vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
+  // eslint-disable-next-line security/detect-object-injection -- Index i bounded by vec1.length in reduce
+  const dotProduct = vec1.reduce((sum, val, i) => sum + val * (vec2[i] ?? 0), 0);
   const magnitude1 = Math.sqrt(vec1.reduce((sum, val) => sum + val ** 2, 0));
   const magnitude2 = Math.sqrt(vec2.reduce((sum, val) => sum + val ** 2, 0));
 

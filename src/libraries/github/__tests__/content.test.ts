@@ -6,6 +6,7 @@ import { extractFunctionSourceCode } from '../content';
 describe('libraries/github/content', () => {
   describe('extractFunctionSourceCode', () => {
     let result: GitHubContentFunctionInfo | null;
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Test fixture path from __dirname
     const content = fs.readFileSync(path.join(__dirname, 'test.source.txt'), 'utf8');
 
     describe('when the function name is valid', () => {

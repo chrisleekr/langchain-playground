@@ -3,6 +3,8 @@
     "require": ["tsconfig-paths/register"]
   },
   "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "strictNullChecks": true,
     "allowJs": true,
     "target": "ES2022",

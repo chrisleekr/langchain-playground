@@ -39,7 +39,7 @@ export const routeToNextIntent = (state: typeof OverallStateAnnotation.State): s
     return 'final-response';
   }
 
-  // Get the next intent to execute
+  // eslint-disable-next-line security/detect-object-injection -- Index bounds-checked above
   const nextIntent = intentsToExecute[currentIndex];
 
   logger.info({ nextIntent, currentIndex }, 'routeToNextIntent response');
@@ -49,5 +49,7 @@ export const routeToNextIntent = (state: typeof OverallStateAnnotation.State): s
     return 'general-response';
   }
 
-  return intentToNodeMap[nextIntent].node || 'final-response';
+  // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
+  const nodeMapping = Object.hasOwn(intentToNodeMap, nextIntent) ? intentToNodeMap[nextIntent] : undefined;
+  return nodeMapping?.node || 'final-response';
 };

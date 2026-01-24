@@ -13,9 +13,11 @@ import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getQdrantVecto
 
 async function getMarkdownFiles(directoryPath: string): Promise<string[]> {
   const markdownFiles: string[] = [];
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path constructed from __dirname
   const files = await readdir(directoryPath);
   for (const file of files) {
     const filePath = join(directoryPath, file);
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path constructed from __dirname
     const stats = await stat(filePath);
     if (stats.isDirectory()) {
       markdownFiles.push(...(await getMarkdownFiles(filePath)));
@@ -57,6 +59,7 @@ export default function parentLoadMarkdownPut() {
 
     // Loop through the markdown files and retrieve the text
     for (const markdownFile of markdownFiles) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from getMarkdownFiles
       const markdownText = await readFile(markdownFile, 'utf8');
       const markdownSplitter = RecursiveCharacterTextSplitter.fromLanguage('markdown', {
         chunkSize: SAFE_CHUNK_SIZE,
