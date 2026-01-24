@@ -110,5 +110,6 @@ export const INSTANCE_CLASS_MEMORY_GB: Readonly<Record<string, number>> = {
  * @returns Memory in GB, or undefined if instance class is not in the reference data
  */
 export const getInstanceMemoryGB = (instanceClass: string): number | undefined => {
-  return INSTANCE_CLASS_MEMORY_GB[instanceClass];
+  // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
+  return Object.hasOwn(INSTANCE_CLASS_MEMORY_GB, instanceClass) ? INSTANCE_CLASS_MEMORY_GB[instanceClass] : undefined;
 };

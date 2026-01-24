@@ -1,15 +1,16 @@
 import type { WebClient } from '@slack/web-api';
 import { logger } from '@/libraries';
 
-// Cache user names
-const userNameCache: Record<string, string> = {};
+// Cache user names using Map for type-safe key access
+const userNameCache = new Map<string, string>();
 
 export const getUserName = async (client: WebClient, userId: string): Promise<string> => {
-  logger.debug({ cacheSize: Object.keys(userNameCache).length }, 'getUserName called');
+  logger.debug({ cacheSize: userNameCache.size }, 'getUserName called');
   try {
-    if (userNameCache[userId]) {
+    const cachedName = userNameCache.get(userId);
+    if (cachedName) {
       logger.info({ userId }, 'getUserName User name cache hit');
-      return userNameCache[userId];
+      return cachedName;
     }
 
     const result = await client.users.info({
@@ -18,9 +19,10 @@ export const getUserName = async (client: WebClient, userId: string): Promise<st
 
     // Get the display name or fall back to real name
     const displayName = result.user?.profile?.display_name || result.user?.real_name || result.user?.name;
-    userNameCache[userId] = displayName || userId;
+    const nameToCache = displayName || userId;
+    userNameCache.set(userId, nameToCache);
     logger.info({ userId, displayName }, 'getUserName User name cache set');
-    return displayName || userId;
+    return nameToCache;
   } catch (error) {
     logger.error({ error }, 'getUserName Error fetching user info');
     return userId; // Return the ID as fallback

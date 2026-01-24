@@ -107,7 +107,10 @@ export const createFetchAndAnalyzeLogsTool = (options: LLMToolOptions) => {
         const urlProperties = config.get<string[]>('newrelic.urlLogs.properties') || [];
         const envoyLogs = normalizedLogs.filter((log: Record<string, unknown>) => log.container_name === 'envoy');
         const serviceLogs = normalizedLogs.filter((log: Record<string, unknown>) => log.container_name !== 'envoy');
-        const urlLogs = normalizedLogs.filter((log: Record<string, unknown>) => urlProperties.some(prop => log[prop]));
+        const urlLogs = normalizedLogs.filter((log: Record<string, unknown>) =>
+          // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
+          urlProperties.some(prop => Object.hasOwn(log, prop) && log[prop])
+        );
 
         // Step 3: Extract trace IDs and ECS task ARNs for cross-domain routing
         // Note: parsedEcsTaskArns contains ParsedTaskArn objects (not just ARN strings)

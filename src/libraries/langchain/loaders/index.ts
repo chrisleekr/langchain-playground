@@ -17,6 +17,7 @@ export class TextLoader extends BaseDocumentLoader {
   }
 
   async load(): Promise<Document[]> {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Loader class designed for dynamic paths
     const content = await fs.readFile(this.filePath, 'utf-8');
     return [
       new Document({
@@ -48,6 +49,7 @@ const traverseJsonPointer = (json: unknown, pointer: string): unknown => {
     if (typeof current !== 'object') {
       throw new Error(`Invalid JSON pointer: ${pointer}. Cannot access key "${key}" on non-object type.`);
     }
+    // eslint-disable-next-line security/detect-object-injection -- Key from JSON pointer path, validated above
     current = (current as Record<string, unknown>)[key];
   }
 
@@ -79,6 +81,7 @@ export class JSONLoader extends BaseDocumentLoader {
   }
 
   async load(): Promise<Document[]> {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Loader class designed for dynamic paths
     const content = await fs.readFile(this.filePath, 'utf-8');
     const json: unknown = JSON.parse(content);
 
@@ -115,6 +118,7 @@ export class JSONLinesLoader extends BaseDocumentLoader {
   }
 
   async load(): Promise<Document[]> {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Loader class designed for dynamic paths
     const content = await fs.readFile(this.filePath, 'utf-8');
     const lines = content.split('\n').filter(line => line.trim());
 
@@ -163,6 +167,7 @@ export class DirectoryLoader extends BaseDocumentLoader {
   }
 
   private async loadDirectory(dirPath: string, documents: Document[]): Promise<void> {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Loader class designed for dynamic paths
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
     for (const entry of entries) {
@@ -172,7 +177,8 @@ export class DirectoryLoader extends BaseDocumentLoader {
         await this.loadDirectory(fullPath, documents);
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
-        const loaderFactory = this.loaderMap[ext];
+        // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
+        const loaderFactory = Object.hasOwn(this.loaderMap, ext) ? this.loaderMap[ext] : undefined;
 
         if (loaderFactory) {
           try {

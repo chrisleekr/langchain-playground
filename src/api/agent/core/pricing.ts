@@ -51,7 +51,8 @@ export const getModelPricing = (model: string, provider: LLMProvider): ModelPric
     return PRICING['ollama'] ?? DEFAULT_PRICING;
   }
 
-  return PRICING[model] ?? DEFAULT_PRICING;
+  // eslint-disable-next-line security/detect-object-injection -- Validated with Object.hasOwn
+  return Object.hasOwn(PRICING, model) ? PRICING[model] : DEFAULT_PRICING;
 };
 
 /**

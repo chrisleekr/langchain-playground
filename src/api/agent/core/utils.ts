@@ -281,10 +281,11 @@ export const formatMetricPair = (
   if (primary === undefined && secondary === undefined) {
     return null;
   }
-  const result: MetricPairResult = {};
-  result[primaryKey] = primary !== undefined ? primary.toFixed(decimals) : 'N/A';
-  result[secondaryKey] = secondary !== undefined ? secondary.toFixed(decimals) : 'N/A';
-  return result;
+  // Keys are function parameters with defaults, not external user input
+  return {
+    [primaryKey]: primary !== undefined ? primary.toFixed(decimals) : 'N/A',
+    [secondaryKey]: secondary !== undefined ? secondary.toFixed(decimals) : 'N/A'
+  };
 };
 
 /**
@@ -305,10 +306,11 @@ export const formatBytesMetricPair = (
   if (primary === undefined && secondary === undefined) {
     return null;
   }
-  const result: MetricPairResult = {};
-  result[primaryKey] = formatBytes(primary) ?? 'N/A';
-  result[secondaryKey] = formatBytes(secondary) ?? 'N/A';
-  return result;
+  // Keys are function parameters with defaults, not external user input
+  return {
+    [primaryKey]: formatBytes(primary) ?? 'N/A',
+    [secondaryKey]: formatBytes(secondary) ?? 'N/A'
+  };
 };
 
 /**

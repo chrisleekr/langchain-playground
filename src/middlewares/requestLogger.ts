@@ -47,7 +47,9 @@ const requestLogger = (): RequestHandler => {
         }
       };
 
-      logger[logLevel](logMessage, `${request.method} ${request.url} ${reply.statusCode} ${getReasonPhrase(reply.statusCode)}`);
+      // eslint-disable-next-line security/detect-object-injection -- logLevel from LogLevel enum
+      const logMethod = logger[logLevel].bind(logger);
+      logMethod(logMessage, `${request.method} ${request.url} ${reply.statusCode} ${getReasonPhrase(reply.statusCode)}`);
     });
 
     done();

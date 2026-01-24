@@ -98,7 +98,9 @@ export class RepositoryManager {
    * Ensures the data directory exists.
    */
   private ensureDataDirectory(): void {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from config
     if (!existsSync(this.dataPath)) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from config
       mkdirSync(this.dataPath, { recursive: true });
       this.logger.info({ dataPath: this.dataPath }, 'Created data directory');
     }
@@ -112,6 +114,7 @@ export class RepositoryManager {
     const repoPath = this.getRepoPath(owner, repo);
 
     // Check if repo already exists
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from config
     if (existsSync(join(repoPath, '.git'))) {
       return {
         owner,
@@ -124,7 +127,9 @@ export class RepositoryManager {
 
     // Ensure parent directory exists
     const parentDir = join(this.dataPath, owner);
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from config
     if (!existsSync(parentDir)) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from config
       mkdirSync(parentDir, { recursive: true });
     }
 
@@ -167,6 +172,7 @@ export class RepositoryManager {
     const repoPath = this.getRepoPath(owner, repo);
 
     // Check if repo exists
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Path from config
     if (!existsSync(join(repoPath, '.git'))) {
       this.logger.warn({ owner, repo }, 'Repository does not exist, attempting clone instead');
       return this.cloneRepository(repoConfig);
