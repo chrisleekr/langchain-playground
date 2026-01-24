@@ -10,17 +10,23 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 import config from 'config';
-import { Logger } from 'pino';
 import { Document } from '@langchain/core/documents';
 import { ConfluencePagesLoader } from '@langchain/community/document_loaders/web/confluence';
 import { StatusCodes } from 'http-status-codes';
-import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getQdrantVectorStore, addDocumentsToVectorStore, getRetriever } from '@/libraries';
-import { sendResponse } from '@/libraries/httpHandlers';
+import {
+  cleanupQdrantVectorStoreWithSource,
+  getOllamaEmbeddings,
+  getQdrantVectorStore,
+  addDocumentsToVectorStore,
+  getRetriever,
+  getRequestLogger,
+  sendResponse
+} from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 export default function parentLoadConfluencePut() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const collectionName = config.get<string>('document.collectionName');
 
     const baseUrl = config.get<string>('document.confluence.baseUrl');

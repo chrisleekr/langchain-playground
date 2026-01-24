@@ -8,7 +8,7 @@ describe('queries', () => {
       results = await executeNRQLQuery({ query: 'SELECT * FROM Log LIMIT 10' });
     });
 
-    it('should return the results', () => {
+    it('returns the results', () => {
       expect(results).toEqual(expect.any(Array));
     });
   });

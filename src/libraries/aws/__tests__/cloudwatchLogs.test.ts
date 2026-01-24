@@ -111,7 +111,7 @@ if (!shouldSkip) {
   });
 } else {
   describe('queryContainerInsightsLogs - skipped', () => {
-    it('should be skipped', () => {
+    it('is skipped', () => {
       expect(true).toBe(true);
     });
   });

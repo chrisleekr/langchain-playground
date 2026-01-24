@@ -17,21 +17,26 @@
   "ollama": {
     "baseUrl": "http://localhost:11434",
     "model": "llama3.1:8b",
+    "temperature": 0,
+    "keepAlive": 300,
     "embeddingModel": "mxbai-embed-large:latest",
-    "documentSystemTemplate": ""
+    "documentSystemTemplate": "The AI will engage in a friendly conversation with a human, offering specific details from its context. If it lacks knowledge on a topic, it will simply respond with \"I don't know.\" The AI will provide clear and direct answers, avoiding unnecessary information and refraining from asking questions back. It will respond to the last question asked without introducing new topics, providing additional details or asking questions in return."
+  },
+  "thread": {
+    "maxHistoryTokens": 4000
   },
   "openai": {
     "baseUrl": "",
     "apiKey": "",
     "temperature": 0,
     "model": "gpt-5.2",
-    "documentSystemTemplate": ""
+    "documentSystemTemplate": "The AI will engage in a friendly conversation with a human, offering specific details from its context. If it lacks knowledge on a topic, it will simply respond with \"I don't know.\" The AI will provide clear and direct answers, avoiding unnecessary information and refraining from asking questions back. It will respond to the last question asked without introducing new topics, providing additional details or asking questions in return."
   },
   "groq": {
     "apiKey": "",
-    "model": "qwen3-32b",
+    "model": "qwen/qwen3-32b",
     "temperature": 0,
-    "documentSystemTemplate": ""
+    "documentSystemTemplate": "The AI will engage in a friendly conversation with a human, offering specific details from its context. If it lacks knowledge on a topic, it will simply respond with \"I don't know.\" The AI will provide clear and direct answers, avoiding unnecessary information and refraining from asking questions back. It will respond to the last question asked without introducing new topics, providing additional details or asking questions in return."
   },
   "unstructuredAPI": {
     "url": "http://unstructured-api:8000/general/v0/general"
@@ -78,6 +83,8 @@
     "bedrock": {
       "region": "us-east-1",
       "model": "us.anthropic.claude-opus-4-5-20251101-v1:0",
+      "temperature": 0,
+      "maxTokens": 4096,
       "embeddingModel": "amazon.titan-embed-text-v2:0",
       "knowledgeBaseId": "",
       "credentials": {

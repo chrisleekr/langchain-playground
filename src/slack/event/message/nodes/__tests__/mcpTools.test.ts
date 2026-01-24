@@ -179,15 +179,15 @@ describe('mcpToolsNode', () => {
         120000
       );
 
-      it('should return the correct MCP tools', async () => {
+      it('returns the correct MCP tools', async () => {
         expect(result.mcpToolsOutput.useMCPTools).toEqual(expected.mcpToolsOutput.useMCPTools);
       });
 
-      it('should return the correct confidence', async () => {
+      it('returns the correct confidence', async () => {
         expect(result.mcpToolsOutput.confidence).toBeGreaterThanOrEqual(expected.mcpToolsOutput.confidence);
       });
 
-      it('should return the correct suggested tools', async () => {
+      it('returns the correct suggested tools', async () => {
         expect(result.mcpToolsOutput.suggestedTools).toEqual(expected.mcpToolsOutput.suggestedTools);
       });
     });

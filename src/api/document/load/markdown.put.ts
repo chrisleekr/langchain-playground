@@ -2,16 +2,14 @@
  * This endpoint is to load the markdown files using the markdown text splitter.
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import config from 'config';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import crypto from 'crypto';
 import { readdir, readFile, stat } from 'fs/promises';
 import { join, resolve } from 'path';
-import { sendResponse } from '@/libraries/httpHandlers';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getQdrantVectorStore } from '@/libraries';
+import { cleanupQdrantVectorStoreWithSource, getOllamaEmbeddings, getQdrantVectorStore, getRequestLogger, sendResponse } from '@/libraries';
 
 async function getMarkdownFiles(directoryPath: string): Promise<string[]> {
   const markdownFiles: string[] = [];
@@ -30,7 +28,7 @@ async function getMarkdownFiles(directoryPath: string): Promise<string[]> {
 
 export default function parentLoadMarkdownPut() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const collectionName = config.get<string>('document.collectionName');
     const directoryPath = resolve(__dirname, '../../../../data/langgraph');
 

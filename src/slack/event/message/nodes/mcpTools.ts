@@ -15,7 +15,7 @@ export const mcpToolsNode = async (state: typeof OverallStateAnnotation.State): 
 
   try {
     const mcpTools = await getMCPTools(logger);
-    const model = getChatLLM(0, logger);
+    const model = getChatLLM(logger);
 
     const agent = createReactAgent({
       llm: model,

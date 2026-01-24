@@ -3,8 +3,12 @@ const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const jestPlugin = require('eslint-plugin-jest');
 const importPlugin = require('eslint-plugin-import');
 const prettierPlugin = require('eslint-plugin-prettier');
+const pluginSecurity = require('eslint-plugin-security');
+const eslintConfigPrettier = require('eslint-config-prettier');
 
 module.exports = [
+  // Security rules for detecting potential vulnerabilities
+  pluginSecurity.configs.recommended,
   {
     ignores: [
       'dist/**',
@@ -102,5 +106,7 @@ module.exports = [
     rules: {
       'import/no-extraneous-dependencies': 'off'
     }
-  }
+  },
+  // eslint-config-prettier must be last to disable conflicting rules
+  eslintConfigPrettier
 ];

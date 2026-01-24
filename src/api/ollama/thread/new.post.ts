@@ -1,14 +1,13 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
 
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 export default function threadNewPost() {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const threadId = uuidv4();
 
     logger.info({ threadId }, 'Created new thread.');

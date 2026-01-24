@@ -1,5 +1,4 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import config from 'config';
 import { Document } from '@langchain/core/documents';
@@ -13,13 +12,15 @@ import {
   getOllamaEmbeddings,
   getRetriever,
   getQdrantVectorStore,
+  getRequestLogger,
   removeCodeBlock,
   removeThinkTag,
   LLM,
+  Logger,
   truncateStructuredContent,
-  DocumentSource
+  DocumentSource,
+  sendResponse
 } from '@/libraries';
-import { sendResponse } from '@/libraries/httpHandlers';
 import { ServiceResponse, ResponseStatus } from '@/models/serviceResponse';
 import { QueryVariation } from './types';
 
@@ -37,7 +38,7 @@ export default function bedrockKnowledgeBaseQueryPost() {
     reply: FastifyReply
   ): Promise<void> => {
     const startTime = Date.now();
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
 
     try {
       const { query: userQuery } = request.body;
@@ -48,7 +49,7 @@ export default function bedrockKnowledgeBaseQueryPost() {
         return;
       }
 
-      const model = getChatOllama(0, logger);
+      const model = getChatOllama(logger);
       const embeddings = getOllamaEmbeddings(logger);
       const collectionName = config.get<string>('document.collectionName');
       const vectorStore = await getQdrantVectorStore(embeddings, collectionName, logger);

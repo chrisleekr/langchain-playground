@@ -1,9 +1,7 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 import { Annotation, StateGraph, START, END } from '@langchain/langgraph';
-import { getChatOllama } from '@/libraries/langchain/llm';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getChatOllama, getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 import { SentryEventSourceMapDebug, SentryIssue, SentryIssueEventNormalized } from '@/libraries/sentry/types';
 import { getSentryIssueNode } from './node/get-sentry-issue';
@@ -28,11 +26,11 @@ export default function sentryInvestigatePost() {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
 
     const { issueId } = request.body;
 
-    const model = getChatOllama(0, logger);
+    const model = getChatOllama(logger);
 
     const graph = new StateGraph(OverallStateAnnotation)
       .addNode('get-sentry-issue', getSentryIssueNode(model, logger))

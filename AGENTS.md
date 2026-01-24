@@ -41,10 +41,12 @@ langchain-playground/
 │   │   ├── ollama/            # Ollama local LLM endpoints
 │   │   └── openai/            # OpenAI provider endpoints
 │   ├── libraries/             # Core utilities and services
+│   │   ├── aws/               # AWS SDK integrations (ECS, RDS, CloudWatch, OpenSearch)
 │   │   ├── github/            # GitHub API and repository management
 │   │   ├── langchain/         # LangChain utilities (LLM, embeddings, vector store)
 │   │   ├── mcp/               # Model Context Protocol client
 │   │   ├── newrelic/          # New Relic API integration
+│   │   ├── sentry/            # Sentry API integration
 │   │   ├── slack/             # Slack utilities
 │   │   ├── logger.ts          # Pino structured logging
 │   │   └── redis.ts           # Redis client configuration
@@ -86,12 +88,12 @@ langchain-playground/
 
 ## Code Style
 
-- **TypeScript**: Strict mode with `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`
-- **Line Length**: 120 characters maximum
+- **TypeScript**: Strict mode with `isolatedModules`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`
+- **Line Length**: 150 characters maximum
 - **Indentation**: 2 spaces (consistent across all files)
 - **Quotes**: Single quotes preferred, double quotes for strings containing single quotes
 - **Semicolons**: Required (enforced by ESLint)
-- **Trailing Commas**: Always use trailing commas in multiline structures
+- **Trailing Commas**: No trailing commas (trailingComma: 'none')
 - **Path Aliases**: Always use `@/` imports instead of relative paths
 - **Import Organization**: External → builtin → internal → sibling → parent (auto-sorted)
 - **Naming Conventions**: Use "URL" (not "Url"), "API" (not "Api"), "ID" (not "Id")

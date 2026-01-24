@@ -1,13 +1,11 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { formatDocumentsAsString } from '@/middlewares';
 
-import { getChatOllama, getOllamaEmbeddings, getQdrantVectorStore } from '@/libraries';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getChatOllama, getOllamaEmbeddings, getQdrantVectorStore, getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
 
 const systemTemplate = `Answer the user's question based on the context below. And improve your answers from previous answer in History.
@@ -44,7 +42,7 @@ export default function documentChatPost(collectionName: string) {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const { messages } = request.body;
 
     logger.info({ messages }, 'Received messages');
@@ -66,7 +64,7 @@ export default function documentChatPost(collectionName: string) {
     logger.info({ retriever }, 'Initialised retriever');
 
     // Initialise chat model
-    const chat = getChatOllama(0.5, logger);
+    const chat = getChatOllama(logger);
 
     // Setup chain
     const chain = RunnableSequence.from([

@@ -33,7 +33,7 @@ export const shouldRewriteDraftEmailNode =
       })
     );
 
-    const model = getChatGroq(0, logger);
+    const model = getChatGroq(logger);
 
     const chain = RunnableSequence.from([PromptTemplate.fromTemplate(shouldRewriteDraftEmailSystemPrompt), model, parser]);
 

@@ -65,7 +65,7 @@ describe('libraries/github/content', () => {
             result = extractFunctionSourceCode('test.ts', content, functionName);
           });
 
-          it('should return the function info', () => {
+          it('returns the function info', () => {
             expect(result).toStrictEqual(expected);
           });
         });

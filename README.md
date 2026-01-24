@@ -47,7 +47,7 @@ In this project, I used LangGraph Supervisor to build a multi-agent investigatio
 
 Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi-agent) for more details.
 
-**Supervisor** coordinates five specialized domain agents:
+**Supervisor** coordinates six specialized domain agents:
 
 | Agent | Purpose | Tools |
 |-------|---------|-------|
@@ -55,6 +55,7 @@ Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi
 | **Sentry Expert** | Error tracking, crashes | Issue lookup, event analysis, stack traces |
 | **Research Expert** | External documentation | Brave Search, Context7, Kubernetes (MCP) |
 | **AWS ECS Expert** | AWS ECS | ECS task status, container health, CloudWatch Container Insights metrics, service deployment, task placement, historical task event lookup, container exit codes, performance bottleneck analysis |
+| **AWS RDS Expert** | AWS RDS monitoring | RDS instance status, Performance Insights, CloudWatch metrics, top SQL queries |
 | **Code Research Expert** | Codebase analysis | ChunkHound semantic search, regex patterns, architecture analysis |
 
 **Workflow**:
@@ -70,7 +71,56 @@ Refer to [Multi-agent](https://docs.langchain.com/oss/javascript/langchain/multi
 - **Timeout protection** - Configurable per-request and per-step timeouts
 - **Cost tracking** - Token usage and cost calculation via callbacks
 
-<img width="1191" height="886" alt="Image" src="https://github.com/user-attachments/assets/84708064-b7ff-42fc-b5b2-79c0bbc79ca5" />
+```mermaid
+flowchart TB
+    subgraph top [" "]
+        direction TB
+        LC[LangChain.js] --> Supervisor["Investigate<br/>(Supervisor)"]
+    end
+    
+    Supervisor --> SupervisorFlow
+    
+    subgraph SupervisorFlow ["Supervisor Prompt - Investigation flow"]
+        direction TB
+        
+        subgraph agents [" "]
+            direction LR
+            NR["NewRelic Expert<br/>(ReAct Agent)"]
+            SE["Sentry Expert<br/>(ReAct Agent)"]
+            RE["Research Expert<br/>(ReAct Agent)"]
+            AWS["AWS ECS Expert<br/>(ReAct Agent)"]
+        end
+        
+        subgraph NRTools ["Tools"]
+            NR1["Get Issue/Incident/Alert from NewRelic<br/>(get_investigation_context)"]
+            NR2["Use LLM to generate trace NRQL for<br/>violated logs based on alert title<br/>and alert NRQL<br/>(generate_log_nrql_query)"]
+            NR3["Use LLM to generate NRQL to get<br/>trace logs based on trace id<br/>(generate_trace_logs_query)"]
+            NR4["Fetch logs and use LLM to summarise<br/>investigation information<br/>(fetch_and_analyze_logs)"]
+            NR1 --> NR2 --> NR3 --> NR4
+        end
+        
+        subgraph SETools ["Tools"]
+            SE1["Get issues from Sentry<br/>(investigate_and_analyze_sentry_issue)"]
+        end
+        
+        subgraph RETools ["Tools"]
+            RE1["Brave Search MCP"]
+            RE2["Context7 MCP"]
+            RE3["More MCPs"]
+        end
+        
+        subgraph AWSTools ["Tools"]
+            AWS1["Analyses ECS task status, CloudWatch<br/>metrics and service events<br/>(investigate_and_analyze_ecs_tasks)"]
+        end
+        
+        NR --> NRTools
+        SE --> SETools
+        RE --> RETools
+        AWS --> AWSTools
+    end
+    
+    SupervisorFlow --> Final["Return final summarised investigation"]
+```
 
 ## Sentry alert analysis
 
@@ -82,7 +132,47 @@ The workflow in big picture is as follows:
 2. Normalize the issue and event and extend the stacktrace to source code fetching from GitHub
 3. Generate a summary of the investigation using the normalized issue and event
 
-<img width="740" height="1022" alt="Image" src="https://github.com/user-attachments/assets/37864876-8189-46c9-85a1-9163f9cda45e" />
+```mermaid
+flowchart TB
+    subgraph header [" "]
+        direction LR
+        LC[LangChain.js]
+        Slack[Slack]
+        MCP[MCP Tool]
+    end
+    
+    Investigate((Investigate)) -.-> Sentry[Sentry]
+    
+    Investigate --> GetIssue["Get issue from Sentry"]
+    GetIssue --> NormalizeIssue["Normalize Sentry issue<br/>- Remove unnecessary data from issue"]
+    
+    NormalizeIssue --> GetEvent["Get latest issue event from Sentry"]
+    GetEvent --> NormalizeEvent["Normalize Sentry issue event<br/>- Extract only necessary event data<br/>including stack trace"]
+    
+    NormalizeEvent --> HasStackTrace{"Retrieved stack trace?"}
+    
+    HasStackTrace -->|No| Summarize["Use LLM to summarise<br/>investigation information"]
+    
+    HasStackTrace -->|Yes| LoopStackTrace
+    
+    subgraph LoopStackTrace ["Loop stack trace"]
+        direction TB
+        CheckNodeModules{"filename contains<br/>node_modules?"}
+        CheckNodeModules -->|"If yes, skip"| CheckNodeModules
+        CheckNodeModules -->|"No, then let's fetch the file"| CheckAvailable{"Does filename and function<br/>are available?<br/>- in case anonymous?"}
+        CheckAvailable -->|"If no, skip"| CheckNodeModules
+        CheckAvailable -->|"Yes, available"| FetchFile["Fetch file content from<br/>source code repository"]
+        FetchFile --> ExtractBody["Extract function body"]
+        ExtractBody --> Override["Override stack trace with original<br/>source code function body"]
+        Override --> CheckNodeModules
+    end
+    
+    FetchFile -.-> GitHub[GitHub]
+    FetchFile -.-> GitLab[GitLab]
+    FetchFile -.-> Bitbucket[Bitbucket]
+    
+    LoopStackTrace --> Summarize
+```
 
 ## New Relic log analysis
 
@@ -94,7 +184,38 @@ The workflow in big picture is as follows:
 2. Analyze New Relic logs to get the request timeline, service error logs and relevant URLs
 3. Generate a summary of the investigation by analyzing the request timeline, service error logs and relevant URLs
 
-<img width="1083" height="581" alt="New Relic log analysis using LangGraph" src="https://github.com/user-attachments/assets/917264df-7667-4f41-b200-b4009c302f28" />
+```mermaid
+flowchart TB
+    subgraph header [" "]
+        direction LR
+        LC[LangChain.js]
+        Slack[Slack]
+        MCP[MCP Tool]
+    end
+    
+    Investigate((Investigate))
+    
+    Investigate --> GetIssue["Get Issue from NewRelic"]
+    GetIssue --> GetIncident["Get Incident from NewRelic"]
+    GetIncident --> GetAlert["Get alert from NewRelic"]
+    GetAlert --> GenerateNRQL["Use LLM to generate trace NRQL for<br/>violated logs based on alert title<br/>and alert NRQL"]
+    
+    GenerateNRQL --> ExtractTrace["Execute NRQL to extract trace<br/>logs based on trace id"]
+    ExtractTrace --> GenerateTraceNRQL["Use LLM to generate NRQL to<br/>get trace logs based on trace id"]
+    GenerateTraceNRQL --> GetFullLogs["Get full logs from NewRelic"]
+    
+    GetFullLogs --> FilterEnvoy["Filter envoy logs"]
+    GetFullLogs --> FilterService["Filter service logs"]
+    GetFullLogs --> FilterURLs["Filter logs for retrieving<br/>relevant URLs"]
+    
+    FilterEnvoy --> TimelineEnvoy["Use LLM to generate timeline<br/>from envoy logs"]
+    FilterService --> IdentifyErrors["Use LLM to identify errors<br/>from service logs"]
+    FilterURLs --> ConstructURLs["Use LLM to construct any<br/>relevant URLs"]
+    
+    TimelineEnvoy --> Summarize["Use LLM to summarise<br/>investigation information"]
+    IdentifyErrors --> Summarize
+    ConstructURLs --> Summarize
+```
 
 ## Generate Alert Runbook from Slack thread
 
@@ -109,7 +230,33 @@ The workflow in big picture is as follows:
 5. Send the Alert Runbook to the user for approval
 6. If the user approves the Alert Runbook, then RCA will be added to the Alert Runbook.
 
-<img width="1271" height="460" alt="Alert Runbook generation from Slack thread" src="https://github.com/user-attachments/assets/70933b8b-fc93-4658-af8f-572b25a11399" />
+```mermaid
+flowchart TB
+    LC[LangChain.js] --> SlackThread[Slack Thread]
+    SlackThread --> GetReplies["Get all replies from Slack thread"]
+    GetReplies --> EnrichReplies["Enrich replies such as Images,<br/>NewRelic query"]
+    EnrichReplies --> DetermineSolution["Use LLM to determine there is a solution<br/>to solve the problem in the replies"]
+    
+    DetermineSolution -->|"No, then do not process"| End1((End))
+    
+    DetermineSolution --> GenerateRunbook["Use LLM to generate Alert runbook"]
+    GenerateRunbook --> SendDM["Send Alert Runbook to the<br/>requester's DM"]
+    SendDM --> ReviewRunbook["Requester review Alert Runbook"]
+    
+    ReviewRunbook -->|"Not correct, then do not process"| End2((End))
+    
+    ReviewRunbook --> RequestSave["Requester requests to save<br/>Alert Runbook"]
+    RequestSave --> SaveConfluence["Save the Alert runbook<br/>into Confluence"]
+    SaveConfluence --> TriggerSync["Trigger Knowledge Base Sync"]
+    
+    TriggerSync --> OpenSearch
+    
+    subgraph KnowledgeBaseSync [" "]
+        direction LR
+        Confluence[Confluence] -.->|"Data source: Confluence"| Bedrock["AWS Bedrock<br/>Embedding Model"]
+        Bedrock --> OpenSearch["Knowledge Base<br/>AWS OpenSearch Serverless<br/>(Vector Store)"]
+    end
+```
 
 ## Answer from Retriever-Augmented Generation (RAG)
 
@@ -124,17 +271,63 @@ Routes:
 
 ### Document loader process
 
-<img width="851" height="268" alt="Document loader process" src="https://github.com/user-attachments/assets/f72bf705-a89d-4016-8320-22d7f03dcc55" />
+```mermaid
+flowchart LR
+    Github>Github]
+    Confluence>Confluence]
+    PDFTextImage>"PDF/Text/Image"]
+    
+    PDFTextImage --> UnstructuredAPI["Unstructured<br/>API"]
+    
+    Github --> Chunking
+    Confluence --> Chunking
+    UnstructuredAPI --> Chunking
+    
+    Chunking["Chunking<br/>ParentDocumentRetriever<br/>RecursiveCharacterTextSplitter"] --> Embedding[Embedding]
+    
+    Embedding --> VectorDB[(Vector<br/>database)]
+```
 
 ### Document query process
 
 #### AWS Bedrock Knowledge Base
 
-<img width="919" height="507" alt="Image" src="https://github.com/user-attachments/assets/7ba5dc49-33dc-451a-959d-2b9f5fc52b44" />
+```mermaid
+flowchart TB
+    subgraph QueryFlow ["Query Flow"]
+        direction TB
+        LC[LangChain.js] --> Query((Query))
+        Query --> GenerateVariations["Use Bedrock Converse to generate<br/>query variations"]
+        GenerateVariations --> KBRetriever["Use Amazon Knowledge Base retriever<br/>to get relevant documents"]
+        KBRetriever --> GetFullDocs["Get full documents from OpenSearch<br/>for relevant documents"]
+        GetFullDocs --> VerifyDocs["Verify each document whether it's relevant<br/>to the query variations<br/>If not, exclude from documents"]
+        VerifyDocs --> GenerateAnswer["Generate answer based on filtered<br/>documents and query variations"]
+    end
+    
+    subgraph DataIngestion ["Data Ingestion"]
+        direction TB
+        Upload["Upload markdown to AWS S3"] --> S3[AWS S3]
+        S3 -->|"Data source: S3"| BedrockEmbed["AWS Bedrock<br/>Embedding Model"]
+        Confluence[Confluence] -->|"Data source: Confluence"| BedrockEmbed
+        BedrockEmbed --> KnowledgeBase["Knowledge Base<br/>AWS OpenSearch Serverless<br/>(Vector Store)"]
+        KnowledgeBase --> VectorIndex["Vector Index"]
+        BedrockEmbed2["AWS Bedrock<br/>Embedding Model"] --> KnowledgeBase
+    end
+```
 
 #### Parent document retriever
 
-<img width="852" height="233" alt="Image" src="https://github.com/user-attachments/assets/678294fe-e229-4bd6-ab8a-0a952fa4804a" />
+```mermaid
+flowchart LR
+    Query["Query<br/>(User)"] --> LLM1["LLM<br/>Create query variation"]
+    LLM1 --> Retriever["Retriever<br/>Invoke with query"]
+    Retriever --> VectorStore["Vector Store<br/>Get full documents from<br/>Vector database"]
+    VectorStore <--> VectorDB[(Vector<br/>database)]
+    
+    VectorStore --> LLM2["LLM<br/>Verify documents relevancy<br/>and exclude irrelevant<br/>documents"]
+    LLM2 --> LLM3["LLM<br/>Generate answer based on<br/>query variation + relevant<br/>documents"]
+    LLM3 --> ReturnAnswer["Return answer"]
+```
 
 ## Slack integration
 

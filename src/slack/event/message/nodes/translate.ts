@@ -10,7 +10,7 @@ export const translateNode = async (state: typeof OverallStateAnnotation.State):
 
   logger.info({ messageHistory, finalResponse, message }, 'translateNode request');
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const prompt = PromptTemplate.fromTemplate(`
 You are an expert translation assistant. Your goal is to provide accurate, contextually appropriate translations while maintaining the original meaning and tone. Do not return any additional text. Just return the translated message in markdown format.

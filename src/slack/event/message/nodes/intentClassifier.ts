@@ -24,7 +24,7 @@ export const intentClassifierNode = async (state: typeof OverallStateAnnotation.
     logger.warn({ channel, messageTs, error }, 'Reaction add failed');
   }
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const parser = StructuredOutputParser.fromZodSchema(
     z.object({

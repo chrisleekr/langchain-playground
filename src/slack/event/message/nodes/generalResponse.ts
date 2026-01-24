@@ -10,7 +10,7 @@ export const generalResponseNode = async (state: typeof OverallStateAnnotation.S
 
   logger.info({ message }, 'generalResponseNode request');
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const prompt = PromptTemplate.fromTemplate(`
 You are an expert assistant specializing in generating helpful, contextual responses. Your goal is to understand the user's needs and provide the most valuable response possible. Always respond in clean markdown format without code fencing. Do not return any additional text.

@@ -10,7 +10,7 @@ export const getMessageHistoryNode = async (state: typeof OverallStateAnnotation
   const { userMessage, client } = state;
   const { text: message, thread_ts: threadTs, channel } = userMessage;
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const parser = StructuredOutputParser.fromZodSchema(
     z.object({

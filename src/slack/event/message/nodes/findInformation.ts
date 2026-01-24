@@ -15,7 +15,7 @@ export const findInformationNode = async (state: typeof OverallStateAnnotation.S
 
   logger.info({ messageHistory }, 'Find information from RAG');
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const keywordParser = StructuredOutputParser.fromZodSchema(
     z.object({

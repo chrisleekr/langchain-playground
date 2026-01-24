@@ -32,7 +32,7 @@ export const writeDraftEmailNode =
       })
     );
 
-    const model = getChatGroq(0.5, logger);
+    const model = getChatGroq(logger);
 
     const chain = RunnableSequence.from([PromptTemplate.fromTemplate(writeDraftEmailSystemPrompt), model, parser]);
 

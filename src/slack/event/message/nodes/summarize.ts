@@ -7,7 +7,7 @@ import { getChatLLM } from '../../utils';
 export const summarizeNode = async (state: typeof OverallStateAnnotation.State): Promise<typeof OverallStateAnnotation.State> => {
   const { messageHistory, userMessage } = state;
 
-  const model = getChatLLM(0, logger);
+  const model = getChatLLM(logger);
 
   const prompt = PromptTemplate.fromTemplate(`
 You are an expert summarization system. Your goal is to create helpful, structured summaries that capture the essential information from conversations. You must always return clean markdown without code fencing. Do not return any additional text.

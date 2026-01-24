@@ -4,13 +4,11 @@
  * Replaces deprecated BufferMemory with direct RedisChatMessageHistory usage.
  */
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Logger } from 'pino';
 import { StatusCodes } from 'http-status-codes';
 
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
-import { sendResponse } from '@/libraries/httpHandlers';
+import { getRedisClient, getRequestLogger, sendResponse } from '@/libraries';
 import { ResponseStatus, ServiceResponse } from '@/models/serviceResponse';
-import { getRedisClient } from '@/libraries/redis';
 
 const redisClient = getRedisClient();
 
@@ -21,7 +19,7 @@ export default function threadIdGet() {
     }>,
     reply: FastifyReply
   ): Promise<void> => {
-    const logger = request.log as Logger;
+    const logger = getRequestLogger(request.log);
     const { id: threadId } = request.params;
 
     const sessionId = `openai-thread-${threadId}`;

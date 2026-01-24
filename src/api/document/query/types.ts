@@ -3,4 +3,4 @@ type QueryVariation = {
   weight: number;
 };
 
-export { QueryVariation };
+export type { QueryVariation };
