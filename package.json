@@ -101,7 +101,7 @@
   "devDependencies": {
     "@babel/core": "7.28.6",
     "@babel/preset-env": "7.28.6",
-    "@commitlint/cli": "20.3.1",
+    "@commitlint/cli": "20.4.0",
     "@commitlint/config-conventional": "20.3.1",
     "@jest/globals": "30.2.0",
     "@rspack/cli": "1.7.3",
