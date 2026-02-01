@@ -67,7 +67,7 @@
     "@langchain/langgraph-supervisor": "1.0.1",
     "@langchain/mcp-adapters": "1.1.2",
     "@langchain/ollama": "1.2.1",
-    "@langchain/openai": "1.2.3",
+    "@langchain/openai": "1.2.4",
     "@langchain/pinecone": "1.0.1",
     "@langchain/qdrant": "1.0.1",
     "@langchain/redis": "1.0.1",
