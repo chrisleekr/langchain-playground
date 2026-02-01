@@ -32,9 +32,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22.17.0'
+          node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
+
+      # Install npm version from volta config to ensure consistent dependency resolution
+      - name: Install npm version from volta config
+        run: |
+          NPM_VERSION=$(node -p "require('./package.json').volta.npm")
+          echo "Installing npm@$NPM_VERSION"
+          npm install -g npm@$NPM_VERSION
 
       - name: Install dependencies
         run: npm ci
@@ -81,9 +88,10 @@ jobs:
       # - name: Run test
       #   run: npm run test
 
-  semantic-release-dev:
+  semantic-release:
     name: Semantic Release - Dev
     needs: lint-and-test
+    # Only run semantic-release for branches configured in release.config.dev.mjs
     if: |
       !contains(github.event.head_commit.message, 'skip ci') && (
         startsWith(github.event.head_commit.message, 'feat') ||
@@ -94,5 +102,8 @@ jobs:
         startsWith(github.event.head_commit.message, 'bump') ||
         startsWith(github.event.head_commit.message, 'localize')
       )
-    uses: ./.github/workflows/semantic-release-dev.yml
+    uses: ./.github/workflows/semantic-release.yml
+    with:
+      is-dev-release: true
+      skip-checks: true
     secrets: inherit
