@@ -155,8 +155,8 @@ publish-dev-docker:
     - GIT_HASH=$(git rev-parse --short HEAD)
     # Pass NODE_VERSION to Docker build for single source of truth
     - docker buildx build --progress plain --platform linux/amd64,linux/arm64 --allow network.host --provenance false --build-arg
-      NODE_VERSION=$NODE_VERSION --build-arg PACKAGE_VERSION=$PACKAGE_VERSION --build-arg GIT_HASH=$GIT_HASH --build-arg NODE_ENV=production
-      --target production --pull --tag $CI_REGISTRY/chrisleekr/${CI_PROJECT_NAME}:dev-${CI_COMMIT_SHORT_SHA} --push .
+      NODE_VERSION=$NODE_VERSION --build-arg PACKAGE_VERSION=$PACKAGE_VERSION --build-arg GIT_HASH=$GIT_HASH --build-arg NODE_ENV=production --target
+      production --pull --tag $CI_REGISTRY/chrisleekr/${CI_PROJECT_NAME}:dev-${CI_COMMIT_SHORT_SHA} --push .
 
 publish-tag-docker:
   stage: release
@@ -179,5 +179,5 @@ publish-tag-docker:
     - GIT_HASH=$(git rev-parse --short HEAD)
     # Pass NODE_VERSION to Docker build for single source of truth
     - docker buildx build --progress plain --platform linux/amd64,linux/arm64 --allow network.host --provenance false --build-arg
-      NODE_VERSION=$NODE_VERSION --build-arg PACKAGE_VERSION=$PACKAGE_VERSION --build-arg GIT_HASH=$GIT_HASH --build-arg NODE_ENV=production
-      --target production --pull --tag $CI_REGISTRY/chrisleekr/${CI_PROJECT_NAME}:${PACKAGE_VERSION} --push .
+      NODE_VERSION=$NODE_VERSION --build-arg PACKAGE_VERSION=$PACKAGE_VERSION --build-arg GIT_HASH=$GIT_HASH --build-arg NODE_ENV=production --target
+      production --pull --tag $CI_REGISTRY/chrisleekr/${CI_PROJECT_NAME}:${PACKAGE_VERSION} --push .
