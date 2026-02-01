@@ -7,6 +7,14 @@ updates:
       interval: 'monthly'
       time: '09:00'
       timezone: 'Australia/Melbourne'
+    groups:
+      all-actions:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -16,15 +24,17 @@ updates:
       timezone: 'Australia/Melbourne'
     pull-request-branch-name:
       separator: '-'
-    open-pull-requests-limit: 99
+    open-pull-requests-limit: 10
     target-branch: main
-    ignore:
-      - dependency-name: 'husky'
-        versions:
-          - '>= 7'
-      - dependency-name: '@types/node'
-        versions:
-          - '>= 22'
+    groups:
+      # Group all minor and patch updates into a single PR
+      all-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    # Removed outdated ignores - husky and @types/node are now current
     commit-message:
       prefix: chore
       include: scope
