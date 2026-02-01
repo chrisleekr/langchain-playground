@@ -51,7 +51,7 @@
     "@aws-sdk/client-rds": "3.975.0",
     "@aws-sdk/credential-provider-node": "3.972.4",
     "@aws-sdk/credential-providers": "3.975.0",
-    "@aws-sdk/types": "3.973.0",
+    "@aws-sdk/types": "3.973.1",
     "@chroma-core/default-embed": "0.1.9",
     "@fastify/compress": "8.3.1",
     "@fastify/cors": "11.2.0",
