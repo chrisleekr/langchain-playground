@@ -57,8 +57,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'npm'
+
+      # Install npm version from volta config to ensure consistent dependency resolution
+      - name: Install npm version from volta config
+        run: |
+          NPM_VERSION=$(node -p "require('./package.json').volta.npm")
+          echo "Installing npm@$NPM_VERSION"
+          npm install -g npm@$NPM_VERSION
 
       - name: Install dependencies
         run: npm ci
@@ -85,14 +92,17 @@ jobs:
           PACKAGE_VERSION="${TAG_NAME#v}"
           GIT_HASH=$(git rev-parse --short HEAD)
           IS_DEV_RELEASE=${{ inputs.is-dev-release }}
+          NODE_VERSION=$(cat .nvmrc | tr -d '[:space:]')
 
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
           echo "GIT_HASH=$GIT_HASH" >> $GITHUB_ENV
           echo "IS_DEV_RELEASE=$IS_DEV_RELEASE" >> $GITHUB_ENV
+          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_ENV
 
           echo "Package Version: $PACKAGE_VERSION"
           echo "Git Hash: $GIT_HASH"
           echo "Is Dev Release: $IS_DEV_RELEASE"
+          echo "Node Version: $NODE_VERSION"
 
       - name: Generate Docker tags and labels
         id: docker-meta
@@ -118,6 +128,7 @@ jobs:
           cache-from: type=registry,ref=chrisleekr/langchain-playground:cache
           cache-to: type=registry,mode=max,ref=chrisleekr/langchain-playground:cache
           build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
             PACKAGE_VERSION=${{ env.PACKAGE_VERSION }}
             GIT_HASH=${{ env.GIT_HASH }}
             NODE_ENV=production
@@ -136,6 +147,7 @@ jobs:
           cache-from: type=registry,ref=chrisleekr/langchain-playground:cache
           cache-to: type=registry,mode=max,ref=chrisleekr/langchain-playground:cache
           build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
             PACKAGE_VERSION=${{ env.PACKAGE_VERSION }}
             GIT_HASH=${{ env.GIT_HASH }}
             NODE_ENV=production
