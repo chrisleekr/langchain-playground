@@ -82,8 +82,8 @@ const getChatOllama = (logger: Logger): ChatOllama => {
   );
   if (!chatOllama) {
     chatOllama = new ChatOllama({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature,
       keepAlive: config.get<number>('ollama.keepAlive')
     });
@@ -143,8 +143,8 @@ const getChatGroq = (logger: Logger): ChatGroq => {
   );
   if (!chatGroq) {
     chatGroq = new ChatGroq({
-      apiKey: config.get('groq.apiKey'),
-      model: config.get('groq.model'),
+      apiKey: config.get<string>('groq.apiKey'),
+      model: config.get<string>('groq.model'),
       temperature
     });
   }
@@ -175,9 +175,9 @@ const getChatOpenAI = (logger: Logger): ChatOpenAI => {
     );
 
     chatOpenAI = new ChatOpenAI({
-      apiKey: config.get('openai.apiKey'),
+      apiKey: config.get<string>('openai.apiKey'),
       temperature,
-      model: config.get('openai.model'),
+      model: config.get<string>('openai.model'),
       configuration: {
         baseURL
       }

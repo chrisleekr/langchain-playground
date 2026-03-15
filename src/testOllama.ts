@@ -35,8 +35,8 @@ console.log(config);
   try {
     logger.info('Connecting to the Ollama server...');
     const chatModel = new ChatOllama({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model')
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model')
     });
 
     // docker run -p 8000:8000 -d --rm --name unstructured-api downloads.unstructured.io/unstructured-io/unstructured-api:latest --port 8000 --host 0.0.0.0

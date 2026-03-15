@@ -1,7 +1,7 @@
 import { HumanMessage } from '@langchain/core/messages';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import slackifyMarkdown from 'slackify-markdown';
+import { slackifyMarkdown } from 'slackify-markdown';
 import { logger, removeThinkTag } from '@/libraries';
 import { FormattedMessageElement, formatThreadReplies, getThreadRepliesFromText } from '@/libraries/slack/getThreadReplies';
 import { OverallStateAnnotation } from '../constants';
