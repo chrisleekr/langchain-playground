@@ -20,7 +20,7 @@ RUN npm run build
 
 # Step 2: Production stage
 # Re-declare ARG before FROM (Docker requirement - ARGs don't persist across stages)
-ARG NODE_VERSION=24
+ARG NODE_VERSION=24.14.0
 FROM node:${NODE_VERSION}-alpine AS production
 
 ARG PACKAGE_VERSION
