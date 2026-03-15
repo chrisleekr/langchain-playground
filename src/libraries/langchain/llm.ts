@@ -74,8 +74,8 @@ const getChatOllama = (logger: Logger): ChatOllama => {
   const temperature = config.get<number>('ollama.temperature');
   logger.info(
     {
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature
     },
     'Getting ChatOllama...'
@@ -105,16 +105,16 @@ const getLLMOllama = (logger: Logger): Ollama => {
   const temperature = config.get<number>('ollama.temperature');
   logger.info(
     {
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature
     },
     'Getting LLM Ollama...'
   );
   if (!llmOllama) {
     llmOllama = new Ollama({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature,
       keepAlive: config.get<number>('ollama.keepAlive')
     });
@@ -136,7 +136,7 @@ const getChatGroq = (logger: Logger): ChatGroq => {
   const temperature = config.get<number>('groq.temperature');
   logger.info(
     {
-      model: config.get('groq.model'),
+      model: config.get<string>('groq.model'),
       temperature
     },
     'Getting ChatGroq...'
@@ -169,7 +169,7 @@ const getChatOpenAI = (logger: Logger): ChatOpenAI => {
       {
         baseURL: baseURL || 'Not set',
         temperature,
-        model: config.get('openai.model')
+        model: config.get<string>('openai.model')
       },
       'Getting OpenAI...'
     );
@@ -206,7 +206,7 @@ const getChatBedrockConverse = (logger: Logger): ChatBedrockConverseSafe => {
 
   if (!chatBedrockConverse) {
     logger.info(
-      { temperature, maxTokens, profile: config.get('aws.bedrock.credentials.profile') },
+      { temperature, maxTokens, profile: config.get<string>('aws.bedrock.credentials.profile') },
       'Getting ChatBedrockConverse (with empty message filter)...'
     );
 

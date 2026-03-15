@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Node version passed from .nvmrc via --build-arg (defaults to 22 for local builds)
-ARG NODE_VERSION=22
+# Node version passed from .nvmrc via --build-arg (defaults to 24 for local builds)
+ARG NODE_VERSION=24
 
 # Step 1: Build stage
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS build
@@ -20,7 +20,7 @@ RUN npm run build
 
 # Step 2: Production stage
 # Re-declare ARG before FROM (Docker requirement - ARGs don't persist across stages)
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24
 FROM node:${NODE_VERSION}-alpine AS production
 
 ARG PACKAGE_VERSION

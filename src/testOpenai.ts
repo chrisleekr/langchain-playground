@@ -18,7 +18,7 @@ console.log(config);
     const model = new ChatOpenAI({
       temperature: 0.9,
       configuration: {
-        baseURL: config.get<string>('openai.baseUrl')
+        baseURL: config.get<string>('openai.baseUrl') || undefined
       },
       apiKey: config.get<string>('openai.apiKey')
     });
