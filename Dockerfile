@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Node version passed from .nvmrc via --build-arg (defaults to 24 for local builds)
-ARG NODE_VERSION=24
+ARG NODE_VERSION=24.14.0
 
 # Step 1: Build stage
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS build
