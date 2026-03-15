@@ -35,13 +35,13 @@ console.log(config);
   try {
     logger.info('Connecting to the Ollama server...');
     const chatModel = new ChatOllama({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model')
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model')
     });
 
     // docker run -p 8000:8000 -d --rm --name unstructured-api downloads.unstructured.io/unstructured-io/unstructured-api:latest --port 8000 --host 0.0.0.0
     const directoryLoader = new UnstructuredDirectoryLoader(directoryPath, {
-      apiUrl: config.get('unstructuredAPI.url')
+      apiUrl: config.get<string>('unstructuredAPI.url')
     });
 
     logger.info({ directoryPath }, 'Loading documents from the directory:');
@@ -60,8 +60,8 @@ console.log(config);
 
     logger.info('Creating embeddings from the documents...');
     const embeddings = new OllamaEmbeddings({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.embeddingModel')
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.embeddingModel')
     });
 
     logger.info('Creating a vector store from the documents...');
@@ -74,8 +74,8 @@ console.log(config);
 
     // Create prompt template
     const promptTemplate =
-      config.get('ollama.documentSystemTemplate') !== ''
-        ? <string>config.get('ollama.documentSystemTemplate')
+      config.get<string>('ollama.documentSystemTemplate') !== ''
+        ? config.get<string>('ollama.documentSystemTemplate')
         : `You must use the context. Answer the following question based only on the provided context:
 
 <context>

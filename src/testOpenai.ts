@@ -18,9 +18,9 @@ console.log(config);
     const model = new ChatOpenAI({
       temperature: 0.9,
       configuration: {
-        baseURL: config.get('openai.baseUrl')
+        baseURL: config.get<string>('openai.baseUrl') || undefined
       },
-      openAIApiKey: config.get('openai.apiKey')
+      apiKey: config.get<string>('openai.apiKey')
     });
 
     const message = await model.invoke(humanMessage);

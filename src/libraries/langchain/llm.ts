@@ -74,16 +74,16 @@ const getChatOllama = (logger: Logger): ChatOllama => {
   const temperature = config.get<number>('ollama.temperature');
   logger.info(
     {
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature
     },
     'Getting ChatOllama...'
   );
   if (!chatOllama) {
     chatOllama = new ChatOllama({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature,
       keepAlive: config.get<number>('ollama.keepAlive')
     });
@@ -105,16 +105,16 @@ const getLLMOllama = (logger: Logger): Ollama => {
   const temperature = config.get<number>('ollama.temperature');
   logger.info(
     {
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature
     },
     'Getting LLM Ollama...'
   );
   if (!llmOllama) {
     llmOllama = new Ollama({
-      baseUrl: config.get('ollama.baseUrl'),
-      model: config.get('ollama.model'),
+      baseUrl: config.get<string>('ollama.baseUrl'),
+      model: config.get<string>('ollama.model'),
       temperature,
       keepAlive: config.get<number>('ollama.keepAlive')
     });
@@ -136,15 +136,15 @@ const getChatGroq = (logger: Logger): ChatGroq => {
   const temperature = config.get<number>('groq.temperature');
   logger.info(
     {
-      model: config.get('groq.model'),
+      model: config.get<string>('groq.model'),
       temperature
     },
     'Getting ChatGroq...'
   );
   if (!chatGroq) {
     chatGroq = new ChatGroq({
-      apiKey: config.get('groq.apiKey'),
-      model: config.get('groq.model'),
+      apiKey: config.get<string>('groq.apiKey'),
+      model: config.get<string>('groq.model'),
       temperature
     });
   }
@@ -169,15 +169,15 @@ const getChatOpenAI = (logger: Logger): ChatOpenAI => {
       {
         baseURL: baseURL || 'Not set',
         temperature,
-        model: config.get('openai.model')
+        model: config.get<string>('openai.model')
       },
       'Getting OpenAI...'
     );
 
     chatOpenAI = new ChatOpenAI({
-      apiKey: config.get('openai.apiKey'),
+      apiKey: config.get<string>('openai.apiKey'),
       temperature,
-      model: config.get('openai.model'),
+      model: config.get<string>('openai.model'),
       configuration: {
         baseURL
       }
@@ -206,7 +206,7 @@ const getChatBedrockConverse = (logger: Logger): ChatBedrockConverseSafe => {
 
   if (!chatBedrockConverse) {
     logger.info(
-      { temperature, maxTokens, profile: config.get('aws.bedrock.credentials.profile') },
+      { temperature, maxTokens, profile: config.get<string>('aws.bedrock.credentials.profile') },
       'Getting ChatBedrockConverse (with empty message filter)...'
     );
 

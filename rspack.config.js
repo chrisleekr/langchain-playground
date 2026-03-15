@@ -42,7 +42,7 @@ module.exports = {
                   syntax: 'typescript',
                   decorators: true
                 },
-                target: 'es2022',
+                target: 'es2024',
                 loose: false,
                 externalHelpers: false
               },

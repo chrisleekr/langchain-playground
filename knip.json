@@ -3,7 +3,7 @@
   "entry": ["src/*.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["**/__tests__/**", "**/*.test.ts", "**/*.spec.ts"],
-  "ignoreDependencies": ["@chroma-core/default-embed", "pino-pretty", "tsc-alias"],
+  "ignoreDependencies": ["@chroma-core/default-embed", "@types/config", "pino-pretty", "tsc-alias"],
   "ignoreBinaries": ["semantic-release", "ngrok"],
   "ignoreExportsUsedInFile": true
 }

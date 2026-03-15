@@ -1,6 +1,6 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import slackifyMarkdown from 'slackify-markdown';
+import { slackifyMarkdown } from 'slackify-markdown';
 import { logger, removeThinkTag } from '@/libraries';
 import { OverallStateAnnotation } from '../constants';
 import { getChatLLM } from '../../utils';
