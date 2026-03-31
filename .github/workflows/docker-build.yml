@@ -106,7 +106,7 @@ jobs:
 
       - name: Generate Docker tags and labels
         id: docker-meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: chrisleekr/langchain-playground
           tags: |
