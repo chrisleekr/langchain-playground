@@ -73,7 +73,7 @@
     "@langchain/redis": "1.1.0",
     "@langchain/textsplitters": "1.0.1",
     "@opensearch-project/opensearch": "3.5.1",
-    "@pinecone-database/pinecone": "5.1.2",
+    "@pinecone-database/pinecone": "7.1.0",
     "@sinclair/typebox": "0.34.49",
     "@slack/bolt": "4.6.0",
     "@slack/web-api": "7.15.0",
