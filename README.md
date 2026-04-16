@@ -1,5 +1,6 @@
 # A LangChain playground using TypeScript
 
+[![SafeSkill 20/100](https://img.shields.io/badge/SafeSkill-20%2F100_Blocked-red)](https://safeskill.dev/scan/chrisleekr-langchain-playground)
 A playground for LangChain.js, LangGraph, Slack, Model Context Protocol (MCP) and other LLM-related tools.
 
 This project provides both REST API endpoints or Slack bot integration for interacting with different language models and LangChain and LangGraph workflows.
