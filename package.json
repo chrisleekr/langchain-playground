@@ -95,7 +95,7 @@
     "simple-git": "3.33.0",
     "slackify-markdown": "5.0.0",
     "typescript": "5.9.3",
-    "uuid": "13.0.0",
+    "uuid": "14.0.0",
     "yaml": "2.8.3",
     "zod": "3.25.76"
   },
