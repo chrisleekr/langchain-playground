@@ -105,7 +105,7 @@
     "@commitlint/cli": "20.5.0",
     "@commitlint/config-conventional": "20.5.0",
     "@jest/globals": "30.4.1",
-    "@rspack/cli": "1.7.11",
+    "@rspack/cli": "2.0.4",
     "@rspack/core": "1.7.11",
     "@slack/types": "2.21.1",
     "@swc/core": "^1.15.33",
